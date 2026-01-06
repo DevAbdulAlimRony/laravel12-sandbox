@@ -1,0 +1,276 @@
+There are many ways to install laravel.
+Some are easy, some are hard, some are harder.
+
+## Easiest way to install laravel using laravel herd just by clicking which is native depeloment environment which doesn't use docker.
+
+## Install manually:
+1. Install php, composer and laravel installer manually or by this commnd for windows: # Run as administrator...
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows/8.4'))
+2. If alreay php and composer installed, install laravel installer: composer global require laravel/installer
+3. Create a Project: laravel new example-app
+4. cd example-app, npm install, npm run build, composer run dev
+5. Once you have started the development server, your application will be accessible in your web browser at http://localhost:8000.
+6. Set up database in env file and migrate.
+7. If you are developing on macOS or Windows and need to install MySQL, PostgreSQL, or Redis locally, consider using Herd Pro or DBngin.
+
+## Install using Sail:
+- Laravel Sail is a light-weight command-line interface for interacting with Laravel's default Docker development environment.
+- The sail script provides a CLI with convenient methods for interacting with the Docker containers defined by the compose.yaml file
+1. Prerequisites in Windows Machine: Install WSL2 and Docker Desktop.
+2. Enable WSL2 and Install Ubuntu: Open PowerShell as Administrator and run- wsl --install
+3. After installing Docker Desktop, open Docker Desktop and go to Settings > Resources > WSL Integration. Enable integration for your default distro (usually Ubuntu).
+4. Open Ubuntu Terminal (search ubuntu from windows search)
+5. Go to the Home Directory if not: cd ~. If you want to install in another folder, cd that_folder.
+6. Install laravel: curl -s "https://laravel.build/my-app" | bash. It will take time and will want wsl2 password.
+7. Launch Application: Open the project in a code editor and go to the terminal or cd my-app
+8. Start Laravel Sail: ./vendor/bin/sail up. it will download several Docker images (PHP, MySQL, Redis, etc.).
+   **In case, if error come- sessions doesnt exist. Reason can be migration not running. 
+   ** If got this type error run: ./vendor/bin/sail artisan migrate
+9. Create a "Sail" Alias: Typing ./vendor/bin/sail every time is tedious.
+   - In your Ubuntu terminal: nano ~/.bashrc
+   - Scroll to the bottom and type or paste: alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+   - Save (Ctrl+O, Enter) and Exit (Ctrl+X). Then reload your settings: source ~/.bashrc
+10. Access Your App: Web: http://localhost, Mailpit: http://localhost:8025, Database: Use any DB tool (like TablePlus or DBeaver) to connect to 127.0.0.1 on port 3306 with username sail and password password.
+
+Notes: 
+** Assigning a unique name to the application image is particularly important if you are using Sail to develop multiple Laravel applications on a single machine
+** We can set custom image name in yml file by editing and rebuild- laravel.test: image: mycompany/laravel-app:php83
+** After installing, now project is not in any drive, its in \\wsl.localhost\Ubuntu\home\yourUserNaame/
+** Laravel sail use php's built in server, it does not use nginx or apache, so you will not see that type of container. If need, install in container.
+** If you want vue: ./vendor/bin/sail composer require laravel/ui, ./vendor/bin/sail artisan ui vue --bootstrap
+** Running two servers like xampp and sail both on the system: Stop one the start another or, use different port for sail. The sail down and up.
+** Change ports in env file, not in compose: APP_PORT=8080 FORWARD_DB_PORT=3307 FORWARD_MAILPIT_PORT=1026 FORWARD_MAILPIT_DASHBOARD_PORT=8026 FORWARD_REDIS_PORT=6380 FORWARD_MEILISEARCH_PORT=7701
+** For multiple server or multiple sail project: If you only ever have one project active, you do not need to change the ports.
+** ./vendor/bin/sail up -d: Project will run, doesnt matter you close the terminal or editor.
+
+- Rebuilding Sail Images: docker compose down -v, sail build --no-cache, sail up
+-  The laravel.test container is the primary application container that will be serving your application.
+- To stop all of the containers, you may simply press Control + C to stop the container's execution. 
+- If container running in background using -d, stop it by: sail stop
+
+- Running Artisan commands within Laravel Sail: sail artisan queue:work (we just typed sail rather than php)
+- Executing PHP Commands: sail php --version
+- Executing Composer Commands: sail composer require laravel/sanctum
+- Executing Node / NPM Commands: sail node --version, sail npm run dev
+
+- MySQL Database: Once you have started your containers, you may connect to the MySQL instance within your application by setting your DB_HOST environment variable within your application's .env file to mysql.
+- Can use graphical database management system called TablePlus.
+- By default, the MySQL database is accessible at localhost port 3306.
+
+- Share Your app to your colleagues:
+- First sail up or -d then, ./vendor/bin/sail share lets you temporarily share your local Laravel app over the internet with a public URL.
+- When sharing your site via the share command, you should configure your application's trusted proxies using the trustProxies middleware method in your application's bootstrap/app.php file. 
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustProxies(at: '*');
+})
+- If you don’t add trustProxies('*'), your app will still open via sail share, but URLs generated by Laravel will be WRONG.
+- Use subdomain: sail share --subdomain=my-sail-site
+
+- Debugging: Laravel Sail's Docker configuration includes support for Xdebug, a popular and powerful debugger for PHP. 
+- add the following variables to your application's .env file to configure Xdebug: SAIL_XDEBUG_MODE=develop,debug,coverage
+- debug: Enables step debugging, develop: Enables better var_dump output and stack traces.
+- Can add that also in env: SAIL_XDEBUG_CONFIG="client_host=host.docker.internal"
+- host.docker.internal: Tells the Docker container to send debug data back to your host machine (Windows/Mac).
+- Put in php.ini: [xdebug] xdebug.mode=${XDEBUG_MODE} (publish sail docker, then check verson sail php --version, Now in docker folder- that version folder- you will see php.ini)
+- But if you dont add it in php.ini, maybe laravel will injec automatically.
+- Rebuild Docker Images: sail build --no-cache
+- Xdebug "broadcasts" the code execution, but VS Code needs to be "listening" to catch it.
+- Install the PHP Debug extension in VS Code.
+- Create a .vscode/launch.json file in your project root with this exact content:
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Listen for Xdebug (Sail)",
+            "type": "php",
+            "request": "launch",
+            "port": 9003,
+            "pathMappings": {
+                "/var/www/html": "${workspaceFolder}"
+            },
+        }
+    ]
+}
+- Can install php debug extension in vs code, and select xdebug in debug mode. and refsh the page to see debug
+- Run: sail artisan migrate, sail debug migrate
+
+-  Sail is mainly docker, if you want to customize this docker, then,
+-  Publish Sail's own Dockerfiles: sail artisan sail:publish and rebuild.
+
+- If sometimes got error about port, from powershel administrator:
+net stop winnat
+sail up -d
+net start winnat
+
+## Editor:
+1. Lightweight and extensible editors, VS Code or Cursor combined with the official Laravel VS Code Extension 
+2. For extensive and robust support of Laravel, take a look at PhpStorm, a JetBrains IDE. 
+3. PhpStorm's built-in Laravel framework support includes Blade templates, smart autocompletion for Eloquent models, routes, views, translations, and components, along with powerful code generation and navigation across Laravel projects.
+4.  cloud-based development experience, Firebase Studio provides instant access to building with Laravel directly in your browser. 
+
+## AI:Laravel Boost is a powerful tool that bridges the gap between AI coding agents and Laravel applications.
+- When you install Boost in your Laravel application, AI agents gain access to over 15 specialized tools including the ability to know which packages you are using, query your database, search the Laravel documentation, read browser logs, generate tests, and execute code via Tinker.
+- In addition, Boost gives AI agents access to over 17,000 pieces of vectorized Laravel ecosystem documentation, specific to your installed package versions.
+- Boost also includes Laravel-maintained AI guidelines that help agents to follow framework conventions
+- Install: composer require laravel/boost --dev
+- Once installed, run: php artisan boost:install
+- The installer will auto-detect your IDE and AI agents, allowing you to opt into the features that make sense for your project.
+
+## Installing Laravel in Office Way:
+1. Install Laravel: composer create-project laravel/laravel laravel-vue-theme
+2. Database Setup
+3. Vue Use .org all functions try
+4. npm install, npm run dev
+5. Install UI: composer require laravel/ui, php artisan ui vue
+6. vite plugin-vue install: npm i @vitejs/plugin-vue
+7. Configure vite plugin-vue in vite.config.js:
+   import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: [
+                'resources/sass/app.scss',
+                'resources/js/app.js',
+            ],
+            refresh: true,
+        }),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    base: null,
+                    includeAbsolute: false,
+                },
+            },
+        }),
+    ],
+    resolve: {
+        alias: {
+            vue: 'vue/dist/vue.esm-bundler.js',
+        },
+    },
+});
+
+7. Import saas to get bootstrap in app.js: import './../sass/app.scss'
+8. Router Install: npm i vue-router
+9. routers.js file in js folder: 
+import {createRouter, createWebHistory} from 'vue-router';
+const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+      { path: '/',
+       component: ()=>import('./pages/dashboard.vue'),
+       name: 'HomePage'
+       },
+      {   path: '/post', 
+          component: ()=>import('./pages/post/index.vue'),
+          name: 'PostPage' 
+      },
+    ],
+  });
+
+  export default router;
+
+10. Import routers in app.js: import router from './routers.js'; 
+
+11. Install Vuetify: npm i vuetify
+
+12. Install Material Icons to use <v-icon>: npm i mdi vue
+
+13. Import mdi css in app.saas: // Material Design Icons
+@import 'material-design-icons-iconfont/dist/material-design-icons.css';
+
+14. Import and configure all in app.js:
+	
+	import './bootstrap';
+import './../sass/app.scss'
+import {createApp} from 'vue';
+
+
+import router from './routers.js';
+
+import 'vuetify/styles';
+import { createVuetify } from 'vuetify';
+
+import { aliases, md } from 'vuetify/iconsets/md'
+
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
+
+const vuetify = createVuetify({
+    components, directives,
+    icons: {
+        defaultSet: 'md',
+        aliases,
+        sets: {
+          md,
+        },
+      },
+})
+const app = createApp();
+
+import App from './App.vue'
+app.component('index-component', App);
+
+
+app.use(router)
+.use(vuetify)
+.mount('#app');
+
+
+15. File structures: components, pages->common(nav.js, footer.js)->post(index.vue) 
+
+16. web.php route: Route::get('{any?}', function () {
+    return view('welcome');
+});
+
+17. App.vue: <template>
+  <v-card>
+    <v-layout>
+
+      <NavBar />
+      <v-main>
+       <router-view />
+      </v-main>
+      <Footer />
+    
+    </v-layout>
+  </v-card>
+</template>
+
+<script>
+
+import NavBar from './pages/common/navbar.vue'
+import Footer from './pages/common/footer.vue'
+
+export default {
+
+  components:{
+    NavBar,
+    Footer
+  },
+
+
+  setup() {
+    
+  },
+}
+</script>
+
+18. Router Link:  <router-link :to="{ name: 'HomePage' }" class="pl-5">Home</router-link>
+19. Proper Formatting and Commenting
+20. Component Add: import App from './App.vue'
+app.component('index-component', App);
+
+21. welcome.blade.php or any blade: <div id="app">
+        <index-component />
+    </div>
+    @vite('resources/js/app.js')
+22. @mdi-font install, not js
+
+
+
+
+
