@@ -1,0 +1,37 @@
+## Directory:
+1. Laravel imposes almost no restrictions on where any given class is located - as long as Composer can autoload the class.
+2. The Root Directory: The app directory contains the core code of your application.
+3. The bootstrap directory contains the app.php file which bootstraps the framework. 
+4. The public directory contains the index.php file, which is the entry point for all requests entering your application and configures autoloading.
+5. Public directory also houses your assets such as images, JavaScript, and CSS.
+6. The web.php file contains routes that Laravel places in the web middleware group, which provides session state, CSRF protection, and cookie encryption.
+7. The console.php file is where you may define all of your closure-based console commands. 
+8. You may also schedule tasks in the console.php file.
+9. Can Install additional route files for API routes (api.php) and broadcasting channels (channels.php), via the install:api and install:broadcasting Artisan commands.
+10. The api.php file contains routes that are intended to be stateless, so requests entering the application through these routes are intended to be authenticated via tokens and will not have access to session state.
+11. The channels.php file is where you may register all of the event broadcasting channels that your application supports.
+12. The majority of your application is housed in the app directory.
+
+## Lifecycle:
+1. The entry point for all requests to a Laravel application is the public/index.php file. 
+   - All requests are directed to this file by your web server (Apache / Nginx) configuration. 
+2. Loads the Composer generated autoloader definition, and then retrieves an instance of the Laravel application from bootstrap/app.php.
+   - The first action taken by Laravel itself is to create an instance of the application / service container.
+3.  The incoming request is sent to either the HTTP kernel or the console kernel, using the handleRequest or handleCommand methods of the application instance.
+    - Http Kernel is an instance of Illuminate\Foundation\Http\Kernel.
+    - The HTTP kernel defines an array of bootstrappers that will be run before the request is executed. 
+    - These bootstrappers configure error handling, configure logging, detect the application environment, and perform other tasks that need to be done before the request is actually handled. 
+    - Then The HTTP kernel is also responsible for passing the request through the application's middleware stack. 
+    - The method signature for the HTTP kernel's handle method is quite simple: it receives a Request and returns a Response. 
+    -  Feed it HTTP requests and it will return HTTP responses.
+4. Kernel also bootsrap service providers.
+   - Service providers are responsible for bootstrapping all of the framework's various components, such as the database, queue, validation, and routing components.
+   - First instantiate the provider then register method will be called.
+   - Once all of the providers have been registered, the boot method will be called on each provider. 
+   - Essentially every major feature offered by Laravel is bootstrapped and configured by a service provider. 
+   - While the framework internally uses dozens of service providers, you also have the option to create your own. Y
+   - Find all providers in bootsrap/providers.php
+5. Once the application has been bootstrapped and all service providers have been registered, the Request will be handed off to the router for dispatching. 
+   - The router will dispatch the request to a route or controller, as well as run any route specific middleware.
+   - Middleware provide a convenient mechanism for filtering or examining HTTP requests entering your application. 
+6. Once the route or controller method returns a response, the response will travel back outward through the route's middleware, giving the application a chance to modify or examine the outgoing response.

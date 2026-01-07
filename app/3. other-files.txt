@@ -1,5 +1,5 @@
 ## artisan file:
-1. Artisan is Laravel’s command-line entry point.
+1. Artisan is Laravel’s command-line entry point. We know the request lifecycle of laravel starts from index.php, but for console request it starts from this file.
 2. artisan is to Laravel what index.php is to a web request.
 3. Browser → public/index.php, Terminal → artisan.
 4. when you run php artisan: This artisan file is what actually starts Laravel.
@@ -22,8 +22,8 @@ On Linux/Unix, files starting with . are hidden files.
 It has no extension because Git recognizes it by name, not type.
 Comments start with # and are used for documentation.
 It prevents committing secrets, dependencies, logs, and build files.
-.gitignore is meant to be a config file, not a normal document. Git looks for a file named exactly .gitignore. 
-
+.gitignore is meant to be a config file, not a normal document.
+ Git looks for a file named exactly .gitignore. 
 1. You write patterns, one per line.
 2. Ignore a file: .env
 3. Ignore a folder: /vendor, /public/build
