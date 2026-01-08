@@ -1,0 +1,24 @@
+## Artisan:
+Artisan is the command line interface included with Laravel.
+1. php artisan list or sail list to see all pre-built commands.
+2. Run php artisan commands in sail project: docker exec -it your-container-name bash
+3. or, easy way: sail shell
+4. php artisan list -h: Extra information about the specific command.
+5. php artisan list --format=md
+6. php artisan route:list,php artisan route:list --except-vendor, php artisan route, php artisan list route
+7. php artisan help migrate : "help" screen displays and describes the command's available arguments and options.
+
+## Tinker:
+Laravel Tinker is a powerful REPL for the Laravel framework, powered by the PsySH package.
+A REPL (Read-Eval-Print Loop) is an interactive computer programming environment that takes single user inputs, executes them immediately, and returns the result to the user.
+1. Laravel automatically include tinker. If removed, install: composer require laravel/tinker
+2. Enter the tinker environment: php artisan tinker
+3. Can publish Tinker's configuration file to add own custom commands: php artisan vendor:publish --provider="Laravel\Tinker\TinkerServiceProvider"
+4. We can run code in tinker like- new Date(), new PaymentService()
+5. But after editing code, tinker can't hot reload so you have to exit by ctrl+c and again enter the tinker environment.
+6. We can run this command directly: up (live mode), down (app will be in maintenance mode), env, inspire, migrate, migrate:install, optimize.
+7. We can add our custom commands in published config file.
+8. Tinker always alias classes, if you dont want any class to alias add it into tinker.php config file:
+'dont_alias' => [
+    App\Models\User::class,
+]

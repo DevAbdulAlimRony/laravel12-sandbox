@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+// This initializes the Laravel Application instance.
+// basePath tells Laravel where the root of your project is. This allows Laravel to find your .env file and other resources.
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -11,12 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->trustProxies(at: '*'); // To share sail app using sail share
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*'); // To share sail app using sail share
     })
     ->create();

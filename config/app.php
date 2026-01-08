@@ -2,6 +2,8 @@
 
 return [
 
+    // env() doing Env::get($key, $default) in the background.
+
     /*
     |--------------------------------------------------------------------------
     | Application Name
@@ -13,7 +15,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Laravel-Sandbox'),
 
     /*
     |--------------------------------------------------------------------------
