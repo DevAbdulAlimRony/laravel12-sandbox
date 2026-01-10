@@ -1,0 +1,76 @@
+1. Config files are simply a php file which basically return an associative array in key value pair.
+2. Each file return configurations for different part of your application.
+3. Laravel uses env() helper function to take configuraton value sometimes.
+   - Those values which are not recommended to hardcode in config files, we can take it from env file.
+   - Behind the scene, env() actually getting those values from php's $_ENV super global.
+   - If we tinker that super global, we will get all env variables.
+   - If we tinker env('APP_NAME'), we will ge the value of that variable.
+4. If we try to access non existed variable, it will return null. We can pass default value in env() as second argument.
+5. We can use facade to check app's environment local or anything- App::environment() - Return the environment like local. 
+6. App::environment('local'): It will return true or false.
+7. App::environment(['production', 'staging']): If contains any of this.
+8. We also can check by: App::isLocal(), App::isProduction(), App::hasDebugModeEnabled()
+9. Accessing config value: config('app.name')
+   - fileName.configKey. If not exist, return null.
+   - Can pass default value: config('app.name', 'Crm')
+   - Using facade: Config::get('app.name'). Can pass default value.
+   - Typed Access: Config::string('config-key')- if different type, will give error.
+   - There is no performance difference between helper and facade. helper is more readable for newbies. Facade have advantage of IDE's autocomplete and test cases.
+10 We can create our own config file. It must be a php file and return an array.
+11. config([app.new_value' => 'New Value']) or Config::set(): It will update the value of the new_value at runtime that means only for the current request.
+12. To boost performance, we can cache the config files or laravel do: php artisan config:cache.
+13. After caching, if we edit the config files then new edited will not be reflected. We have to clear the cache: php artisan config:clear. or if we config:cache again, it will recache with new value.
+14. When we cache, all config files will merged into one file(bootstrap->cache->config.php) which can be accessed fast. Caching in locally is not recommended.
+15. We should really cache for production.
+16. When we cache config file, .env file's variable is not in $_ENV variable anymore, it has only system level variable. So,
+17. Accessing env variables using env() outside of the congig file is prohibited. First access in config file, then access that config file outside anywhere.
+18. You can have different env file like .env, .env.local etc. Now, if we set APP_ENV=local then our app will load the .env.local.
+19. php artisan tinker --env=local
+20. Some config files are not vaialable because we dont need to change them. But if we wanna change we can publish them: php artisan config:publish then select the file to publish.
+21. If we wanna publish third party library's config file: php artisan vendor::publish --provider="SeviceProviderOfThatConfigFile"
+22. Never commit your env file in git because it holds confidential values.
+23. You can add any third party key like bkash key in services.php.
+
+## Env:
+1. php artisan about: overview of all config files.
+2. php artisan about --only=environment
+3. Specific config file: php artisan config:show database
+4. Any variable in your .env file can be overridden by external environment variables such as server-level or system-level environment variables.
+5. It is possible to encrypt your environment file using Laravel's built-in environment encryption. Encrypted environment files may be placed in source control safely.
+6. Before loading,  Laravel determines if an APP_ENV environment variable has been externally provided or if the --env CLI argument has been specified. f so, Laravel will attempt to load an .env.[APP_ENV] file if it exists. If it does not exist, the default .env file will be loaded.
+7. If you need to define an environment variable with a value that contains spaces, use "": APP_NAME="My Application"
+8. The current application environment detection can be overridden by defining a server-level APP_ENV environment variable.
+9. To encrypt an environment file: php artisan env:encrypt
+10. Running the env:encrypt command will encrypt your .env file and place the encrypted contents in an .env.encrypted file.
+11. The decryption key is presented in the output of the command and should be stored in a secure password manager.
+12. If you would like to provide your own encryption key: php artisan env:encrypt --key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF
+13. If you have eenv.staging and wanna encrypt it: php artisan env:encrypt --env=staging
+14. php artisan env:encrypt --readable : Variale names will be visible, only values are encrypted.
+15. When decrypting environment files, Laravel automatically detects which format was used, so no additional options are needed for the env:decrypt command.
+16. php artisan env:decrypt, php artisan env:decrypt --key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF, php artisan env:decrypt --key=qUWuNRdfuImXcKxZ --cipher=AES-128-CBC, php artisan env:decrypt --env=staging, override existing file: php artisan env:decrypt --force 
+17. Decrypted vars will be in .env file.
+18. php artisan config:publish --all
+19. php artisan config:publish --all: Maintenance mode and automatically refresh the app after 15 seconds.
+    - php artisan down --retry=60
+    - Bypass using secret token: php artisan down --secret="1630542a-246b-4b66-afa1-dd72a4c43515"
+    - php artisan down --with-secret
+    - When accessing this hidden route, you will then be redirected to the / route of the application. 
+    - For multi servers just specify driver in env: APP_MAINTENANCE_DRIVER=cache
+    - php artisan down --render="errors::503"
+    - php artisan down --redirect=/
+    - While your application is in maintenance mode, no queued jobs will be handled.
+
+## Methods of Config Facade:
+Config::has(), get()- can pass single key or array of keys, 
+getMany()- pass array of keys, string(), integer(), float(),
+boolean(), array(), set(), prepend()- Prepend a value onto an array configuration value.
+push(), all()- Get all of the configuration items for the application.
+offsetExists()- same as key(), offsetGet(), offsetSet(), offsetUnset()
+
+## Some necessary Methods of App Facade:
+App::version(), hasBeenBootstrapped(), setBasePath(), path()- path of app directory,
+basePath(), publicPath(), storagePath(), isLocal(), isProduction(), detectEnvironment(),
+hasDebugModeEnabled(), getProvider(), isBooted(), routesAreCached(), isDownForMaintenance(),
+abort()- Throw an HttpException with the given data, terminate()- Terminate the application,
+getLocale() or currentLocale()- Get the current application locale, getFallbackLocale(), setLocale(),
+isLocale('eng'), getNamespace() and etc.
