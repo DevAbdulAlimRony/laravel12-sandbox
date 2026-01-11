@@ -3,7 +3,6 @@
 use App\Enum\FileType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\RateLimiter;
 use App\Http\Controllers\ProcessTransactionController;
 
 // web.php defines http  routes
@@ -35,14 +34,20 @@ Route::any('/dashboard-test/admin-test', function () {
 // We should always define routes with specific HTTP method before these match and any route.
 // match and any route should always after everything. Ex- 404 error page for any page.
 
-//Fallback Route
+//* Fallback Route: will be executed when no other route matches the incoming request.
 Route::fallback(function () {});
 
-//Redirect and View Routes
+//* Redirect and View Routes
 Route::redirect('/home', '/dashboard'); // If we go to the /home url, it will automatically go to the /dashboard url.
 Route::redirect('/here', '/there', 404); //If 404 not defined, normally give 302 status code
 Route::permanentRedirect('/here', '/there'); //301 Status Code
 Route::view('/', 'welcome');
+
+
+//* Encoded Forward Slash
+Route::get('/search/{search}', function (string $search) {
+    return $search;
+})->where('search', '.*');
 
 /*
 |--------------------------------------------------------------------------
@@ -50,11 +55,11 @@ Route::view('/', 'welcome');
 |--------------------------------------------------------------------------
 |
 | 1. php artisan route:list
-| 2. Display with Route Middleware: php artisan route:list -v
+| 2. Display with Route Middleware: php artisan route:list -v, php artisan route:list -vv (expand middleware roups)
 | 3. php artisan route:list --path=api
 | 4. php artisan route:list --except-vendor
 | 5. php artisan route:list --only-vendor
-| 6. php artisan route:cache - to deploy
+| 6. php artisan route:cache - when deploy to boost perfromance.
 | 7. php artisan route:clear - to clear cache
 | 8. Each time a request is made laravel has to load and register all loads, to boost performance- php artisan route:cache. It will be stored in a single file in bootstrap/cache/routes..php
 */
@@ -78,7 +83,7 @@ Route::view('/', 'welcome');
 | 10. POST, PUT, PATCH, DELETE must define @csrf token in the form tag
 */
 
-// Route Parameters
+//* Route Parameters
 Route::get('/transactions-test/{transactionId}', function($transactionId){
     return $transactionId; // The name of the variable $transactionId doesn't matter, laravel just check the serial. At first, which parameter come, then which
 }); // So, route param will automatically be injected in callback or our controller in the serial we define it.
@@ -87,7 +92,10 @@ Route::get('/transactions-test/{transactionId}/files/{fileId}', function ($id, $
     return $id . $file;
 });
 
-// Optional Parameter using ?, you have to give default value for optional parameter
+// When using route parameters in view routes Route::view()..
+// Following parameters are reserved by Laravel and cannot be used: view, data, status, and headers.
+
+//* Optional Parameter using ?, you have to give default value for optional parameter
 Route::get('/report-test/{year}/{month?}', function ($year, $month = null) {
     return $year . $month;
 });
@@ -95,7 +103,7 @@ Route::get('/report-test/{year}/{month?}', function ($year, $month = null) {
 // Query string is generally usefull for filtering, sorting, paginating etc.
 // You have to decide what for which. For example: year/month/day- 1997/11/5- Instead of route query string will be more suitable for it: report/975?year=2025&month=5
 
-// Dependency Injection: Laravel allows using any dependency in route
+//* Dependency Injection: Laravel allows using any dependency in route
 // Route parameters recommended to specify later after all dependency injection
 // Here we first take Request dependency, then take route parameter $invoiceId. But its not the required rule, recommended for best practice.
 Route::get('/invoice-test/{invoiceId}', function (Request $request, int $invoiceId) {
@@ -121,15 +129,10 @@ Route::get('/files/{fileType}', function (FileType $fileType) {
     // and laravel implicitely resolve backed enum when it resolve a route. You can check it in ImplicitRouteBinding.php's resolveForRoute() method.
 });
 
- //Encoded Forward Slash
-Route::get('/search/{search}', function (string $search) {
-    return $search;
-})->where('search', '.*');
-
-//Using Method from Controller Class
+//* Using Method from Controller Class
 Route::get('/home-test', [TransactionController::class, "index"]);
 
-// Grouping:
+//* Grouping:
 // But this is not a perfect way to define a route.
 // Rather than calling a closure, we should pass a controller class
 // php artisan make:controller TransactionController
@@ -164,6 +167,20 @@ Route::prefix('transactions')->group(function () {
     //           ->group(base_path(routes/transaction.php)); - base_path will generate fully qualified path for that file.
     // Now, we can just define routes in transactions.php or any extra grouping if need
     // }
+    // or, complete control using 'using'
+    // using: function () {
+
+    //     Route::middleware('api')
+
+    //         ->prefix('api')
+
+    //         ->group(base_path('routes/api.php'));
+
+    //     Route::middleware('web')
+
+    //         ->group(base_path('routes/web.php'));
+
+    // },
     // Dont go crazy with routing, prefixing, or grouping. If you over-engineer, sometimes it will be hard to understand.
     // Do not create separate route file unless your web.php or api.php grows more.
     // Do not after two or three levels gouping. Don't make harder for your team or yourself to understand it later.
@@ -198,7 +215,7 @@ Route::get('/', function (){})->withTrashed();
 
 /*
 |--------------------------------------------------------------------------
-| Route Model Binding
+| *Route Model Binding
 |--------------------------------------------------------------------------
 |
 | 1. Short Way to Find By ID. Typically Used in Edit or Show Method
@@ -207,15 +224,26 @@ Route::get('/', function (){})->withTrashed();
 | 4. We can conditionally make our own customized route model binding like find this id if condition
 */
 //Implicit Binding: automatically bind where variable name compares with model name
-Route::get('users/{user}', function(User $user){}); //$user and {user} matches, withTrashed() for Soft Delete
-Route::get('users/{user:slug}', function(User $user){return $user;}); //Rather than ID - slug. If Define in Model, don't need :slug here
-Route::get('users/{user}/posts/{post:slug}', function(User $user, Post $post){}); //Gradually User, and the Post for relationship
-Route::get('users/{user}/posts/{post:slug}', function(User $user, Post $post){})->scopBindings(); //Scope Child Bindings, withoutScopBindings()
-Route::scopBindings()->group(function(){});
-Route::get('users/{user}', [LocationController::class, 'show'])->missing(function (Request $request){
-    return Redirect::route('error.index'); //if route model binding's model not found or missing
-});
-//Scoped bindings" in Laravel limit data retrieval to a specific context
+Route::get('users/{user}', function(User $user){}); //$user and {user} matches
+// Typically, implicit model binding will not retrieve models that have been soft deleted. Use ->withTrashed().
+Route::get('users/{user:slug}', function(User $user){}); //Rather than ID - slug. If Define in Model, don't need :slug here.
+// or,  may override the getRouteKeyName method on the Eloquent model. 
+// public function getRouteKeyName(): string
+// {
+//     return 'slug';
+// } // Now, model will be found by slug, not by id.
+Route::get('users/{user}/posts/{post:slug}', function(User $user, Post $post){
+    // Don't look for the post with ID 432; look for the post where the slug column in the database matches 'laravel-11-released-today
+}); 
+// Now, It will be assumed that the User model has a relationship named post 
+Route::get('/users/{user}/posts/{post}', function (User $user, Post $post) { 
+    // Now even with IDs, it checks ownership
+})->scopeBindings();
+Route::get('/categories/{category}/items/{item}', function (Category $category, Item $item) {
+    // Load the item even if it's not in this category
+})->withoutScopedBindings();
+
+// Scoped bindings in Laravel limit data retrieval to a specific context
 // for instance, getting posts that belong to a particular user. With ->scopeBindings()
 // Laravel only finds a Post that is related to the provided User, otherwise, it returns a 404 error. 
 // Without scoped bindings (without ->scopeBindings()), Laravel will fetch a Post based on its ID across all posts, regardless of the user it's related to. It broadens the search to the entire dataset, ignoring the user-post relationship.
@@ -224,23 +252,42 @@ Route::get('users/{user}', [LocationController::class, 'show'])->missing(functio
 // {
 //         return $this->where('slug', $value)->firstOrFail();
 // }
-//Route::model(), own binding resolution logic: Route::bind(), If we want to pass a column as a parameter rather than id , In model-  getRouteKeyName()
+// Customize missing model behaviour using ->missing(function(Request $request)){return Redirect::route('location.index')}
+// We can use implicit enum binding also.
+// We can do explicit route binding in AppServiceProvider's boot() method above using Route::model()
 
-//Rate Limiting:Restrict amount of traffic for a given route/routes (RouteServiceProvider)
-//If exceed, 429 status code
-RateLimiter::for('global', function (Request $request){
-    return Limit::perMinute(1000)->response(function (Request $request, array $headers){
-        return response('Custom Message', 429, $headers);
-    });
-});
+//* Rate Limiting
+// Restricts amount of traffic for a given route/routes
+// Rate limiters may be defined within the boot method of your application's App\Providers\AppServiceProvider class, check it.
+// Assign Rate Limiter to Route
+Route::middleware(['throttle:uploads'])->group(function(){});
+// If use redis, you may wish to instruct Laravel to use Redis to manage rate limiting.
+// Use the throttleWithRedis method in your application's bootstrap/app.php file.
 
-RateLimiter::for('uploads', function(Request $request){
-    return $request->user()->isAdmin()
-           ? Limit::none()->by($request->user()->id)
-           : Limit::perMinute(100)->by($request(ip));
-}); //by means per ip address or per user here
+//* Form Security:
+// Use @csrf under form in blade file.
+// In spa application, you will see in frontend:
+// window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'; ...
+// Those two lines tell Axios to handle the CSRF token for you.
 
-//Assign Rate Limiter to Route
-Route::middleware(['throttle:uploads']);
+// HTML forms do not support PUT, PATCH, or DELETE actions.
+// So, when defining those, you will need to add a hidden _method field to the form.
+// <form action="/example" method="POST">input type="hidden" name="_method" value="PUT">
+// or, use @method('PUT') @csrf
 
-//Accessing Current Route from Route Facade: Route:current(), Route:currentRouteName(), Route:currentRouteAction()
+
+//* Accessing Current Route:
+$route  = Route::current(); // Illuminate\Routing\Route
+$name   = Route::currentRouteName(); // string
+$action = Route::currentRouteAction(); // string
+//  if ($request->route()->named('profile')) {}
+
+//* cors configuration:
+//* Though laravel do everything, but If you need to change cors configuration:
+//  php artisan config:publish cors
+
+//* API Route:
+// Installing api Routes: php artisan install:api
+// The install:api command installs Laravel Sanctum, which provides a robust, yet simple API token authentication guard which can be used to authenticate third-party API consumers, SPAs, or mobile applications. 
+// Also creates the routes/api.php file.
+// You can change prefix in app.php in withRouting: apiPrefix: 'api/admin'

@@ -14,6 +14,7 @@ class TransactionController
    // If custom class then injecting constructor, if laravel's class like Request then injecting directly in method is standard and recommended.
 
    public function index(): string{
+        // Generating URLs to Named Routes:
         route('transactions'); // We passed the route name, it will generate full url
         return 'Transaction';
    }
