@@ -1,9 +1,10 @@
 <?php
 
+use App\Models\User;
 use App\Enum\FileType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProcessTransactionController;
+use App\Http\Controllers\TransactionTestController;
 
 // web.php defines http  routes
 // We can split this route file into multiple route file like admin.php, user.php
@@ -21,7 +22,6 @@ Route::get('/dashboard-test', function () {
     // return 'Welcome';
     return [1, 2, 3]; // Array will automatically be converted in json format and show that way
 });
-
 
 Route::match(['get', 'post'], '/admin-test', function () {
     return 'It will match get or post request automatically based on the incoming request.';
@@ -130,14 +130,14 @@ Route::get('/files/{fileType}', function (FileType $fileType) {
 });
 
 //* Using Method from Controller Class
-Route::get('/home-test', [TransactionController::class, "index"]);
+Route::get('/home-test', [TransactionTestController::class, "index"]);
 
 //* Grouping:
 // But this is not a perfect way to define a route.
 // Rather than calling a closure, we should pass a controller class
 // php artisan make:controller TransactionController
 Route::prefix('transactions')->group(function () {
-    Route:controller(TransactionController::class)->group(function () {
+    Route::controller(TransactionTestController::class)->group(function () {
         // We can give a name for each route, route name must be unique.
         // If name is not unique, and we call by a name which has multiple routes, last route will be called.
         Route::get('/', 'index')->name('transactions');
@@ -187,11 +187,11 @@ Route::prefix('transactions')->group(function () {
 });
 
 Route::middleware(['admin'])->group(function(){});
-Route::controller(TransactionController::class)->group(function(){});
+Route::controller(TransactionTestController::class)->group(function(){});
 Route::domain('{account}.example.com')->group(function () {}); //Sub Domain Routing
 Route::prefix('admin')->group(function(){});
 Route::name('admin.')->group(function(){}); //domain(), resource(), apiResource()
-Route::middleware()->name()->prefix()->controller()->group(function(){});
+// Route::middleware()->name()->prefix()->controller()->group(function(){});
 //Organizing Routes: Public Route, Private Route as middleware grouped
 //If controllers in the separate folder, that can be called as namespace
 
@@ -199,14 +199,14 @@ Route::middleware()->name()->prefix()->controller()->group(function(){});
 Route::group(['middleware'=>'auth'], function(){
     Route::group(['middleware'=>'admin', 'prefix'=> 'admin', 'namespace' => 'Admin', 'as' => 'admin.'], function(){
         //Partial Resource Controller
-        Route::resource('admin', TransactionController::class)->except('edit');
+        Route::resource('admin', TransactionTestController::class)->except('edit');
         //->only()
         //Extra Method must be defined before the resource controller to work
     });
 
     Route::group(['middleware'=>'user', 'prefix'=> 'user', 'namespace' => 'User', 'as' => 'user.'], function(){
         //Partial Resource Controller
-        Route::resource('user', TransactionController::class)->except('edit');
+        Route::resource('user', TransactionTestController::class)->except('edit');
     });
 });
 
@@ -291,3 +291,17 @@ $action = Route::currentRouteAction(); // string
 // The install:api command installs Laravel Sanctum, which provides a robust, yet simple API token authentication guard which can be used to authenticate third-party API consumers, SPAs, or mobile applications. 
 // Also creates the routes/api.php file.
 // You can change prefix in app.php in withRouting: apiPrefix: 'api/admin'
+
+//* Middleware:
+// Middleware provide a convenient mechanism for inspecting and filtering HTTP requests entering your application.
+// It sits between your route and controller.
+// Exmp: Auth middleware redirect to login or admin panel
+// Logging middleware log all incoming requests.
+// If we inspect withMiddleware in ApplicationBuilder.php inside the framework, we see it is adding global middlewares, setting middleware groups and aliases.
+// If we inspect the getMiddleware method in Middleware.php, there are some global middlewares:
+// InvokeDifferCallbacks, TrustHosts, TrustProxies, HandleCors, PreventRequestDuringMaintenance, ValidatePostSize, TrimString, ConvertEmptyStringToNull
+// If we see getMiddlewareGroups method, for web, we have EncryptCookies, AddQueuedCookiesToResponse, StartSession, ShareErrorFromSession, ValidateCsrfToken, SubstitueBindings middlewares
+// for api, EnsureFrontendRequestsAreStsteful, SubstituteBindings.
+// Then its mapping middlewares and finally merging with prepen and append middlewares.
+// So, if we want to register a middleware we can prepend or append in bootstrap/app.php
+// Making a Middleware in app/http/Middleware: php artisan make:middleware EnsureTokenIsValid.
