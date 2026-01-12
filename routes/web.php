@@ -369,3 +369,8 @@ $action = Route::currentRouteAction(); // string
 // Then its mapping middlewares and finally merging with prepen and append middlewares.
 // So, if we want to register a middleware we can prepend or append in bootstrap/app.php
 // Making a Middleware in app/http/Middleware: php artisan make:middleware EnsureTokenIsValid.
+
+//* Binding Dependency using attribute
+Route::get('/user', function (#[CurrentUser] User $user) {
+    return $user; // User class points to the CurrentUser's instance
+})->middleware('auth');
