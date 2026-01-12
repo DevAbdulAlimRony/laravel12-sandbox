@@ -43,7 +43,6 @@ Route::redirect('/here', '/there', 404); //If 404 not defined, normally give 302
 Route::permanentRedirect('/here', '/there'); //301 Status Code
 Route::view('/', 'welcome');
 
-
 //* Encoded Forward Slash
 Route::get('/search/{search}', function (string $search) {
     return $search;
@@ -131,6 +130,7 @@ Route::get('/files/{fileType}', function (FileType $fileType) {
 
 //* Using Method from Controller Class
 Route::get('/home-test', [TransactionTestController::class, "index"]);
+Route::get('/home-test', 'TransactionTestController@index');
 
 //* Grouping:
 // But this is not a perfect way to define a route.
@@ -169,17 +169,11 @@ Route::prefix('transactions')->group(function () {
     // }
     // or, complete control using 'using'
     // using: function () {
-
     //     Route::middleware('api')
-
     //         ->prefix('api')
-
     //         ->group(base_path('routes/api.php'));
-
     //     Route::middleware('web')
-
     //         ->group(base_path('routes/web.php'));
-
     // },
     // Dont go crazy with routing, prefixing, or grouping. If you over-engineer, sometimes it will be hard to understand.
     // Do not create separate route file unless your web.php or api.php grows more.
@@ -192,16 +186,25 @@ Route::domain('{account}.example.com')->group(function () {}); //Sub Domain Rout
 Route::prefix('admin')->group(function(){});
 Route::name('admin.')->group(function(){}); //domain(), resource(), apiResource()
 // Route::middleware()->name()->prefix()->controller()->group(function(){});
-//Organizing Routes: Public Route, Private Route as middleware grouped
-//If controllers in the separate folder, that can be called as namespace
+// Organizing Routes: Public Route, Private Route as middleware grouped.
+// If controllers in the separate folder, that can be called as namespace.
 
-// Using group(), resource route:
+//* Soft Delete
+Route::get('/', function (){})->withTrashed();
+
+//* Using group()
+//* Resource route: Users can create, read, update, or delete resources.
+// Laravel resource routing assigns the typical create, read, update, and delete ("CRUD") routes to a controller with a single line of code. 
+// php artisan make:controller PhotoController --resource
+// Type hint a model instance: php artisan make:controller PhotoController --model=Photo --resource
+// Generating Form Requests: php artisan make:controller PhotoController --model=Photo --resource --requests
 Route::group(['middleware'=>'auth'], function(){
     Route::group(['middleware'=>'admin', 'prefix'=> 'admin', 'namespace' => 'Admin', 'as' => 'admin.'], function(){
         //Partial Resource Controller
         Route::resource('admin', TransactionTestController::class)->except('edit');
         //->only()
-        //Extra Method must be defined before the resource controller to work
+        // Extra Method must be defined before the resource controller to work
+        // Partisal Resource Route: when we use only or except.
     });
 
     Route::group(['middleware'=>'user', 'prefix'=> 'user', 'namespace' => 'User', 'as' => 'user.'], function(){
@@ -210,8 +213,65 @@ Route::group(['middleware'=>'auth'], function(){
     });
 });
 
-//Soft Delete
-Route::get('/', function (){})->withTrashed();
+// By default resources will have name:
+// photos.index, photos.create, photos.store, photos.show, photos.update, photos.edit, photos.destroy
+// But we can override any name:
+Route::resource('photos', PhotoController::class)->names([
+    'create' => 'photos.build'
+]);
+
+// Multiple resources at once:
+Route::resources([
+    'photos' => PhotoController::class,
+    'posts' => PostController::class,
+])->missing(function (Request $request) {
+        return Redirect::route('photos.index');
+})->withTrashed(['show']); // Route::softDeletableResources
+// Routes will be: /photos(GET), /photos/create, /photos(POST), /photos/{photo} (GET), /photos/{photo}/edit,  /photos/{photo} (PUT/PATCH), /photos/{photo} (DELETE) 
+// 404 HTTP response if an implicitly bound resource model is not found. 
+// Can customize this behavior by calling the missing method. 
+// Calling withTrashed with no arguments will allow soft deleted models for the show, edit, and update resource routes. 
+
+// API Resource Route: Does not include the create or edit methods
+// php artisan make:controller PhotoController --api
+Route::apiResource('photos', PhotoController::class); // Multiple: Route::apiResources([])
+
+// Nested Resource:
+Route::resource('photos.comments', PhotoCommentController::class); // Route: /photos/{photo}/comments/{comment}
+
+// Shallow Nesting:
+// When using unique identifiers such as auto-incrementing primary keys to identify your models in URI segments
+Route::resource('photos.comments', CommentController::class)->shallow()
+// Routes: /photos/{photo}/comments, /photos/{photo}/comments/create, /photos/{photo}/comments, /comments/{comment}, /comments/{comment}/edit, /comments/{comment}, /comments/{comment}
+// Names: photos.comments.index, photos.comments.create, photos.comments.store, comments.show, comments.edit, comments.update, comments.destroy.  
+
+// By default, Route::resource will create the route parameters for your resource routes
+// But we can override:
+Route::resource('users', AdminUserController::class)->parameters([
+'users' => 'admin_user' // Route: /users/{admin_user}
+]);
+
+// Localize URIs:
+// We may want to change from create to banaw.
+// Do this in ApplicationServiceProvider's boot method.
+
+// If need to add additional routes to a resource controller beyond the default set of resource routes:
+// should define those routes before your call to the Route::resource method to consider precedence.
+
+// Singleton Resource Controllers:
+// A user may not have more than one "profile"
+// An image may have a single "thumbnail"
+// These resources are called "singleton resources", meaning one and only one instance of the resource may exist.
+Route::singleton('profile', ProfileController::class); // Routes: /profile(GET), /profile/edit, /profile(PUT/PATCH)
+Route::singleton('photos.thumbnail', ThumbnailController::class); // Routes: /photos/{photo}/thumbnail, /photos/{photo}/thumbnail/edit, /photos/{photo}/thumbnail(PUT/PATCH) 
+Route::singleton('photos.thumbnail', ThumbnailController::class)->creatable(); // create and delete will be added also.
+// ->destroyable(): only delete route
+// Same goes for: apiSingleton
+
+// Applying middleware for specific methods:
+Route::resource('users', UserController::class)->middlewareFor('show', 'auth');
+//  ->middlewareFor(['show', 'update'], 'auth'), ->middlewareFor(['show', 'update'], ['auth', 'verified'])
+//  ->withoutMiddlewareFor('index', ['auth', 'verified'])
 
 /*
 |--------------------------------------------------------------------------
@@ -255,6 +315,10 @@ Route::get('/categories/{category}/items/{item}', function (Category $category, 
 // Customize missing model behaviour using ->missing(function(Request $request)){return Redirect::route('location.index')}
 // We can use implicit enum binding also.
 // We can do explicit route binding in AppServiceProvider's boot() method above using Route::model()
+
+// Scoping Resource Route:
+Route::resource('photos.comments', PhotoCommentController::class)->scoped(['comment' => 'slug']);
+// /photos/{photo}/comments/{comment:slug}
 
 //* Rate Limiting
 // Restricts amount of traffic for a given route/routes

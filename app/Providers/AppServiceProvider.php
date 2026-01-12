@@ -15,7 +15,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Binding Terminable middleware from same handled middleware
+        // $this->app->singleton(TerminatingMiddleware::class);
     }
 
     /**
@@ -37,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
         
         //* Global Constraints fro route parameter validation:
         Route::pattern('id', '[0-9]+');
+
+        // Localizing Resource URIs
+         Route::resourceVerbs(['create' => 'banaw','edit' => 'edit-koro']);
         
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit .
