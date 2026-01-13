@@ -15,11 +15,21 @@ class AppServiceProvider extends ServiceProvider
      * Its extending ServiceProvider that has a $app field, we can use that.
      */
 
+    // Service providers are the central place of all Laravel application bootstrapping.
+    // Service providers are the central place to configure your application, registering things like service container bindings.
+    // All user-defined service providers are registered in the bootstrap/providers.php file
+    // If we create our own service provider, and register and do things like here in the AppServiceProvider, they will work same as here.
+    // Make Custom Provider: php artisan make:provider PaymentProcessorProvider
+    // If we manually created the provider, we should register it in bootsrap/providers.php
+    // Within any of your service provider methods, you always have access to the $app property which provides access to the service container
+
     //* Binding Dependency (First way)
     public $bindings = [
         PaymentProcessor::class => Bkash::class
     ] // So, here laravel is saying, when someone inject PaymentProcessor interface, give him a Bkash instance.
+    // Can define singletons like this also.
 
+    // Within the register method, you should only bind things into the service container, nothing else.
     public function register(): void
     {
         //* Binding Terminable middleware from same handled middleware
@@ -116,6 +126,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Boot method is being called after all service priver registered
+        // So we can inject any service provider here to use.
+        View::share('name', 'Abdul Alim'); // Now, this name will be available in all blade file into our entire application.
+
         //* Explicit Route Binding
         Route::model('user', User::class); // all user parameter in route {user} will point to the User's instance.
         // If a matching model instance is not found in the database, a 404 HTTP response will be automatically generated.
@@ -177,4 +191,6 @@ class AppServiceProvider extends ServiceProvider
 
         });
     }
+
+    //* Facades: See app/Facades/Payment.php
 }
