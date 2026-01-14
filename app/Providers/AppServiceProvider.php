@@ -146,8 +146,11 @@ class AppServiceProvider extends ServiceProvider
         Route::pattern('id', '[0-9]+');
 
         //* Localizing Resource URIs
-         Route::resourceVerbs(['create' => 'banaw','edit' => 'edit-koro']);
+        Route::resourceVerbs(['create' => 'banaw','edit' => 'edit-koro']);
         
+        // Global Locale currency of all Number helper functions to use
+        Number::useCurrency('USD');
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit .
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 
