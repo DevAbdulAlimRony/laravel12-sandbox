@@ -130,6 +130,22 @@ class AppServiceProvider extends ServiceProvider
         // So we can inject any service provider here to use.
         View::share('name', 'Abdul Alim'); // Now, this name will be available in all blade file into our entire application.
 
+        // Register a View Composer
+        View::composer('profile', ProfileComposer::class); // Class Based Composer
+        // Closure Based Composer:
+        View::composer('transaction', function(View $view){
+            // Do or return something...
+        });
+        // Assigning multiple views to a single composer:
+        View::composer(['profile', 'welcome'], ProfileComposer::class);
+        // Assigning all views
+        View::composer('*', ProfileComposer::class);
+
+        // View Creator: Let's say we have Views/Creators/ProfileCreaor same as ProfileComposer.
+        // View::creator('profile', ProfileCreator::class)
+        // Very similar to view composers
+        // However, they are executed immediately after the view is instantiated instead of waiting until the view is about to render. 
+
         //* Explicit Route Binding
         Route::model('user', User::class); // all user parameter in route {user} will point to the User's instance.
         // If a matching model instance is not found in the database, a 404 HTTP response will be automatically generated.

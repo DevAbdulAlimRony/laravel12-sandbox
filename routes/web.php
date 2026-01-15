@@ -21,9 +21,18 @@ Route::get('/', function () {
 Route::get('/home', function () {
     return View::first(['dashboard', 'welcome']);
 }); // If dashboard.blade.php not found then render welcome blade file.
+// View directory names should not contain the . character.
+
+// Rather than array, we can pass data one by one as key value one by one:
+return view('greeting')
+       ->with('name', 'Victoria')
+       ->with('occupation', 'Astronaut');
 
 // If blade file in a directory, we can use dot notation:
 // admin.pages.welcome
+
+// Determining if View exists
+if (View::exists('admin.profile')){}
 
 // To chek if xdebug is installed and enabled. If we see a dashboard of xdebug, then it is enabled.
 Route::get('/xdebug-check', function () {

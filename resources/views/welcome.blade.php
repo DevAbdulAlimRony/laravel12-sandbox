@@ -8,6 +8,9 @@
         If we refresh, laravel checks if any modification happenned and if then recomile html file again, which is time consuming.
         So, we can cache in production: php artisan view:cache.
         Clear Cache: php artisan view:clear , or, simple delete the cached view files from storage manually. -->
+        <!-- Creating View: php artisan make:view home -->
+        <!-- Views separate your controller / application logic from your presentation logic -->
+        <!-- Rather than using blade, we can use any starter kits like inertia and vue which use shadcdn/vue and tailwindcss -->
 
         <!-- Accessing passed data from route or controller: -->
         <!-- Using Raw php -->
@@ -30,6 +33,11 @@
          <!-- HTML syntax for comment will be rendered in browser's html -->
          {{-- But this blade syntax for comment wont render, which is recommended. --}}
 
-         {{-- All Blade Directives: --}}
+         <!-- View Composers: -->
+         <!-- View composers are callbacks or class methods that are called when a view is rendered. -->
+         <!-- It is useful when we have same data or route for different view to share -->
+         <!-- See app/Views/Composers directory -->
+
+         <!-- All Blade Directives: -->
     </body>
 </html>
