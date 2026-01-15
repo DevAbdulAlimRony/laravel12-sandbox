@@ -1,7 +1,7 @@
 <?php
 // Returns fully qualified class:
 
-app_path() // full app directory
+app_path(); // full app directory
 app_path('Http/Controllers/Controller.php'); // full path of that namespace.
 
 base_path();

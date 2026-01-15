@@ -140,7 +140,7 @@ $filled = data_fill($array, 'products.desk.discount', 10); // discount added int
 data_fill($data, 'products.*.price', 200); // Tried to add price of all products using  asterisks as wildcards, but already they have price, so dont modify. 
 
 // Push an item onto the beggining of an array: prepend(array, value, key)
-$pushData = Arr::prepend($array, 200, 'price')
+$pushData = Arr::prepend($array, 200, 'price');
 $pushData = Arr::prepend($array, 'product.'); // All keys will get product. - product.product, product.chair...
 
 // Sets a value within a deeply nested array using "dot" notation

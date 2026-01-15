@@ -1,9 +1,4 @@
 <?php
-// Generates a fluent URI instance for the given URI
-uri('https://example.com')->withPath('/users')->withQuery(['page' => 1]);
-uri([UserController::class, 'show'], ['user' => $user]); // create a Uri instance for the controller method's route path
-uri(UserIndexController::class); // for invokable controller
-
 // Generates a fully qualified URL to the given path
 url('user/profile');
 url()->current();
@@ -29,12 +24,12 @@ secure_asset('img/photo.jpg');
 
 // Generates a redirect HTTP response for a given controller action
 to_action([UserController::class, 'show'], ['user' => 1]);
- to_action(
+to_action(
     [UserController::class, 'show'],
     ['user' => 1],
     302, // http status code
     ['X-Framework' => 'Laravel']
-)
+);
 
 // Generates  redirect HTTP response for a given named route
 to_route('users.show', ['user' => 1]); // also can pass status code and X- ...

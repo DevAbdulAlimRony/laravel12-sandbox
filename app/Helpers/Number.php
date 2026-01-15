@@ -10,7 +10,7 @@ Number::trim(12.0); // 12
 Number::trim(12.30); // 12.3
 
 // String into Int
-Number::parseInt('10.123') // (int) 10
+Number::parseInt('10.123'); // (int) 10
 Number::parseInt('10,123', locale: 'fr'); // (int) 10
 
 // String into float:
@@ -36,8 +36,8 @@ Number::defaultLocale(); // en
 
 // Return Human Readable Format:
 Number::abbreviate(489939); // 490k
-Number::abbreviate(1230000, precision: 2) // 1.23M
-umber::forHumans(1000); // 1 thousand
+Number::abbreviate(1230000, precision: 2); // 1.23M
+Number::forHumans(1000); // 1 thousand
 Number::forHumans(489939); // 490 thousand
 Number::forHumans(1230000, precision: 2); // 1.23 million
 

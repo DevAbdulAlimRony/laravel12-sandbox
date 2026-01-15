@@ -10,8 +10,20 @@ use App\Http\Controllers\TransactionTestController;
 // We can split this route file into multiple route file like admin.php, user.php
 // You will find the implementation of Route facade in Router.php file, Route.php is the definition just.
 Route::get('/', function () {
-    return view('welcome');
+    // return view('welcome'); // Go to the views/welcome.blade.php
+    // We can pass data to the view file:
+    return view('welcome', ['name' => 'Abdul']);
 });
+
+// We can share data globally in all view blade file using View::share from AppServiceProvider's boot method.
+
+// Using View Facade
+Route::get('/home', function () {
+    return View::first(['dashboard', 'welcome']);
+}); // If dashboard.blade.php not found then render welcome blade file.
+
+// If blade file in a directory, we can use dot notation:
+// admin.pages.welcome
 
 // To chek if xdebug is installed and enabled. If we see a dashboard of xdebug, then it is enabled.
 Route::get('/xdebug-check', function () {
@@ -241,7 +253,7 @@ Route::resource('photos.comments', PhotoCommentController::class); // Route: /ph
 
 // Shallow Nesting:
 // When using unique identifiers such as auto-incrementing primary keys to identify your models in URI segments
-Route::resource('photos.comments', CommentController::class)->shallow()
+Route::resource('photos.comments', CommentController::class)->shallow();
 // Routes: /photos/{photo}/comments, /photos/{photo}/comments/create, /photos/{photo}/comments, /comments/{comment}, /comments/{comment}/edit, /comments/{comment}, /comments/{comment}
 // Names: photos.comments.index, photos.comments.create, photos.comments.store, comments.show, comments.edit, comments.update, comments.destroy.  
 

@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
     //* Binding Dependency (First way)
     public $bindings = [
         PaymentProcessor::class => Bkash::class
-    ] // So, here laravel is saying, when someone inject PaymentProcessor interface, give him a Bkash instance.
+    ]; // So, here laravel is saying, when someone inject PaymentProcessor interface, give him a Bkash instance.
     // Can define singletons like this also.
 
     // Within the register method, you should only bind things into the service container, nothing else.
@@ -41,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
         //* Binding Dependency (Third Way- If class have extra config or constructor)
         $this->app->bind(PaymentProcessor::class, function(){
             return new Bkash('something-here-from-constructor');
-        })
+        });
         // We can pass the extra dependency of Bkash as second argument, but thats not the standard solution
         // Because that dependency can have another dependency and so on.
 
