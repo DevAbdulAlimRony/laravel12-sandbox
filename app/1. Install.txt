@@ -120,10 +120,44 @@ net start winnat
 - In vscode: terminaL->NAVIGATE TO LARAVEL BOOST AND ENTER -> SELECT START server
 - To add custom guidelines for your project, create .blade.php or .md files in your application's .ai/guidelines directory
 - If you maintain a Laravel package and want to provide AI guidelines for your users, you can include guidelines in your package's resources/boost/guidelines directory:
-- AI guidelines should provide a short overview of what your package does, outline any required file structure or conventions, and explain how to create or use its main features 
+- AI guidelines should provide a short overview of what your package does, outline any required file structure or conventions, and explain how to create or use its main features.
 
+## Frontend:
+1. Can use laravel's default views or blade.
+2. Laravel Livewire is a framework for building Laravel powered frontends that feel dynamic, modern, and alive just like frontends built with modern JavaScript frameworks like Vue and React.
+3. Developers still prefer to leverage the power of a JavaScript framework like React or Vue. This allows developers to take advantage of the rich ecosystem of JavaScript packages and tools available via NPM.
+4. But it is complicated when comes to Routing, authentication while using vue or react.
+5. To solve this problem, anyone can use Inertia.
+6. Inertia can do server side rendering also.
+7. Bundle your application's CSS into production-ready assets, lso need to bundle your components into browser ready JavaScript assets.- Use vite.
 
-## Installing Laravel in Office Way:
+## Starter Kits:
+1. At first install a laravel project normally.
+   - composer global require laravel/installer
+   - laravel new my-app. Laravel will ask you which starter kit you want.
+   - npm install && npm run build
+   - composer run dev
+2. Now, can use react, vue, livewire any starter kit.
+3. Vue starter kit is built with Inertia 2, Vue 3 Composition API, Tailwind, and shadcn-vue. 
+4. The majority of the frontend code is located in the resources/js directory. 
+5. To publish additional shadcn-vue components: npx shadcn-vue@latest add switch
+6. All starter kits use Laravel Fortify to handle authentication.
+7. Fortify provides routes, controllers, and logic for login, registration, password reset, email verification, and more.
+8. Can control which Fortify features are enabled in your application's config/fortify.php.
+9. If you disable email verification, you should remove the imports and references to the verification routes in your Vue or React components. 
+10. Starter kits include built-in two-factor authentication (2FA), allowing users to secure their accounts using any TOTP-compatible authenticator app. 
+    - 2FA is enabled by default via Features::twoFactorAuthentication() in your application's config/fortify.php configuration file.
+11. Can customize Fortify's rate limiting behavior in your application's FortifyServiceProvider.
+12. Can use WorkOS Authkit like social authentication, passkey auth, email based magic auth, sso.
+13. Using WorkOS as your authentication provider requires a WorkOS account. 
+14. WorkOS offers free authentication for applications up to 1 million monthly active users.
+15. After creating a new application using a WorkOS powered starter kit, you should set the WORKOS_CLIENT_ID, WORKOS_API_KEY, and WORKOS_REDIRECT_URL environment variables in your application's .env file. 
+16. In inertia, for ssr run: npm run build:ssr
+17. composer dev:ssr
+18. Email verification is not required when using the WorkOS variant of the starter kits., can disable it.
+19. Customize Default Email Template: php artisan vendor:publish --tag=laravel-mail. This will generate several files in resources/views/vendor/mail.
+
+## Installing Laravel in C P Office Way:
 1. Install Laravel: composer create-project laravel/laravel laravel-vue-theme
 2. Database Setup
 3. Vue Use .org all functions try
