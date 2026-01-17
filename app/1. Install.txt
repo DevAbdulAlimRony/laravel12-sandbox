@@ -115,6 +115,13 @@ net start winnat
 - Install: composer require laravel/boost --dev
 - Once installed, run: php artisan boost:install
 - The installer will auto-detect your IDE and AI agents, allowing you to opt into the features that make sense for your project.
+- Generated configuration files like .mcp.json, CLAUDE.md, and boost.json can be safely added to your .gitignore if you prefer each developer to configure their own environment.
+- For claude, gemini, codex- automatically detected.
+- In vscode: terminaL->NAVIGATE TO LARAVEL BOOST AND ENTER -> SELECT START server
+- To add custom guidelines for your project, create .blade.php or .md files in your application's .ai/guidelines directory
+- If you maintain a Laravel package and want to provide AI guidelines for your users, you can include guidelines in your package's resources/boost/guidelines directory:
+- AI guidelines should provide a short overview of what your package does, outline any required file structure or conventions, and explain how to create or use its main features 
+
 
 ## Installing Laravel in Office Way:
 1. Install Laravel: composer create-project laravel/laravel laravel-vue-theme
