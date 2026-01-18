@@ -7,7 +7,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
 
 //* class TransactionController extends Controller
-class TransactionTestController implements HasMiddleware
+class BasicController implements HasMiddleware
 {
    //* Extending from Controller is not required.
    // If the Controller class is always empty, you dont have any shared thing then recommended to remove the extends Controller.

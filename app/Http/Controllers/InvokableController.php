@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class ProcessTransactionController extends Controller
+class InvokableController extends Controller
 {
     /**
      * Handle the incoming request.

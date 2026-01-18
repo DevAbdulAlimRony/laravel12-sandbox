@@ -114,6 +114,8 @@
         <!-- @inject('metrics', 'App\Services\MetricsService') -->
 
         <!-- Form Handling and Validation -->
+        <!-- old helper function to see flashed old request input -->
+        <input type="text" name="username" value="{{ old('username') }}">
 
         <!-- CSRF Protection -->
         <!-- Cross-site request forgeries are a type of malicious exploit whereby unauthorized commands are performed on behalf of an authenticated user.  -->

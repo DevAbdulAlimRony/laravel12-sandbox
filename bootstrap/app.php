@@ -48,6 +48,37 @@ return Application::configure(basePath: dirname(__DIR__))
         //* Sorting Middleware:
         // Though rarely need middleware to execute in a specific order
         // We can do it by $middeware->priority([\Illuminate\Cookie\Middleware\EncryptCookies::class, ...others])
+
+        //* Remove Global middleware:
+        // $middleware->remove([ConvertEmptyStringsToNull::class,  TrimStrings::class]);
+        
+        //* Remove Global middleware for specific set of requests:
+        $middleware->convertEmptyStringsToNull(except: [fn (Request $request) => $request->is('admin/*')]);
+
+        //* Trusting Proxies and Load Balancer (like AWS ELB, Cloudflare, or Nginx)
+        // A Load Balancer is a server (or service) that sits in front of your web servers. 
+        // When a user visits your site, they don't talk to your server directly; they talk to the Load Balancer first.
+        // To the server, it looks like the request is coming from the Load Balancer's IP, not the user's and laravel got confused.
+        // Benefecial for: 
+        // Scaling (High Traffic): If you have 10,000 people visiting your site at once, one server might crash. A Load Balancer spreads that traffic across multiple servers
+        // Reliability (No Downtime), SSL Termination, t decrypts the secure traffic and sends it to your servers as plain "HTTP" traffic over a private network.
+        // The request technically hits the Load Balancer first, which then passes it to the server.
+        // Without Trusted Proxies, if you call request()->ip() in your code, it will return the IP of the Load Balancer, not the customer.
+
+        // We can enable TrustProxies middleware if we run our application behind a load balancer  that terminates TLS / SSL certificates.
+        $middleware->trustProxies(at: ['192.168.1.1', '10.0.0.0/8']);
+        // We may also configure the proxy headers that should be trusted: $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR | and others...
+        // If we use AWS Elastic Load Balancing, the headers value should be Request::HEADER_X_FORWARDED_AWS_ELB.
+        // If we are using Amazon AWS or another "cloud" load balancer provider, we may not know the IP addresses of the actual balancers.
+        // In that case, trust all proxies: $middleware->trustProxies(at: '*');
+
+        //* Trusting Hosts:
+        // We should configure our web server such as nginx or apache to only send requests that match a given hostname.
+        // If we have no ability to customize server, we can do in laravel:
+        // $middleware->trustHosts(at: ['^laravel\.test$']); // or from config file:
+        // $middleware->trustHosts(at: fn () => config('app.trusted_hosts'));
+        // By default, requests coming from subdomains of the application's URL are also automatically trusted. 
+        // We can disable this by subdomains: false.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

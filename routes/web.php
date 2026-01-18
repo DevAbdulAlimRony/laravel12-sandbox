@@ -4,7 +4,7 @@ use App\Models\User;
 use App\Enum\FileType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TransactionTestController;
+use App\Http\Controllers\BasicController;
 
 // web.php defines http  routes
 // We can split this route file into multiple route file like admin.php, user.php
@@ -150,15 +150,15 @@ Route::get('/files/{fileType}', function (FileType $fileType) {
 });
 
 //* Using Method from Controller Class
-Route::get('/home-test', [TransactionTestController::class, "index"]);
-Route::get('/home-test', 'TransactionTestController@index');
+Route::get('/home-test', [BasicController::class, "index"]);
+Route::get('/home-test', 'BasicController@index');
 
 //* Grouping:
 // But this is not a perfect way to define a route.
 // Rather than calling a closure, we should pass a controller class
 // php artisan make:controller TransactionController
 Route::prefix('transactions')->group(function () {
-    Route::controller(TransactionTestController::class)->group(function () {
+    Route::controller(BasicController::class)->group(function () {
         // We can give a name for each route, route name must be unique.
         // If name is not unique, and we call by a name which has multiple routes, last route will be called.
         Route::get('/', 'index')->name('transactions');
@@ -174,7 +174,7 @@ Route::prefix('transactions')->group(function () {
         // Typically it uses php's __invoke() magic method behind the scene
         // Creating: php artisan make:controller ProcessTransactionController --invokable
         // We will get __invoke with Request dependency automatically.
-        Route::get('/{transactionId}/process', ProcessTransactionController::class); // we can pass '__invoke' as second argument, but not passing or not defining like [] this will work also.
+        Route::get('/{transactionId}/process', InvokableController::class); // we can pass '__invoke' as second argument, but not passing or not defining like [] this will work also.
         // In real application invokable class will always be post request
     });
 
@@ -202,7 +202,7 @@ Route::prefix('transactions')->group(function () {
 });
 
 Route::middleware(['admin'])->group(function(){});
-Route::controller(TransactionTestController::class)->group(function(){});
+Route::controller(BasicController::class)->group(function(){});
 Route::domain('{account}.example.com')->group(function () {}); //Sub Domain Routing
 Route::prefix('admin')->group(function(){});
 Route::name('admin.')->group(function(){}); //domain(), resource(), apiResource()
@@ -222,7 +222,7 @@ Route::get('/', function (){})->withTrashed();
 Route::group(['middleware'=>'auth'], function(){
     Route::group(['middleware'=>'admin', 'prefix'=> 'admin', 'namespace' => 'Admin', 'as' => 'admin.'], function(){
         //Partial Resource Controller
-        Route::resource('admin', TransactionTestController::class)->except('edit');
+        Route::resource('admin', BasicController::class)->except('edit');
         //->only()
         // Extra Method must be defined before the resource controller to work
         // Partisal Resource Route: when we use only or except.
@@ -230,7 +230,7 @@ Route::group(['middleware'=>'auth'], function(){
 
     Route::group(['middleware'=>'user', 'prefix'=> 'user', 'namespace' => 'User', 'as' => 'user.'], function(){
         //Partial Resource Controller
-        Route::resource('user', TransactionTestController::class)->except('edit');
+        Route::resource('user', BasicController::class)->except('edit');
     });
 });
 

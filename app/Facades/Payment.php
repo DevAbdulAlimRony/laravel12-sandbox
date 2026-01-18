@@ -39,4 +39,8 @@ class Payment extends Facades{
     // So, choose in your way when to use what.
 
     // Rather than writting custom facade, using dependency injection is better.
+    // Facae Example: You have to upload, update and delete image for many models. Make a facade called ImgaeFacade and a servie class for that facade.
+    // The service class automatically detect the model where it is injected and default parameters
+    // Now call, ImageFacade::upload(), ImageFacade::update(), ImageFacade::removeFromStorage(). We can take a property in service for Image Base Path called from config file maybe.
+    // Others way for the image upload process: Explicit dependency injection, HasImageTrait for model.
 }
