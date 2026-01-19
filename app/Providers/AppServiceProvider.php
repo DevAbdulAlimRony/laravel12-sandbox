@@ -164,8 +164,14 @@ class AppServiceProvider extends ServiceProvider
         //* Localizing Resource URIs
         Route::resourceVerbs(['create' => 'banaw','edit' => 'edit-koro']);
         
-        // Global Locale currency of all Number helper functions to use
+        //* Global Locale currency of all Number helper functions to use
         Number::useCurrency('USD');
+
+        //* Macro Response:
+        Response::macro('caps', function (string $value) {
+            return Response::make(strtoupper($value));
+        });
+        // Now, use it: return response()->caps('foo');
 
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit .

@@ -55,6 +55,12 @@ return Application::configure(basePath: dirname(__DIR__))
         //* Remove Global middleware for specific set of requests:
         $middleware->convertEmptyStringsToNull(except: [fn (Request $request) => $request->is('admin/*')]);
 
+        //* Cookies Encryption
+        // All cookies are encypted automatically so that can't be modified or read.
+        // If we dont want it for any cookie:
+        $middleware->encryptCookies(except: ['cookie_name']);
+        // In general, cookie encryption should never be disabled
+
         //* Trusting Proxies and Load Balancer (like AWS ELB, Cloudflare, or Nginx)
         // A Load Balancer is a server (or service) that sits in front of your web servers. 
         // When a user visits your site, they don't talk to your server directly; they talk to the Load Balancer first.

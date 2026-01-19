@@ -395,3 +395,7 @@ $action = Route::currentRouteAction(); // string
 Route::get('/user', function (#[CurrentUser] User $user) {
     return $user; // User class points to the CurrentUser's instance
 })->middleware('auth');
+
+//* Cache Control Middleware:
+// Laravel includes a cache.headers middleware, which may be used to quickly set the Cache-Control header for a group of routes. 
+Route::middleware('cache.headers:public;max_age=30;s_maxage=300;stale_while_revalidate=600;etag')->group(function () {});

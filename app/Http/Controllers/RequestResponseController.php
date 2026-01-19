@@ -151,5 +151,70 @@ class RequestResponse {
         $request->photo->store('images', 's3');
         $request->photo->storeAs('images', 'filename.jpg');
         $request->photo->storeAs('images', 'filename.jpg', 's3');
-    }   
+    }
+    
+    public function response(){
+        // The most basic response is returning a string
+        // If we return array, it will be json response automatically
+        // If we return eloquent collections, they will automatically be converted to JSON.
+        return User::all();
+
+        //* Returning Illuminate\Http\Response instance
+        // A Response instance inherits from the Symfony\Component\HttpFoundation\Response class, which provides a variety of methods for building HTTP responses.
+        // Returning a full Response instance allows us to customize the response's HTTP status code and headers.
+        // Most response methods are chainable
+         return response('Hello World', 200)
+                ->header('Content-Type', 'text/plain')
+                ->header('X-Header-One', 'Header Value')
+                ->withHeaders(['X-Header-One' => 'Header Value', 'X-Header-Two' => 'Header Value']) // Multiple Hedaers sent with response
+                ->cookie('name', 'value', $minutes) // Send cookie for a value
+                 // cookie can take more arguments: $path, $domain, $secure, $httponly
+                ->withoutCookie('name'); // Remove the cookie by expiring it
+                // If response instance is not ready yet:
+                // Cookie::queue('name', 'value', $minutes)- This cookie will be attached to the outgoing response.
+                // or use helper: $cookie = cookie('name', 'value', $minutes); then attach with response chain- ->cookie($cookie);
+
+        //* Returning Illuminate\Http\RedirectResponse instance:       
+        return redirect('/home/dashboard'); // using global helper
+        return back()->withInput(); // Return to the previous location utilizing session. 
+        // withInput() will flash the current inputs
+        // If we call redirect helper with no parameters, we can chain other methods:
+        return redirect()->route('profile', ['id' => 1]);
+        return redirect()->route('profile', [$user]); // Id of eloquent will be extracted automatically: /profile/{id}
+        return redirect()->action([BasicController::class, 'index']); // Redirect to a controller's method. Can pass route parameter as the second argument.
+        return redirect('/dashboard')->with('status', 'Profile updated!'); // Redirect with flashed success or any message.
+        // Now can use that flashed message in view: {{ session('status') }}
+
+        //* Other Response Types:
+        // When the response helper is called without arguments, Illuminate\Contracts\Routing\ResponseFactory contract is returned
+        return response()->view('hello', $data, 200)->header();
+        return response()->json(['name' => 'Abigail']); // Return Type JsonResponse.
+        // json()  will automatically set the Content-Type header to application/json , also,
+        // convert the given array to JSON using the json_encode PHP function.
+
+        //* JSONP Response:
+        // JSONP (JSON with Padding) is a technique used to request data from a server in a different domain—something that standard AJAX requests normally block due to the Same-Origin Policy (SOP).
+        return response()->json(['name' => 'Abigail', 'state' => 'CA'])->withCallback($request->input('callback'));
+
+        //* File:
+        return response()->file($pathToFile, $headers); // Display a file such as image or pdf directly in the browser.
+        return response()->download($pathToFile); // Force the user browser to download the file
+        return response()->download($pathToFile, $name, $headers); // name which is seen by the user downloading the file.
+
+        //* We can make our own custom macro response in any service provider's boot method. See App ServiceProvider.
+
+        //* Streaming Response:
+        // A Streamed Response is used when you need to send data to the client bit-by-bit rather than waiting for the entire payload to be ready.
+        // We can reduce memory usage and improve performance using streamed responses.
+        // Exmp: Large CSV/Excel Exports(100,000 rows), AI Text Generation (ChatGPT style), Real-time Log Monitoring, Large media download like video. 
+        // response()->stream(function(){ .. Here we can use ob_flush() for output buffering, sleep(), flush() })
+        // Can use OpenAI::client()->chat()->createStreamed(...);
+        // Can use in vue: npm install @laravel/stream-vue
+        // return response()->eventStream(function ()
+        // response()->streamDownload(function () {echo GitHub::api('repo')
+        
+        //* Stream JSON:
+        // Useful for large datasets that need to be sent progressively to the browser in a format that can be easily parsed by JavaScript.
+        return response()->streamJson(['users' => User::cursor()]);
+    }
 }
