@@ -215,6 +215,12 @@ class AppServiceProvider extends ServiceProvider
             });
 
         });
+
+        //* Making blade component's alias during package development:
+        Blade::component('package-alert', Alert::class); // Now can access as <x-package-alert/>
+        Blade::componentNamespace('Nightshade\\Views\\Components', 'nightshade'); // <x-nightshade::calendar />
+        Blade::anonymousComponentPath(__DIR__.'/../components');
+        Blade::anonymousComponentPath(__DIR__.'/../components', 'dashboard');
     }
 
     //* Facades: See app/Facades/Payment.php

@@ -137,5 +137,40 @@
         
         <!-- X-CSRF-TOKEN: We can store x-csrf-token in header: <meta name="csrf-token" content="{{ csrf_token() }}"> then can instruct jquery or any library to add the token to all request headers. -->
         <!-- X-XSRF-TOKEN: By default, the resources/js/bootstrap.js file includes the Axios HTTP library which will automatically send the X-XSRF-TOKEN header for you. -->
+
+        <!-- We can use component and slot to resude and organize code. -->
+        <!-- Class Based Component: php artisan make:component Alert-->
+        <!-- We will get a class in app/View/Componets which is rarely necessary, and a view template in resources/views/components -->
+        <!-- No further component registration is typically required. If template is components/sub-directory/.. then use dot notation to access it -->
+        <!-- For small component , we can return the markup dirrectly from render method of the class rather than using blade file: php artisan make:component Alert --inline (Just class will be created) -->
+        <!-- Rendering component: <x-alert/>. add x- prefix before the name.  -->
+        <!-- <x-inputs.button/> (from components/inputs/button) -->
+        <!-- card/card.vue: <x-card>: same folder and file name, no need to use dot notation. -->
+        <!-- If we want to render base on condition, go to the component's class and implement  shouldRender(): bool method. -->
+        <!-- Passing Data: <x-alert type="error" :message="$message"/> -->
+        <!-- We should define those attributes in component's class constructor. -->
+        <!-- We can define public method in the class and can access it also. -->
+        <!-- We can inject dependency. if want to make any attribute not accessible: except: [] -->
+        <!-- <div class="alert alert-{{ $type }}">: Not recommended, tailwind wont render it. Rather than use full class prop -->
+        <!-- If attribute and variable name are same can use shorthand: <x-profile :$userId :$name /> rather than <x-profile :user-id="$userId" :name="$name" /> -->
+        <!-- <div {{ $attributes }}>, can set default value or merge:  $attributes->merge(['class' => 'alert alert-'.$type]) -->
+        <!-- Conditionally Merge: {{ $attributes->class(['p-4'])->merge(['type' => 'button']) }} -->
+        <!-- We can run on attributes: filter, whereStartsWith, whereDoesNotStartWith, has, hasAny, get, except, only. -->
+        <!-- Reserved Keywords should not use as properties or methods: data, render, resolve, resolveView, shouldRender, view, withAttributes, withName -->
+        <!-- we can deine slot and define element in that space. -->
+        <!-- Named Slot Rendering:  <x-slot:title>...</x-slot> -->
+        <!-- Check slot by $slot->isEmpty() to take default element to render. -->
+        <!-- $slot->hasActualContent() - if contains anyactual content which is not an HTML element. -->
+        <!-- Accessing scoped slot:  {{ $component->formatAlert('Server Error') }} -->
+        <!-- Accessing slot attribute: <x-slot:heading class="font-bold"> -->
+        <!-- Dynamic Component Rendering: <x-dynamic-component :component="$componentName" class="mt-4" /> -->
+
+        <!-- If we dont need class, just component blade file, that is annonymous componet. -->
+        <!-- php artisan make:component forms.input --view -->
+        <!-- Rather than passing attribute from class, now we can use @prop directive. -->
+        <!-- Access Parent Data: @aware(['color' => 'gray']) -->
+
+        <!-- Layouts: -->
+        
     </body>
 </html>
