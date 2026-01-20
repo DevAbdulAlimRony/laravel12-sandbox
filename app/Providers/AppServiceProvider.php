@@ -128,9 +128,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Boot method is being called after all service priver registered
         // So we can inject any service provider here to use.
+
         View::share('name', 'Abdul Alim'); // Now, this name will be available in all blade file into our entire application.
 
-        // Register a View Composer
+        //* Register a View Composer
         View::composer('profile', ProfileComposer::class); // Class Based Composer
         // Closure Based Composer:
         View::composer('transaction', function(View $view){
@@ -140,6 +141,30 @@ class AppServiceProvider extends ServiceProvider
         View::composer(['profile', 'welcome'], ProfileComposer::class);
         // Assigning all views
         View::composer('*', ProfileComposer::class);
+
+        //* Custom Blade directive:
+        Blade::directive('datetime', function (string $expression) {
+            return "<?php echo ($expression)->format('m/d/Y H:i'); ?>";
+        }); // Now, we can use @datetime ... @enddatetime in our blade.
+
+        //* Custom Echo Handler:
+        // When we attempt to echo an object using blade, magic method __toString will be invoked.
+        // Sometimes we may not have conntrol when using third party package.
+        //  Blade allows you to register a custom echo handler for that particular type of object.
+        Blade::stringable(function (Money $money) {
+            return $money->formatTo('en_GB');
+        });
+
+        //* Custom If Directive:
+        Blade::if('disk', function (string $value) {
+            return config('filesystems.default') === $value;
+        }); // Now we can use @disk('value') @enddisk
+
+        //* Making blade component's alias during package development:
+        Blade::component('package-alert', Alert::class); // Now can access as <x-package-alert/>
+        Blade::componentNamespace('Nightshade\\Views\\Components', 'nightshade'); // <x-nightshade::calendar />
+        Blade::anonymousComponentPath(__DIR__.'/../components');
+        Blade::anonymousComponentPath(__DIR__.'/../components', 'dashboard');
 
         // View Creator: Let's say we have Views/Creators/ProfileCreaor same as ProfileComposer.
         // View::creator('profile', ProfileCreator::class)
@@ -236,12 +261,6 @@ class AppServiceProvider extends ServiceProvider
             });
 
         });
-
-        //* Making blade component's alias during package development:
-        Blade::component('package-alert', Alert::class); // Now can access as <x-package-alert/>
-        Blade::componentNamespace('Nightshade\\Views\\Components', 'nightshade'); // <x-nightshade::calendar />
-        Blade::anonymousComponentPath(__DIR__.'/../components');
-        Blade::anonymousComponentPath(__DIR__.'/../components', 'dashboard');
     }
 
     //* Facades: See app/Facades/Payment.php

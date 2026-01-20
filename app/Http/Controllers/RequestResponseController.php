@@ -217,4 +217,77 @@ class RequestResponse {
         // Useful for large datasets that need to be sent progressively to the browser in a format that can be easily parsed by JavaScript.
         return response()->streamJson(['users' => User::cursor()]);
     }
+
+    public function session(Request $request){
+        // As HTTP driven apps are staeless, session provides a way to store info about the user across multiple requests.
+        //* Drivers:
+        // file: stored in storage/framework/sessions
+        // cookie: stored in secure encrypted cookies
+        // database: stored in a relational database. php artisan make:session-table, if alreday not having.
+        // redis or memcached: fast, cache-based stores.
+        // dynamodb: stored in AWS DynamoDB
+        // array: stored in a PHP array. Used during testing.
+
+        //* Accessing Session:
+        $request->session()->all();
+        $request->session()->only(['username', 'email']);
+        $request->session()->except(['username', 'email']);
+        $request->session()->get('key'); // Using Request instance
+        $request->session()->get('key', 'default');
+        $request->session()->get('key', function () {return 'default';});
+
+        session('key'); // Using global helper.
+        session('key', 'default');
+        // Instance or helper both are testable via the assertSessionhas method.
+
+        //* Checking Boolean:
+        $request->session()->has('users'); // Checks if the key exists and if the value is not null. If not, return null.
+        $request->session()->exists('users') // Checks if the key exist.
+
+        //* Store Session:
+        $request->session()->put('key', 'value');
+        session(['key' => 'value']);
+        $request->session()->push('user.teams', 'developers'); // Push into array session.
+
+        //* Integer session
+        $request->session()->increment('count');
+        $request->session()->increment('count', $incrementBy = 2);
+        // Same goes for decreament
+
+        //* Flash Data:
+        //  store items in the session for the next request.
+        // Flash data is primarily useful for short-lived status messages
+        // After the subsequent HTTP request, the flashed data will be deleted.
+        $request->session()->flash('status', 'Task was successful!');
+        $request->session()->now('status', 'Task was successful!'); // Only for the current request.
+        $request->session()->reflash();
+        $request->session()->keep(['username', 'email']); // reflash only specific keys.
+
+        //* Delete
+        $request->session()->pull('key', 'default'); // Retrive and delete the session.
+        $request->session()->forget('name'); // Forget a single key
+        $request->session()->forget(['name', 'status']); // Forget multi keys
+        $request->session()->flush(); // Remove all from the session.
+
+        //* Security:
+        // To prevent malicious users from exploiting a session fixation attack , regenerate the session id.
+        // Laravel starter kits and fortify automatically regenerate session id during authentication.
+        $request->session()->regenerate();
+        $request->session()->invalidate(); // Regenerate and remove all data.
+
+        //* Cache for the current session or user:
+        // The session cache is perfect for storing temporary, user-specific data that you want to persist across multiple requests within the same session, but don't need to store permanently.
+        $request->session()->cache()->put(
+            'discount', 10, now()->plus(minutes: 5)
+        );
+        $request->session()->cache()->get('discount'); // Access cached session.
+
+        //* Session Blocking: Implemented in Route.
+
+        //* We can add custom session driver using implements \SessionHandlerInterface
+        // Methods will be: open($savePath, $sessionName), close(), read($sessionId), write($sessionId, $data),  destroy($sessionId), gc($lifetime) 
+        // The gc method should destroy all session data that is older than the given $lifetime.
+        // Now we can add that driver in SessionServiceProvider's boot method using Session::extend()
+        // Finally, add the driver in end  and use it.
+    }
 }

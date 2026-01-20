@@ -399,3 +399,11 @@ Route::get('/user', function (#[CurrentUser] User $user) {
 //* Cache Control Middleware:
 // Laravel includes a cache.headers middleware, which may be used to quickly set the Cache-Control header for a group of routes. 
 Route::middleware('cache.headers:public;max_age=30;s_maxage=300;stale_while_revalidate=600;etag')->group(function () {});
+
+//* Session Blocking:
+Route::post('/profile', function () {})
+      ->block($lockSeconds = 10, $waitSeconds = 10);
+// If js send multiple request at a time, handle that concurrent request.
+// any incoming requests to the /profile or /order endpoints which share the same session ID will wait for the first request to finish executing before continuing their executio.
+// An Illuminate\Contracts\Cache\LockTimeoutException will be thrown if the request is unable to obtain a session lock within the given number of seconds.
+// If no argument passed, just block(), then automatically get 10 seconds for both arguments.

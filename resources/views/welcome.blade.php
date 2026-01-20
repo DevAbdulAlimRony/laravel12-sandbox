@@ -184,6 +184,13 @@
         <!-- When defining a child view, use the @extends Blade directive to specify which layout the child view should "inherit". -->
         <!-- @@parent directive -->
 
+        <!-- We can push stack of script using @push and @pushIf directory -->
+        <!-- @push('scripts')<script src="/example.js"></script>, @pushIf($shouldPush, 'scripts') -->
+        <!-- Can use in head: @stack('scripts'), @prepend('scripts'), @hasstack('list') -->
+        <!-- Service Injection: @inject('metrics', 'App\Services\MetricsService') -->
+        <!-- Render a string as html: Blade::render('Hello, {{ $name }}', ['name' => 'Julian Bashir']) -->
+        <!-- Render portion of a blade template using @fragment, @fragmentIf, @fragments when using frontend frameworks like turbo or htmx -->
+
         <!-- To access vite, see vite.config.js -->
     </body>
 </html>
