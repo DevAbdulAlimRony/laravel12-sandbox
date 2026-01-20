@@ -116,6 +116,15 @@
         <!-- Form Handling and Validation -->
         <!-- old helper function to see flashed old request input -->
         <input type="text" name="username" value="{{ old('username') }}">
+        <!-- The @error directive may be used to quickly check if validation error messages exist for a given attribute. -->
+        <!-- echo the $message variable to display the error message -->
+        <input id="title" type="text"
+                class="@error('title') is-invalid @enderror"/> 
+        <!-- @error('email') is-invalid @else is-valid @enderror -->
+        <!-- @error('email', 'login') is-invalid @enderror -->
+        @error('title')
+            <div class="alert alert-danger">{{ $message }}</div>
+        @enderror
 
         <!-- CSRF Protection -->
         <!-- Cross-site request forgeries are a type of malicious exploit whereby unauthorized commands are performed on behalf of an authenticated user.  -->
@@ -170,7 +179,9 @@
         <!-- Rather than passing attribute from class, now we can use @prop directive. -->
         <!-- Access Parent Data: @aware(['color' => 'gray']) -->
 
-        <!-- Layouts: -->
-        
+        <!-- Layouts:Using Template Inheritance -->
+        <!-- Use @section and @yeild directive, @section defines a section of content, @yield is used to display the contents of a give section. -->
+        <!-- When defining a child view, use the @extends Blade directive to specify which layout the child view should "inherit". -->
+        <!-- @@parent directive -->
     </body>
 </html>

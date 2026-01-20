@@ -38,6 +38,12 @@ Str::length('Laravel'); // 7
 Str::limit('The quick brown fox jumps over the lazy dog', 20); // Truncate the text: // The quick brown fox...
 Str::limit('The quick brown fox jumps over the lazy dog', 20, ' (...)'); // The quick brown fox (...)
 Str::limit('The quick brown fox', 12, preserveWords: true); // The quick...
+Str::mask('taylor@example.com', '*', 3); // tay***************
+Str::mask('taylor@example.com', '*', -15, 3); // tay***@example.com
+
+Str::match('/bar/', 'foo bar'); // 'bar': Return matched thing by regular expression.
+Str::matchAll('/bar/', 'bar foo bar'); // collect(['bar', 'bar'])
+Str::isMatch('/foo (.*)/', 'foo bar'); // true
 
 Str::lower('LARAVEL'); // laravel
 Str::apa('Creating A Project'); // Title case as APA guidline: 'Creating a Project'
