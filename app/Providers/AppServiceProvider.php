@@ -173,6 +173,27 @@ class AppServiceProvider extends ServiceProvider
         });
         // Now, use it: return response()->caps('foo');
 
+        //* Vite Path Alias Macro:
+        Vite::macro('image', fn (string $asset) => $this->asset("resources/images/{$asset}"));
+        // Now, can use in blade: <img src="{{ Vite::image('logo.png') }}" alt="Laravel Logo">
+
+        //* Asset Prefetching: (when we do vite config splitting)
+        // In a typical Single Page Application (SPA), code splitting breaks your app into small chunks.
+        // While this makes the initial load faster, it creates a "waterfall" effect where clicking a link triggers a network request for the next page's code, leading to a noticeable delay or a "loading" state.
+        // Laravel’s Vite::prefetch solves this by downloading those chunks in the background before the user even clicks the link.
+        // Ex: Load the main inventory list, Immediately start downloading the code for the "Edit Product," "Stock Management," and "Order History" views in the background.
+        Vite::prefetch(concurrency: 3); // Assets will be prefetched with a maximum of 3 concurrent downloads on each page load
+        Vite::prefetch(); // No concurrency limit if the application should download all assets at once
+        Vite::prefetch(event: 'vite:prefetch'); // Rather than in page load, pefetch will happen when that listener call.
+
+        //* Adding extra attribute in built <script> tag for our js
+        Vite::useScriptTagAttributes(['async' => true]);
+        
+        // Conditionally add attribute:
+        Vite::useScriptTagAttributes(fn (string $src, string $url, array|null $chunk, array|null $manifest) => [
+            'data-turbo-track' => $src === 'resources/js/app.js' ? 'reload' : false
+        ]);
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit .
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 

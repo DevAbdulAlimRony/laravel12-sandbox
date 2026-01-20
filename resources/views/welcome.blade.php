@@ -183,5 +183,7 @@
         <!-- Use @section and @yeild directive, @section defines a section of content, @yield is used to display the contents of a give section. -->
         <!-- When defining a child view, use the @extends Blade directive to specify which layout the child view should "inherit". -->
         <!-- @@parent directive -->
+
+        <!-- To access vite, see vite.config.js -->
     </body>
 </html>
