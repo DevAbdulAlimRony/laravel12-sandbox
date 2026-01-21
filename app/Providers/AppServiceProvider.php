@@ -219,6 +219,11 @@ class AppServiceProvider extends ServiceProvider
             'data-turbo-track' => $src === 'resources/js/app.js' ? 'reload' : false
         ]);
 
+        //* Database:
+        DB::listen(function (QueryExecuted $query){}); // Listen to a query events
+        // Monitoring Qumulative Query Time:
+        DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {echo 'Notify developers.'});
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit .
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 

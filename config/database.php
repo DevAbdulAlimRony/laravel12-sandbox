@@ -3,6 +3,12 @@
 use Illuminate\Support\Str;
 
 return [
+    // Sometimes, we may want to use one database connection for select
+    // and another coccention or insert, update and delete.
+    // In database driver, let's say mySQL, specify read and write array with its host: 'read' => ['host' => ['192.168.1.1',]]
+    // 'sticky' => true: The sticky option is an optional value that can be used to allow the immediate reading of records.
+    // If the sticky option is enabled and a "write" operation has been performed against the database during the current request cycle, any further "read" operations will use the "write" connection. 
+    // This ensures that any data written during the request cycle can be immediately read back from the database during that same request.
 
     /*
     |--------------------------------------------------------------------------
