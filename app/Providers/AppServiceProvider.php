@@ -225,7 +225,7 @@ class AppServiceProvider extends ServiceProvider
         DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {echo 'Notify developers.'});
 
         //* Rate Limiters
-        // The for method accepts a rate limiter name and a closure that returns the limit .
+        // The for method accepts a rate limiter name and a closure that returns the limit.
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 
         // If exceed, 429 status code
         RateLimiter::for('global', function (Request $request){
@@ -269,4 +269,13 @@ class AppServiceProvider extends ServiceProvider
     }
 
     //* Facades: See app/Facades/Payment.php
+
+    //* Contracts:
+    // Laravel's "contracts" are a set of interfaces that define the core services provided by the framework.
+    // Each contract has a corresponding implementation provided by the framework.
+    // For the same thing, we have facade helper and contract. If we use contracts, we have to inject it as a dependency.
+    // Some developers prefer to explicitly define their dependencies in this way and therefore prefer to use contracts.
+    // Some parts of applications may use facades while others depend on contracts.
+    // To use the contract, just type hint the interface in constructor.
+    // Example: Illuminate\Contracts\Cookie\Factory, Illuminate\Contracts\Debug\ExceptionHandler, Paginator etc. (See Documentation for full list)
 }
