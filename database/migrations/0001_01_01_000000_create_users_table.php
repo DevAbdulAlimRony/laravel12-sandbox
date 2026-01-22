@@ -54,6 +54,19 @@ return new class extends Migration
     // If not default database:
     Schema::connection('sqlite')->create('users', function(Blueprint $table){});
 
+    //* Rename Table:
+    Schema::rename('old_table', 'new_table'); // Before renaming, see foreign key constraints at first.
+
+    //* Dropping Table:
+    Schema::drop('users');
+    Schema::dropIfExists('users2');
+
+    Schema::enableForeignKeyConstraints();
+    Schema::disableForeignKeyConstraints();
+    Schema::withoutForeignKeyConstraints(function () {});
+    // SQLite disables foreign key constraints by default.
+    // When using SQLite, make sure to enable foreign key support in your database configuration before attempting to create them in your migrations.
+
     public function up(): void
     {
         //* Creating Tables:
@@ -95,6 +108,17 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            //* Foreign Key Constraints:
+            $table->foreign('user_id')->references('id')->on('users'); // or, recommended way:
+            $table->foreignId('user_id')->constrained(); // If table and column is not convenient for auto detecting, use:
+            $table->foreignId('user_id')->constrained(
+                table: 'users', indexName: 'posts_user_id'
+            );
+            // Can add: onUpdate('cascade'), onDelete('cascade')
+            // cascadeOnUpdate(), restrictOnUpdate(), ullOnUpdate(), noActionOnUpdate(),
+            // cascadeOnDelete(), restrictOnDelete(), nullOnDelete(), noActionOnDelete()
+            // Addition column modifiers must be called before constrained() chain.
 
             //* More methods:
             // boolean(), char('name', length: 100), integer(), decimal('amount', total: 8, places: 2), double()
@@ -152,6 +176,7 @@ return new class extends Migration
             $table->collation('utf8mb4_unicode_ci');
             $table->longText('data')->charset('binary'); // Exmp: Encrypted string or small image
             // A and a might be treated as the same thing; in a binary column, they are strictly different.
+            $table->after('password', function (Blueprint $table) {//...columns});
 
             //* Performance- Data Type optimization:
             // Choosing the smallest possible type that fits your data provides significant performance gains when your application scales to millions of rows.
@@ -175,6 +200,22 @@ return new class extends Migration
             // We should alwas use 'timezone' => 'UTC' in config file, if server changed it can be a mess.
             // Then we can convert it in any time zone based on user's location when created or updated or deleted.
 
+            //* Creating Indexes:
+            $table->string('email')->unique(); // or,
+            $table->unique('email');
+            $table->index(['account_id', 'created_at']);
+            // When creating an index, Laravel will automatically generate an index name based on the table, column names, and the index type
+            // But we can specify:
+            $table->unique('email', 'unique_email');
+
+            //* Available Indexes (second argument for index name)
+            // primary('id'), primary(['id', 'parent_id'])- composite keys, unique('email')
+            // index('state'), fullText('body'), fullText('body')->language('english'), >spatialIndex('location')
+            
+            // Creating an index on a large table can lock the table and block reads or writes when index built.
+            // chain online to solve it:
+            $table->string('email')->unique()->online();
+
             //* Column Modifiers:
             // ->nullable(), ->default($value), ->autoIncrement(), ->unsigned(),
             // ->nullable($value = true): Allow NULL values to be inserted into the column.
@@ -184,6 +225,7 @@ return new class extends Migration
             // ->invisible() [make invisible for select * queries]
             // ->lock($mode)[mysql]: For handling race condition. Like multiple customer ordering.
             // ->useCurrent(): Set TIMESTAMP columns to use CURRENT_TIMESTAMP as default value, ->useCurrentOnUpdate()
+            // ->default(new Expression('(JSON_ARRAY())'))
             
             //* GENERATED & IDENTITY COLUMNS
             // ->storedAs($expression):  (MariaDB / MySQL / PostgreSQL / SQLite)
@@ -219,14 +261,21 @@ return new class extends Migration
         // Use table method rather than create method.
         Schema::table('users', function(Blueprint $table){
             $table->integer('votes');
-        });
-
-        //* Rename Table:
-        Schema::rename('old_table', 'new_table'); // Before renaming, see foreign key constraints at first.
-
-        //* Dropping Table:
-        Schema::drop('users');
-        Schema::dropIfExists('users2');
+            $table->string('name', 50)->change(); // Modify the type and attributes of existing columns.
+            $table->integer('votes')->unsigned()->default(1)->comment('my comment')->change(); // Add extra attributes and apply change method.
+            // change method does not change the index of the column, but if we want:
+            $table->bigIncrements('id')->primary()->change();
+            $table->renameColumn('from', 'to'); 
+            $table->dropColumn('votes');
+            $table->dropColumn(['votes', 'avatar', 'location']);
+            $table->renameIndex('from', 'to')
+            // dropMorphs('morphable'), dropRememberToken(), dropSoftDeletes()
+            // dropSoftDeletesTz(), dropTimestamps(), dropTimestampsTz()
+            // dropPrimary(), dropUnique(), dropIndex(), dopFullText(), dropSpatialIndex()
+            // dropIndex(['state']); // Drops index 'geo_state_index'
+            $table->dropForeign('posts_user_id_foreign');
+            $table->dropForeign(['user_id']);
+        });        
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
@@ -275,4 +324,8 @@ return new class extends Migration
     // php artisan migrate:fresh --seed
     // If different databse connection: php artisan migrate:fresh --database=admin
     // Refresh execute down() methods, fresh execute drop command- it drops all table made by migration or not.
+
+    //* Events:
+    // Each migration operation will dispatch an event:
+    // Illuminate\Database\Events\MigrationsStarted, MigrationsEnded, NoPendingMigrations, SchemaDumped, SchemaLoaded.
 };
