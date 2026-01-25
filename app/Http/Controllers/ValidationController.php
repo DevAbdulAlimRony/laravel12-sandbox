@@ -150,10 +150,20 @@ class ValidationController {
 
     //* Live Validation using Laravel Precognition Package
     // For Inertia powered frontend, we can do real time validation using Laravel Precognition Package:
-    public function show(){
-
-    }
+    // Has ability to provide "live" validation for your frontend JavaScript application without having to duplicate your application's backend validation rules.
+    // As of Inertia 2.3, Precognition support is built-in.
+    // Step1: Add middleware in route: ->middleware([HandlePrecognitiveRequests::class])
+    // Step2: For vue, install: npm install laravel-precognition-vue
+    // Step3: import and use precognition's useForm() object to generate form: const form = useForm('post', '/users', {name: ''})
+    // Step5: In input tag: @change="form.validate('name')" <div v-if="form.invalid('name')">{{ form.errors.name }}...
+    // :disabled="form.processing", form.setValidationTimeout(3000), v-if="form.validating",  v-if="form.hasErrors", 
+    // File: @change="(e) => {  form.avatar = e.target.files[0]...  form.forgetError('avatar')
+    // <button  @click="form.validate({only: ['name', 'email', 'phone'], onSuccess: (response) => nextStep(),  onValidationError: (response) => /* ... */,..
+    // form.submit(), form.reset()
+    // Array Validation: form.validate('users.*.email');
+    // In custom rule class, we can use: 'required',  $this->isPrecognitive()  ? Password::min(8)...
+    // If multiple middlewares collision or side effect can happen, in our middleware we can check: $request->isPrecognitive()
 
     //* Available Validation Rule:
-    // 
+    // https://laravel.com/docs/12.x/validation#available-validation-rules
 }
