@@ -1,6 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Validator;
+
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rules\File;
 
 class ValidationController {
 
@@ -106,11 +110,50 @@ class ValidationController {
         ]);
 
         // Additional Validation: $validator->after(function ($validator){})
+
+        //* Array Validation:
+        Validator::make($request->all(), [
+            'user' => 'array:name,username', // Name and username are array keys.
+            'photos.profile' => 'required|image', // Nested array.
+            'users.*.email' => 'email|unique:users', // Each element's email
+            'users.*.first_name' => 'required_with:users.*.last_name',
+            // companies.*.id' => Rule::forEach(function (string|null $value, string $attribute) { }
+            'photos.*.description.required' => 'Please describe photo #:position.', // #:position indicates to the index of the array.
+        ]);
+
+        //* File Validation:
+        Validator::validate($request->all(), [
+            'attachment' => ['required', File::types(['mp3', 'wav'])->min(1024)->max(12 * 1024)],
+            // min('1kb')->max('10mb')
+            'photo' => ['required', File::image()->min(1024)->max(12 * 1024)->dimensions(Rule::dimensions()->maxWidth(1000)->maxHeight(500))]
+            // Image rule does not allow SVG files due to the possibility of XSS vulnerabilities. 
+            // But we can turn it on: File::image(allowSvg: true)
+        ]);
+
+        //* Password Validation:
+        Validator::make($request->all(), [
+            'password' => ['required', 'confirmed', Password::min(8)],
+            // Password::min(8)->letters(): Require at least one letter
+            // ->mixedCase(): Require at least one uppercase and one lowercase letter.
+            // ->numbers(): Requires at least one number.
+            // ->symbols(): Require at least one symbol
+            // ->uncompromised(): Password has not been compromised in a public password data breach leak.
+            //  Uses the k-Anonymity model to determine if a password has been leaked via the haveibeenpwned.com service without sacrificing the user's privacy or security.
+            // If the service finds that password in its "blackbook" of leaked credentials, your application will reject it—even if the password meets all your other rules (like length or special characters).
+            // ->uncompromised(3): Ensure the password appears less than 3 times in the same data leak. Default is 1.
+            // We can make a default rule for password in any service provider's boot method. See AppServiceProvider.
+        ]);
     }
+
+    //* Custom Validation Rule:
+    // php artisan make:rule Uppercase. See in app/Rules directory..
 
     //* Live Validation using Laravel Precognition Package
     // For Inertia powered frontend, we can do real time validation using Laravel Precognition Package:
     public function show(){
 
     }
+
+    //* Available Validation Rule:
+    // 
 }

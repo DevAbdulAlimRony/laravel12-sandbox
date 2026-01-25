@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -223,6 +224,14 @@ class AppServiceProvider extends ServiceProvider
         DB::listen(function (QueryExecuted $query){}); // Listen to a query events
         // Monitoring Qumulative Query Time:
         DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {echo 'Notify developers.'});
+
+        //* Default password validation rule:
+        Password::defaults(function(){
+            $rule = Password::min(8);
+            return $this->app->isProduction() ? $rule->mixedCase()->uncompromised() : $rule;
+        }); 
+        // Now, whenever we will validate password: 'password' => ['required', Password::defaults()],
+        // Can pass additional rule when call using closure in defaults()
 
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.

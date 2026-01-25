@@ -11,6 +11,13 @@ use Illuminate\Support\Str;
 Str::is('foo*', 'foobar'); // True: If a given string matches a given pattern
 Str::is('*.jpg', 'photo.JPG', ignoreCase: true);
 
+str('Taylor')->append(' Otwell'); // str() returns a new Stringable instance so that we can chain other methods.
+// If no argument provided, str() will be a instance of Illuminate\Support\Str
+Str::of('Taylor'); // It make a a more fluent, object-oriented interface for working with string values, allowing you to chain multiple string operations together.
+
+trans('messages.welcome'); // translate the give key base on language file,  would return messages.welcome if the translation key does not exist.
+trans_choice('messages.notifications', $unreadCount); // would return messages.notifications if the translation key does not exist.
+
 Str::isAscii('Taylor'); // True
 Str::isJson('[1,2,3]'); // true
 Str::isJson('{"first": "John", "last": "Doe"}'); // true
@@ -54,15 +61,22 @@ Str::take('Build something amazing!', 5); // Return first 5 character
 Str::substr('The Laravel Framework', 4, 7); // Extract from postion 4 to length 7.
 Str::substrCount('If you like ice cream, you will like snow cones.', 'like'); // 2
 Str::substrReplace('1300', ':', 2); // Replace by : from position 2- 13::
+
+Str::wrap('Laravel', '"'); // "Laravel"
+Str::wrap('is', before: 'This ', after: ' Laravel!'); // This is Laravel!
 Str::limit('The quick brown fox jumps over the lazy dog', 20); // Truncate the text: // The quick brown fox...
 Str::limit('The quick brown fox jumps over the lazy dog', 20, ' (...)'); // The quick brown fox (...)
 Str::limit('The quick brown fox', 12, preserveWords: true); // The quick...
 Str::mask('taylor@example.com', '*', 3); // tay***************
 Str::mask('taylor@example.com', '*', -15, 3); // tay***@example.com
-(string) Str::ordderedUuid(); // Generates a timestamp first UUID that efficiend for indexed column.
+(string) Str::orderedUuid(); // Generates a timestamp first UUID that efficiend for indexed column.
 Str::padBoth('James', 10, '_'); // Add _ both side as log as char will 10, '__James___' : If last argument not given then will take just space.
 // padLeft, padRight
 Str::slug('Laravel 5 Framework', '-'); // laravel-5-framework
+
+Str::wordCount('papa'); // 1
+Str::wordWrap($text, characters: 20, break: "<br />\n"); // Wrap in that legtth line by line
+tr::words('Perfectly balanced, as all things should be.', 3, ' >>>'); // Perfectly balanced, as >>>
 
 (string) Str::ulid(); // Generates a ULID, which is a compact, time-ordered unique identifier
 // Using Carbon Instance: Carbon::createFromId((string) Str::ulid());
@@ -71,6 +85,14 @@ Str::createUlidsUsing(function () {
     return new Ulid('01HRDBNHHCKNW2AK4Z29SN82T9');
 });
 Str::createUlidsNormally();
+
+(string) Str::uuid(); // uuid version 4
+Str::createUuidsUsing(function () {
+    return Uuid::fromString('eadbfeac-5258-45c2-bab7-ccb9b5ef74f9');
+});
+Str::createUuidsNormally();
+(string) Str::uuid7(); // uuid version 7
+(string) Str::uuid7(time: now());
 
 Str::match('/bar/', 'foo bar'); // 'bar': Return matched thing by regular expression.
 Str::matchAll('/bar/', 'bar foo bar'); // collect(['bar', 'bar'])
@@ -138,3 +160,8 @@ Str::transliterate('ⓣⓔⓢⓣ@ⓛⓐⓡⓐⓥⓔⓛ.ⓒⓞⓜ'); // Convert i
 
  Str::password(); // Generate a secure random password: 'EbJo2vE-AS:U,$%_gkrV4n,q~1xy/-_4'
  Str::password(12); // Length 12.
+
+ //* Fluent String:
+ // Using Str::of(), can chain up others now:
+ Str::of('This is my name')->after('This is');
+ // Chainable Methods: All methods above and some others.
