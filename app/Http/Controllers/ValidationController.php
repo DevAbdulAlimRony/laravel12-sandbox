@@ -43,7 +43,50 @@ class ValidationController {
             // Validating when present:
             // email field will only be validated if it is present in the $data array.
             'email' => 'sometimes|required|email',
-        ]);
+
+            //* Available Validation Rule:
+            // accepted: User MUST check this to register
+            'terms_and_conditions' => 'accepted',
+
+            // accepted_if: Only required if 'country' is 'USA' (e.g., specific tax checkbox)
+            'us_tax_agreement' => 'accepted_if:country,USA',
+
+            // active_url: Must be a real, reachable website (e.g., for a partner link)
+            'blog_url' => 'required|active_url',
+
+            // Date Time Validation
+            'start_date'  => 'required|date|after:tomorrow',
+            'finish_date' => 'required|date|after:start_date',
+            'date_time'   => [Rule::date()->after(today()->addDays(7))], 
+            // beforeToday(), afterToday(), todayOrAfter(), beforeOrEqual(), afterOrEqual(), before(today()->subDays(7), date()->format('Y-m-d')
+
+            // Satisfy any of the rules:
+            'username'    => [Rule::anyOf([['string', 'email'], [['string', 'alpha_dash', 'min:6']]])],
+
+            // decimal:2,4
+            // alpha_dash:ascii, alpha:ascii, alpha_num:ascii, ascii
+            // array:name,username, between:min,max, boolean:strict
+            // declined: under validation must be "no", "off", 0, "0", false, or "false". declined_if:another_field,value.
+            // different:field -  different value than field.
+            // digits:value - exact length of value. digits_between.
+            // doesnt_start_with:foo,bar,... doesnt_end_with:foo,bar,..., ends_with.
+
+            'roles' => [Rule::contains(['admin', 'editor']),], // doesntContain()
+            'avatar' => 'dimensions:min_width=100,min_height=200',
+            'avatar' => 'dimensions:ratio=3/2',
+            'foo.*.id' => 'distinct' // No duplicate id into foo array.
+            // distinct:strict, distinct:ignore_case
+            'email' => 'email:rfc,dns',
+            'email2' => [Rule::email()->rfcCompliant(strict: false)->validateMxRecord()->preventSpoofing()]
+            // The dns and spoof validators require the PHP intl extension.
+
+            // File::types(['csv'])->encoding('utf-8')
+
+            'status' => [Rule::enum(ServerStatus::class)],
+            // ->only([ServerStatus::Pending, ServerStatus::Active]), except()
+            'status2' => [Rule::enum(ServerStatus::class)->when(Auth::user()->isAdmin(),
+                                                        fn ($rule) => $rule->only(...),
+                                                        fn ($rule) => $rule->only(...) );],]);
 
         // Validate and store erropr messages within a named error bag:
         $request->validateWithBag('postErrors', ['title' => 'required']);
@@ -126,6 +169,7 @@ class ValidationController {
             'attachment' => ['required', File::types(['mp3', 'wav'])->min(1024)->max(12 * 1024)],
             // min('1kb')->max('10mb')
             'photo' => ['required', File::image()->min(1024)->max(12 * 1024)->dimensions(Rule::dimensions()->maxWidth(1000)->maxHeight(500))]
+            // ->ratio(3 / 2),
             // Image rule does not allow SVG files due to the possibility of XSS vulnerabilities. 
             // But we can turn it on: File::image(allowSvg: true)
         ]);
@@ -133,6 +177,9 @@ class ValidationController {
         //* Password Validation:
         Validator::make($request->all(), [
             'password' => ['required', 'confirmed', Password::min(8)],
+            // 'password' => 'current_password:api'
+            // confirmed for filed_confirmation. password, password_confirmation.
+            // Custom confirmation field: confirmed:repeat_username
             // Password::min(8)->letters(): Require at least one letter
             // ->mixedCase(): Require at least one uppercase and one lowercase letter.
             // ->numbers(): Requires at least one number.
@@ -163,7 +210,4 @@ class ValidationController {
     // Array Validation: form.validate('users.*.email');
     // In custom rule class, we can use: 'required',  $this->isPrecognitive()  ? Password::min(8)...
     // If multiple middlewares collision or side effect can happen, in our middleware we can check: $request->isPrecognitive()
-
-    //* Available Validation Rule:
-    // https://laravel.com/docs/12.x/validation#available-validation-rules
 }

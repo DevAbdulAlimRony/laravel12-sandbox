@@ -77,4 +77,6 @@ class BasicController implements HasMiddleware
             new Middleware('subscribed', except: ['store']),
         ];
     } // or we can make a closure and implement it there.
+
+    //* Model: See Flight Model in directory.
 }

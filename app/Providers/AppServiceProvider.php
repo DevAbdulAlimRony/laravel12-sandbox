@@ -233,6 +233,13 @@ class AppServiceProvider extends ServiceProvider
         // Now, whenever we will validate password: 'password' => ['required', Password::defaults()],
         // Can pass additional rule when call using closure in defaults()
 
+        //* Collection Macro:
+        // The macro closure may access the collection's other methods via $this
+        Collection::macro('toUpper', function() {
+            return $this->map(fn (string $v) => Str::upper($v));
+        }); // Now, we can call or chain up toUpper method for any collection instance.
+        // $collection->toUpper(); In that function (), we can define arguments for that method also.
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 
