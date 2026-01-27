@@ -240,6 +240,16 @@ class AppServiceProvider extends ServiceProvider
         }); // Now, we can call or chain up toUpper method for any collection instance.
         // $collection->toUpper(); In that function (), we can define arguments for that method also.
 
+        //* Configuring Eloquent Strictness:
+        Model::preventLazyLoading(! $this->app->isProduction()); // Only disable lazy loading in non-production environments.
+        Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction()); // Throw an exception when attempting to fill an unfillable attribute.
+
+        //* Register Model Observer:
+        User::observe(UserObserver::class);
+
+        //* Mass Assign Exception:
+        Model::preventSilentlyDiscardingAttributes($this->app->isLocal());
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 

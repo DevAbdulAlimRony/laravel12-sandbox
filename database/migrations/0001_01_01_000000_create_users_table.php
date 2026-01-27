@@ -300,6 +300,15 @@ return new class extends Migration
         Schema::dropIfExists('sessions');
     }
 
+    //* Add deleted_at column:
+    Schema::table('flights', function (Blueprint $table) {
+        $table->softDeletes();
+    });
+
+    Schema::table('flights', function (Blueprint $table) {
+        $table->dropSoftDeletes();
+    });
+
     //* Migrate:
     // Run all migrations: php artisan migrate
     // Which migration already run and which pending: php artisan migrate:status
