@@ -250,6 +250,27 @@ class AppServiceProvider extends ServiceProvider
         //* Mass Assign Exception:
         Model::preventSilentlyDiscardingAttributes($this->app->isLocal());
 
+        //* Morph Aliasing:
+        Relation::enforceMorphMap([
+            'post' => 'App\Models\Post',
+            'video' => 'App\Models\Video',
+        ]); // Then in type we will get post rather than fully qualified class.
+        // Determine the alias in controller:  $post->getMorphClass();
+        // determine fully qualified class: Relation::getMorphedModel($alias)
+
+        //* Automatic Eager Load:
+        Model::automaticallyEagerLoadRelationships();
+        // , Laravel will attempt to automatically load any relationships you access that have not been previously loaded. 
+
+        // Prevent Lazy Load relationship:
+        Model::preventLazyLoading(! $this->app->isProduction());
+        // If lazy loaded somewhere, throw Illuminate\Database\LazyLoadingViolationException
+        // Can use custom msg:
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation) {
+            $class = $model::class;
+            info("Attempted to lazy load [{$relation}] on model [{$class}].");
+        });
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 

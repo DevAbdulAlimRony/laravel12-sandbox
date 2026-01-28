@@ -222,4 +222,173 @@ class Flight extends Model{
     // If we want to execute a observer event only after transaction: class UserObserver implements ShouldHandleEventsAfterCommit
     //* Muting Events: User::withoutEvents(function () {}
     // Mute event for a single model: $user->saveQuietly(), deleteQuietly(), forceDeleteQuietly(), restoreQuietly().
+
+    //* Relations:
+    // The relationships must exist within the same database.
+    //* One to One:
+    public function phone(): HasOne {
+        return $this->hasOne(Phone::class);
+
+         // Eloquent determines the foreign and key of the relationship based on the parent model name.
+         // As our model is flight now, it will be flight_id 
+         // But can be overriden:
+        //  $this->hasOne(Phone::class, 'foreign_key');
+        // $this->hasOne(Phone::class, 'foreign_key', 'local_key');
+    }
+    // Inverse of the relationship in phone model:
+    public function user(): BelongsTo {
+        return $this->belongsTo(User::class);
+        // $this->belongsTo(User::class, 'foreign_key', 'owner_key');
+    }
+
+    //* One to Many:
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+        // hasMany(Comment::class, 'foreign_key', 'local_key');
+        // return $this->hasMany(Comment::class)->chaperone();
+        // chaperone() tells Laravel: "When you load these comments, automatically set their post relationship to the specific Post instance that just loaded them."
+        // Without chaperoning, if you loop through comments and try to access the post's title, Laravel might run a new query for every single comment to "find" the post it belongs to, even though that post is already sitting in memory.
+        // It ensures that $post and $post->comments[0]->post are the exact same object in memory.
+    } // Inverse of the Relationship: BelongsTo.
+
+    //* Null Object Pattern:
+    // belongsTo, hasOne, hasOneThrough, and morphOne relationships allow to define a default model that will be returned if the given relationship is null.
+    // Can help remove conditional checks in code.
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class)->withDefault();
+    }
+    // withDefault(['name' => 'Abdul', ])
+    // withDefault(function(User $user, Post $post){})
+
+    //* Has One To Many:
+    public function latestOrder(): HasOne
+    {
+        return $this->hasOne(Order::class)->latestOfMany();
+        // ->oldestOfMany();
+    }
+    public function largestOrder(): HasOne
+    {
+        return $this->hasOne(Order::class)->ofMany('price', 'max'); // Sorted by price
+        // postgress does not support MAX function with ulid.
+    } 
+    // Or, in a different way:
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+    public function largestOrder(): HasOne
+    {
+        return $this->orders()->one()->ofMany('price', 'max');
+        // ->one()->latestOfMany();
+    }
+    // Advanced way:
+    // $this->hasOne(Price::class)->ofMany([..multiple sorter], function(Builder $query){..query})
+
+    //* Has One Thorugh:
+    // The declaring model can be matched with one instance of another model by proceeding through a third model.
+    // Mechanic and Driver is not realted directly, but Car is realted with both of
+    // In mechanic model:
+    public function carOwner(): HasOneThrough{
+        return $this->hasOneThrough(Owner::class, Car::class);
+    }
+    // Can pass respectively: foreign key of car, foreign key of owner, local of machanic, local of car.
+    // If we have already cars relationship:
+    // $this->through('cars')->has('owner') - string based syntax
+    // $this->throughCars()->hasOwner() - dynamic syntax.
+
+    //* Has Many Throgh:
+    // Access distant relations via an intermediate relation
+    // Book has likes, Author has Books. We need to access got for author.
+    public function likes(): HasManyThrough
+    {
+        return $this->hasManyThrough(Like::class, Author::class);
+        // Can pass foreign and primary key if different
+        // $this->through('environments')->has('deployments');
+        // $this->throughEnvironments()->hasDeployments();
+    }
+
+    //* Scoped Relationship:
+    // Use a relationship with query to build another relationship.
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class)->latest();
+    }
+    public function featuredPosts(): HasMany
+    {
+        return $this->posts()->where('featured', true);
+        // Make true if we create new data using this relation: $this->posts()->withAttributes(['featured' => true])
+    }
+
+    //* Many to Many Relationship:
+    // users, roles, role_user (user_id, role_id)
+    // Just define belongsToMany relationship in user and role model.
+    // Can define more options: this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id')
+    // If pivot table has extra columns: ->withPivot('active', 'created_by')
+    // Define timestamps in pivot: ->withTimestamps()
+    // We usually access $role->pivot->created_at, but we can change that pivot keyword for better name:
+    // belongsToMany(Podcast::class)->as('subscription') , Now can access: $podcast->subscription->created_at
+    // Methods for Intermideate Table Column:
+    // belongsToMany(Role::class)->wherePivot('approved', 1), 
+    // wherePivotIn(), wherePivotNotIn(), wherePivotBetween, wherePivotNotBetween(), wherePivotNull(), wherePivotNotNull(), wherePivotValue(), orderByPivot()
+    // Typically pivot table dont need any model.
+    // Custom Intermediate Table Model: Lets say we need extra in role_user or casts methods etc., we can make a model.
+    // At first, for User and Role model add that: belongsToMany(User::class)->using(RoleUser::class)
+    // Finally, RoleModel user should extends Pivot: class RoleUser extends Pivot. If need softdeletes , extends from Model class.
+
+    //* Polymorphic Relations:
+    // A polymorphic relationship allows the child model to belong to more than one type of model using a single association.
+    // A Comment model might belong to both the Post and Video models.
+
+    //* One to One Polymorphic:
+    // Posts table, users table, images table (id, image, imagable_id, imageable_type)
+    // imageable_id column will contain the ID value of the post or user, while the imageable_type column will contain the class name of the parent model.
+    // Image Model:
+    public function imageable(): MorphTo
+    {
+        return $this->morphTo();
+        // $this->morphTo(__FUNCTION__, 'imageable_type', 'imageable_id');
+    }
+    // Post Model:
+    public function image(): MorphOne
+    {
+        return $this->morphOne(Image::class, 'imageable');
+    }
+    // User Model:
+    public function image(): MorphOne {
+        return $this->morphOne(Image::class, 'imagable');
+    }
+
+    //* One to Many Polymorphic:
+    // posts, videos, commets(id, body, commentable_id, commentable_type)
+    // $this->morphTo() : no change in comments, same as one to one.
+    // Same type implementation, just use morphMany rather than morphOne.
+    // To make automatic hydration when access child to parent to prevent N+1: ->chaperone() on MorphMany posts and videos model.
+    // Can use latestOfMany(), oldestOfMany(), ofMany() also.
+
+    //* Many to Many Polymorphic:
+    // posts, videos, tags, taggables (tag_id, taggable_id, taggable_type)
+    // In Post and Video Model:
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(Tag::class, 'taggable'); 
+    }
+    // In Tag Model:
+    public function posts(): MorphToMany
+    {
+        return $this->morphedByMany(Post::class, 'taggable');
+    }
+    public function videos(): MorphToMany
+    {
+        return $this->morphedByMany(Video::class, 'taggable');
+    }
+    // By default, Laravel will use the fully qualified class name to store the "type" of the related model.
+    // But we can alias it in Any ServiceProvider's boot method.
+
+    protected $with = ['author']; // Always eager load this relation
+    // Can remove in controller if no need: Book::without('author'), Book::withOnly('genre')
+
+    // Update Parent Timestamp when child is updated while using save() method:
+    protected $touches = ['countries', ]; // When country updated, parent timestamp will be updated.
  }

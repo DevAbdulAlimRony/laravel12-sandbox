@@ -132,6 +132,131 @@ class BuilderCollectionController {
         User::find(1) ->toResource()->response()->header('X-Value', 'True'); // Customize resource or do it in resource class.
     }
 
+    public function accessRelationships(Flight $flight){
+         $flight->counties()->where('active', 1)->get();
+         User::find(1)->phone;
+         User::find(1)->comments;
+         foreach ($comments as $comment) {}
+         User::with('comments')->get(); // Eager Loaded
+
+         //* Chaperon: if defned in relationship, then dont need here.
+         foreach ($post->comments as $comment) {
+            // WITHOUT chaperone(): This line triggers a DB query for EVERY comment.
+            // WITH chaperone(): This line uses the Post already in memory.
+            echo $comment->post->author_name; 
+        }
+         $posts = User::with([
+            'comments' => fn ($comments) => $comments->chaperone(),
+        ])->get();
+
+        Post::whereBelongsTo($user)->get(); // Equivalent to: Post::where('user_id', $user->id)->get()
+        // Will determine relatioship based on var $user, but can specify:
+        Post::whereBelongsTo($user, 'author')->get();   
+        Post::whereBelongsTo(User::where('vip', true)->get())->get(); // Passing collection.
+
+        // Many to Many Relationship Pivot Table
+        // foreach ($user->roles as $role) { echo $role->pivot->created_at; }
+        // Access morph relation: $post->image, finding parent: $image->imageable
+        // foreach ($post->tags as $tag), $tag->posts as $post, $tag->videos as $video
+
+        //* Dynamic Relationship: Run relationship at runtime
+        // Not recommended, but can be useful in package developemnt:
+        Order::resolveRelationUsing('customer', function (Order $orderModel) {
+            return $orderModel->belongsTo(Customer::class, 'customer_id');
+        });
+
+        //* Querying Relations:
+        // All types of Eloquent relationships also serve as query builders, allowing you to continue to chain constraints onto the relationship query.
+        // We can use any query builder on relationship like where, orWhere, logical groups
+        Post::has('comments')->get(); // Retrieve all posts that has at least one comment
+        Post::has('comments', '>=', 3)->get();
+        Post::has('comments.images')->get(); // at leat one comment with images.
+        User::whereHas('posts', function ($query) { $query->where('title', 'like', '%Laravel%')})->get(); // Retrive user which have at least one post with that condition
+        User::whereAttachedTo($role)->get(); // Many to Many existence.
+        Post::whereRelation('comments', 'created_at', '>=', now()->minus(hours: 1))->get();
+        // orWhereRelation, whereMorphRelation, orWhereMorphRelation
+        Post::doesntHave('comments')->get(); // All blog posts that don't have any comments.
+        Post::whereDoesntHave('comments', function (Builder $query) {})->get();
+        Comment::whereHasMorph('commentable',[Post::class, Video::class],function (Builder $query) {})->get(); // Get comments of post and video that meet the condition.
+        // whereDoesntHaveMorph(). In callback, can pass $type after Builder $query. Instead of passing Post,Video- can pass * wildcard to match al morph class.
+        Comment::whereMorphedTo('commentable', $post)->orWhereMorphedTo('commentable', $video)->get();
+
+        //* Aggregating Relations:
+        $posts = Post::withCount('comments')->get();
+        foreach ($posts as $post) {  echo $post->comments_count; }
+        Post::withCount(['votes', 'comments' => function (Builder $query) {}]);
+        // Can alias when same type count: withCount(['comments', 'comments as pending_comments_count'...
+        Book::first()->loadCount('genres'); // Deferred Count: Count after retrieving parent.
+        // loadCount(['reviews' => function (Builder $query) { condition...})
+        // If we have select, call withCount after the select.
+        //* withMin, withMax, withAvg, withSum - same functionality.
+        // withExists (has at least one comment or not)
+        // Morph Count: morphWithCount(), loadMorphCount()
+
+        //* Eager Loading:
+        // When accessing Eloquent relationships as properties, the related models are "lazy loaded".
+        // This means the relationship data is not actually loaded until you first access the property. 
+        // Eager loading alleviates the "N + 1" query problem.
+        foreach (Book::all() as $book) {
+            echo $book->author->name;
+            // This loop will execute one query to retrieve all of the books
+            // Another query for each book in order to retrieve the book's author.
+            // If we have 25 books, the code above would run 26 queries: one for the original book, and 25 additional queries to retrieve the author of each
+        }
+        // Solve:
+        Book::with('author')->get();
+        // Only two queries will be executed - one query to retrieve all of the books and one query to retrieve all of the authors for all of the books
+        foreach ($books as $book) {
+            echo $book->author->name;
+        }
+        // We can eager load multiple relationship, specific columns, also nested with . notation or nested array.
+        // with(['user', 'author:id,name,book_id', 'user.posts', 'user => ['posts' => ['comments']]'])
+        // Should always include the id column and any relevant foreign key columns in the list of columns
+        
+        // Morph Eager Load
+        ActivityFeed::query()->with(['parentable' => function(MorphTo $morphTo){
+            $morphTo->morphWith([Photo::class => ['tags'],]);
+        }])->get();
+        
+        // Constraining eager load:
+        User::with(['posts' => function ($query) {$query->where('is_published', true);}])->get();
+        // withWhereHas()
+        // for morph: ...$morphTo->constrain()...
+        // if(Book::all){Book::all()->load('author')} - Lazy Eager Load.
+        // load(['books' => function ($query) {}, book->loadMissing('author'): Load if not already loaded.
+        ActivityFeed::with('parentable')->get()->->loadMorph('parentable', [Event::class => ['calendar']]);
+
+        // Auto Load Relation:
+        User::where()->withRelationshipAutoloading();
+        // Still in Beta Version.
+
+        //* Insert Update:
+        $post->comments()->save($comment);
+        $post->comments()->saveMany([
+            new Comment(['message' => 'A new comment.']),
+            new Comment(['message' => 'Another new comment.']),
+        ]); 
+        // refresh(), push(), pushQuietely(), create(), createMany(), createQuietly(), createManyQuietly()
+        // findOrNew(), firstOrNew(), firstOrCreate(), updateOrCreate()
+        $user->account()->associate($account); // account has a user_id, associate will provide that data to save
+        $user->account()->dissociate();
+        $user->roles()->attach($roleId);
+        $user->roles()->attach($roleId, ['expires' => $expires]);
+        $user->roles()->detach($roleId); // Detach a single role from the user
+        $user->roles()->detach(); // Detach all roles from the user...
+        // Attach and detach can take id also.
+        $user->roles()->sync([1, 2, 3]); // Many to many association.
+        $user->roles()->sync([1 => ['expires' => true], 2, 3]);
+        $user->roles()->syncWithPivotValues([1, 2, 3], ['active' => true]);
+        $user->roles()->syncWithoutDetaching([1, 2, 3]);
+        $user->roles()->toggle([1, 2, 3]);
+        $user->roles()->toggle([
+            1 => ['expires' => true],
+            2 => ['expires' => true],
+        ]);
+        $user->roles()->updateExistingPivot($roleId, ['active' => false]);
+    }
+
     public function store(Request $request){
         //* Insert Data using Model instance:
         $flight = new Flight; // Create a new instance
