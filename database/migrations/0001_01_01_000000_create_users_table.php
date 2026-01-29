@@ -337,4 +337,6 @@ return new class extends Migration
     //* Events:
     // Each migration operation will dispatch an event:
     // Illuminate\Database\Events\MigrationsStarted, MigrationsEnded, NoPendingMigrations, SchemaDumped, SchemaLoaded.
+
+    //* Seeders in the DatabaSeeder.php.
 };

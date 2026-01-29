@@ -33,6 +33,13 @@ class Flight extends Model{
     protected $fillable = ['name']; // Only name is mass assignable
     protected $fillable = ['options->enabled'];  // Json column options's enabled key is mass assignable.
 
+    //* Factory 
+    use HasFactory; // Find factory class in database/factories.
+    // If factory class in other directory, then #[UseFactory(FlightFactory::class)] above model or,
+    protected static function newFactory(){
+        return UserFactory::new();
+    } // and define model in the factory.
+
     //* Soft Deletes:
     use SoftDeletes;
     // will automatically cast the deleted_at attribute to a DateTime / Carbon instance.
