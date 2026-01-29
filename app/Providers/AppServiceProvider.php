@@ -167,6 +167,14 @@ class AppServiceProvider extends ServiceProvider
         Blade::anonymousComponentPath(__DIR__.'/../components');
         Blade::anonymousComponentPath(__DIR__.'/../components', 'dashboard');
 
+        //* Use this tailwind view for pagination rather than default view:
+        Paginator::defaultView('view-name');
+        Paginator::defaultSimpleView('view-name');
+
+        //* Use bootstrap rather than tailwind for Pagination.
+        Paginator::useBootstrapFive();
+        Paginator::useBootstrapFour();
+
         // View Creator: Let's say we have Views/Creators/ProfileCreaor same as ProfileComposer.
         // View::creator('profile', ProfileCreator::class)
         // Very similar to view composers

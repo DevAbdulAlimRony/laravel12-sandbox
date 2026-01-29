@@ -103,6 +103,32 @@ class BuilderCollectionController {
         }
         // Check in category tree, sub category is not same as its parent category.
 
+        //* Pagination:
+        User::where()->paginate(15); // Can pass default value.
+        User::where()->simplePaginate(15); // Just previous and next
+        User::where('votes', '>', 100)->cursorPaginate(15); // Useful for performance gaining, infinite scrolling.
+        User::where('votes', '>', 100)->paginate($perPage = 15, $columns = ['*'], $pageName = 'users') // If multiple paginate in a page, to avoid conflict.
+        // paginate and simplePaginate use offset, but cursorPaginate use where clause so it is the best performant.
+        // Cursor-based pagination places a "cursor" string in the query string: http://localhost/users?cursor=eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
+        // paginate(): select * from users order by id asc limit 15 offset 15
+        // cursorPaginate(): select * from users where id > 15 order by id asc limit 15
+        // Cursor pagination can only be used to display "Next" and "Previous" links and does not support generating links with page numbers.
+        // Cursor equires that the ordering is based on at least one unique column or a combination of columns that are unique. Columns with null values are not supported.
+        // Query expressions with parameters are not supported in cursor paginate.
+        User::paginate(15)->withPath('/admin/users'); // Custom link to show rather than default route
+        User::paginate(15)->appends(['sort' => 'votes']); // Appending query string values.
+        User::paginate(15)->withQueryString(); // Append all current requests query string
+        User::paginate(15)->fragment('users'); // Appended #users after the route link.
+        // {{ $users->onEachSide(5)->links() }} : How many additional page will be displayed in view.
+        // {{ $paginator->links('view.name') }}
+        // To customize pagination view easily: php artisan vendor:publish --tag=laravel-pagination
+        // resources/views/vendor/pagination directory. The tailwind.blade.php file : edit to get your design.
+        // If we want another view for pagination, define it in Service provider.
+        // We can create pagination manually with LengthAwarePaginator.
+        
+        // Paginator Instance: $paginator->count(), currentPage(), firstItem(), lastPageUrl() etc.
+        // Cursor Paginator Instance: $paginator->count() etc.
+
         //* Serialization:
         // Convert models and relationships to arrays or JSON.
         User::with('roles')->first()->toArray(); // All relationships and attributes will be an array
