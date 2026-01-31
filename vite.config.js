@@ -6,6 +6,11 @@
 // Nodejs and NPM must be installed to run vite.
 // Running the vite: npm run dev, npm run build.
 
+//* Installing Tailwind: npm install tailwindcss @tailwindcss/vite
+// Import here , use in plugin
+// Import in app.css
+// Generate Config file: npx tailwindcss init -p
+
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';

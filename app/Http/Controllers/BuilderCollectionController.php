@@ -399,7 +399,81 @@ class BuilderCollectionController {
     }
 
     public function builderMethods(){
+        DB::table('users')->get(); // first(), firstOrFail(), find()
+        // chunk(), chunkById(), lazy(), lazyById()
+        // count(), max(), min(), avg(), sum()
 
+        // Checking Existence:
+        // One way is using count. 
+        DB::table('orders')->where('finalized', 1)->exists();
+        DB::table('orders')->where('finalized', 1)->doesntExist();
+
+        // Specific Value and Column
+        DB::table('users')->where('name', 'John')->value('email'); // Raher than entire row, only email.
+        DB::table('users')->pluck('title'); // Retrive collection instance, Only values of a single column.
+        DB::table('users')->pluck('title', 'name'); // name will be the key of the collection. foreach ($data as $name => $title)
+
+        // Select:
+        DB::table('users')->select('name', 'email as user_email')->get(); // If already have a query, then $query->addSelect('name')
+        DB::table('users')->distinct()->get(); // Return distict results.
+
+        // Raw Expressions:
+        // Laravel cannot guarantee that any query using raw expressions is protected against SQL injection vulnerabilities.
+        DB::table('users'->select(DB::raw('count(*) as user_count, status'))->get(););
+        // selectRaw(), whereRaw(), orWhereRaw(), havingRaw(), orHavingRaw(), orderByRaw(), groupByRaw()
+
+        // Join:
+        DB::table('users')->join('contacts', 'users.id', '=', 'contacts.user_id')->get();
+        // leftJoin(), rightJoin(), crossJoin()
+        // Advance Join: ->join('contacts', function (JoinClause $join) {})
+        // Subquery Join: joinSub()
+        // Lateral Join: joinLateral(), leftJoinLateral()- supported by PostgreSQL, MySQL >= 8.0.14, and SQL Server
+
+        // Union:
+        DB::table('users')->where()->union(DB::table('users')->where())->get(); // uniqueAll(): Duplicates wont be deleted.
+
+        // where clauses:
+        // MySQL and MariaDB automatically typecast strings to integers in string-number comparisons.
+        // Non-numeric strings are converted to 0, It can bring false result when you check condition.
+        // To avoid this, ensure all values are typecast to their appropriate types before using them in queries.
+        DB::table('users')->where('votes', '=', 100) ->where('age', '>', 35)->get();
+        DB::table('users')->where('votes', 100)->get(); // If we directly provide value, automatically check equality.
+        DB::table('users')->where(['votes' => 100, 'rating' => 5])->get(); // Associative array to multiple column quick check
+        DB::table('users')->where([['status', '=', '1'],['subscribed', '<>', '1'],])->get(); // Array of conditioned columns
+        // Operators: <=, >=, <> etc.
+        DB::table('users')->whereColumn('first_name', 'last_name')->get(); // If two columns are qual.
+        DB::table('users')->whereColumn('updated_at', '>', 'created_at')->get(); // Can pass array of columns using array also.
+        DB::table('users')->where('name', 'like', 'T%')->get(); // Find every user whose name starts with the letter T, followed by anything (or nothing) else.
+        DB::table('users')->where('votes', '>', 100)->orWhere('name', 'John')->get(); // Normally, where chains work as and operator, If we want or
+        DB::table('users')->where('votes', '>', 100)->orWhere(function(Builder $query){
+            $qyery->where()->where();
+        })->get(); // select * from users where votes > 100 or (name = 'Abigail' and votes > 50)
+        DB::table('users')->whereNot(function (Builder $query){})->get(); // orWhereNot.
+        DB::table('users')->whereAny(['name', 'emal'], 'like', 'o%')->get(); // Condition for multiple columns.
+        // ->whereAll(['name', 'emal'], ->whereAll(['none', 'none']
+        // Querying json column: ->where('preferences->dining->meal', 'salad')
+        // ->whereJsonContains('options->languages', 'en'),  ->whereJsonDoesntContain('options->languages', 'en')
+        // whereJsonContainsKey(), whereJsonDoesntContainKey(), whereJsonLength()
+        DB::table('users')->whereLike('name', '%John%')->get();
+        DB::table('users')->whereLike('name', '%John%', caseSensitive: true)->get();
+        // orWhereLike(), whereNotLike(), orWhereNotLike()
+        DB::table('users')->whereIn('id', [1, 2, 3])->get(); // whereNotIn()
+        DB::table('comments')->whereIn('user_id', DB::table('users')->select('id')->where('is_active', 1))->get();
+        // Large array of Integer: whereIntegerInraw(), whereIntegerNotInRaw()
+        DB::table('users')->whereBetween('votes', [1, 100])->get(); // orWhereBetween(), whereNotBetween()
+        DB::table('patients')->whereBetweenColumns('weight', ['minimum_allowed_weight', 'maximum_allowed_weight'])->get(); // a column's value is between the two values of two columns in the same table row
+        // whereNotBetweenColumns()
+        DB::table('products')->whereValueBetween(100, ['min_price', 'max_price'])->get(); //  whereValueNotBetween()
+        DB::table('users')->whereNull('updated_at')->get(); // whereNotNull(), orWhereNull(), orWhereNotNull()
+        DB::table('users') ->whereDate('created_at', '2016-12-31')->get();
+        // whereMonth('created_at', '12'), whereDay(), whereYear(), whereTime()
+        // wherePast('due_at'), whereFuture(), whereNowOrPast(), whereNowOrFuture()
+        // whereToday(), whereBeforeToday(), whereAfterToday(), whereTodayOrBefore (), whereTodayOrAfter()
+        DB::table('users')->whereExists(function(Builder $query){}); // Write condition in the closure or pass a query rather than callback.
+        User::where(function (Builder $query){$query->select('type')->from('membership')->whereColumn('membership.user_id', 'users.id')->first();}, 'pr')->get();
+        User::where('income', '<=', function (Builder $query){})->get();
+        DB::table('users')->whereFullText('bio', 'web developer')->get(); // supported in mariadb, mysql, postgres.
+        
     }
 
     //* Can apply only after getting the collection:
