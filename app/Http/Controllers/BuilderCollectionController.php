@@ -313,12 +313,17 @@ class BuilderCollectionController {
             'updated_at' => now(), // Manually required
         ]); // If duplicate entry, will throw error. If dont want error, use: insertOrIgnore()
         //* Mass Bulk Insert: Can pass multiple rows and it will perform using single query, thats the real use case. Exmp: Importing from excel.
+        DB::table('users')->insert([
+            ['email' => 'picard@example.com', 'votes' => 0],
+            ['email' => 'janeway@example.com', 'votes' => 0],
+        ]);
         // Insert and immediately get the primary Key:
         $id = DB::table('orders')->insertGetId([
             'total' => 99.99,
             'user_id' => 1
         ]);
         // If 10,000 rows, can get error- use chunk/lazy and insert combined.
+        // insertUsing(): Insert while using a subquery as condition.
 
         //* Replicating models:
         // Particularly useful when you have model instances that share many of the same attributes.
@@ -349,8 +354,31 @@ class BuilderCollectionController {
             ], uniqueBy: ['departure', 'destination'], update: ['price']);
         // MariaDB and MySQL database drivers ignore the second argument of the upsert method and always use the "primary" and "unique" indexes of the table to detect existing records.
 
+        // updateOrInsert(): will attempt to locate a matching database record using the first argument's column and value pairs.
+        // If the record exists, it will be updated with the values in the second argument. 
+        // ->updateOrInsert( ['email' => 'john@example.com', 'name' => 'John'],  ['votes' => '2']);
+        DB::table('users')->updateOrInsert(
+            ['user_id' => $user_id],
+                fn ($exists) => $exists ? [
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                ] : [
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'marketable' => true,
+            ],
+        );
+
         // Update an array key casted from json column:
         $user->update(['options->key' => 'value']);
+
+        // Increment Decrement:
+        DB::table('users')->increment('votes');
+        DB::table('users')->increment('votes', 5);
+        DB::table('users')->decrement('votes', 5);
+        DB::table('users')->increment('votes', 1, ['name' => 'John']); // Increment vote and update name
+        DB::table('users')->incrementEach(['votes' => 5, 'balance' => 100,]); // multiple columns. decrementEach()
+
 
         //* Examining Attribute Changes:
         $flight->isDirty(); // If any of the model's attributes have been changed since the model was retrieved. 
@@ -473,7 +501,83 @@ class BuilderCollectionController {
         User::where(function (Builder $query){$query->select('type')->from('membership')->whereColumn('membership.user_id', 'users.id')->first();}, 'pr')->get();
         User::where('income', '<=', function (Builder $query){})->get();
         DB::table('users')->whereFullText('bio', 'web developer')->get(); // supported in mariadb, mysql, postgres.
-        
+
+        // Ordering:
+        DB::table('users')->orderBy('name', 'desc')->get();
+        // Can sort by multiple columns using orderBy() again.
+        // Sort direction is optional, ascending by default. Thats why there is orderByDesc(), but not orderByAsc.
+        // Json Column: ->orderBy('location->state')
+        DB::table('users')->inRandomOrder()->get(); // Randomly.
+        DB::table('users')->orderBy('name')->reorder('name', 'desc')->get(); // Remove previos order.
+        DB::table('users')->orderBy('name')->reorder('name', 'desc')->get(); // Remove previos order and add new.
+        // reorderDesc()
+
+        // Grouping:
+        DB::table('users')->groupBy('account_id')->having('account_id', '>', 100)->get();
+        // havingBetween('number_of_orders', [5, 15])
+        // Multiple Column: groupBy('first_name', 'status')
+        $users = DB::table('users')->offset(10)->limit(5)->get();
+        // Offset: Skip the first 10 rows of the result set.
+        // Limit: Maximum of 5 rows after the offset has been applied.
+
+        // Conditional where"
+        DB::table('users')->when($role, function (Builder $query, string $table){
+            $query->where('role_id', $role);
+        }); // If $role is true then execute the closure.
+        // We can pass third argument as closure, when role will be false that closure will be called.
+
+        // Pessimistic Locking:
+        // Pessimistic Locking is a concurrency control strategy based on the assumption that "something will probably go wrong"—specifically, that multiple users will try to update the same piece of data at the exact same time.
+        // sharedLock(): A shared lock prevents the selected rows from being modified until your transaction is committed
+        // lockForUpdate(): A "for update" lock prevents the selected records from being modified or from being selected with another shared lock
+        // Example: There is only one physical seat, but thousands of people are clicking "Buy" at the exact same moment.
+        // While the system is checking your account and calculating the price, another process (like an admin) might try to "deactivate" that seat for maintenance.
+        // sharedLock apply: Both can read, but admin cant delete or update ntil your price calculation is finished.
+        // Both user doing payment for the ticked. lockForUpdate apply():
+        // When Alice’s request hits the server, the database "grabs" Seat 42A and puts it in a vault. When Bob’s request arrives a millisecond later, the database tells him: "Wait. This row is being modified."
+        DB::transaction(function () use ($seatId, $userId) {
+            
+            // 1. USE LOCK FOR UPDATE
+            // We lock the seat immediately so no one else can start a purchase for it.
+            $seat = Seat::where('id', $seatId)
+                        ->lockForUpdate() 
+                        ->first();
+
+            // 2. Check if it was already sold while we were waiting for the lock
+            if ($seat->status === 'sold') {
+                throw new \Exception("This seat is no longer available.");
+            }
+
+            // 3. USE SHARED LOCK
+            // We check the user's balance. We don't want their balance to change 
+            // (e.g., from another purchase) while we are processing this.
+            $user = User::where('id', $userId)
+                          ->sharedLock()
+                          ->first();
+
+            if ($user->balance < $seat->price) {
+                throw new \Exception("Insufficient funds.");
+            }
+
+            // 4. Perform the logic
+            $user->decrement('balance', $seat->price);
+            $seat->update(['status' => 'sold', 'user_id' => $userId]);
+
+            return "Ticket purchased successfully!";
+        });
+
+        // Debugging:
+        DB::table('users')->where('votes', '>', 100)->dd();
+        // dump(), dumpRawSql(), ddRawSql()
+
+        // Reusable Query:
+        // If we have same query applied in multiple places, we can make a central place for it using tap and pipe.
+        // See Scopes/DestinationFilter and finally use it anywhere:
+        // tap return the query build, if we want to extract an object  that executes the query and returns another value, use pipe.
+        DB::table('flights')->tap(new DestinationFilter($destination))->pipe(new Paginate)->orderByDesc('id')->get(); 
+        // Tap: Pass the query to this class, let it do something, but then give me back the query so I can keep going.
+        // Pipe: Pass the query to this class, and whatever that class returns is the new value of this chain.
+        // If we use tap for Paginate, and if call get() now, will get all the flights from the database, not a paginated list.
     }
 
     //* Can apply only after getting the collection:
