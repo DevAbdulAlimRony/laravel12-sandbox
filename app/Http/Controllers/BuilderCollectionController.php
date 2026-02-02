@@ -601,5 +601,37 @@ class BuilderCollectionController {
         $collection->after(3, strict: true);
         $collection->after(function(int $item, int $key){return $item >5}); // Search items greater than 5 and then return the next item of them.
         // Same goes for before.
+
+        collect([1, 2, 3, 4, 5, 6, 7])->chunk(4); // [[1, 2, 3, 4], [5, 6, 7]]
+        // Can use in blade views to make responsive grid system.
+        // chunkWhile()
+
+         collect([ [1, 2, 3],  [4, 5, 6],])->collapse(); // [1, 2, 3, 4, 5, 6]
+         // collapseWithKeys(): ['first'  => [1, 2, 3], 'second' => [4, 5, 6]]
+         collect(['products' => ['desk' => ['price' => 100]]])->dot(); // ['products.desk.price' => 100]
+
+         LazyCollection::make(function () { yield 1; yield 2; })->collect()->all();
+         // The collect method is especially useful when you have an instance of Enumerable and need a non-lazy collection instance. 
+         
+         collect(['name', 'age'])combine(['George', 29]); // ['name' => 'George', 'age' => 29]
+         collect(['John Doe'])concat(['Jane Doe'])->concat(['name' => 'Johnny Doe']); // ['John Doe', 'Jane Doe', 'Johnny Doe']
+         
+         collect(['name' => 'Desk', 'price' => 100])->contains('Desk'); 
+         // Can pass callback: contains(function (int $value, int $key) {}
+         // Can pass key value pair: contains('product', 'Bookcase')
+         // Contains do loose comparison, can use: containsStict()
+         // Reverse: doesntContain(), doesntContainStrict()
+         collect([])->containsManyItems(); // false. when aray contains multiple items then true.
+         collect(['a', 'b', 'a', 'c', 'b'])->duplicates(); // [2 => 'a', 4 => 'b']. 
+         // Can pass key: duplicates('emails'). duplicatesStrict().
+         // count(): Total Number of Items.
+         // countBy(): Counts the occurrences of values in the collection.
+         collect([1, 2, 2, 2, 3])->countBy(); // [1 => 1, 2 => 3, 3 => 1]
+         // Can pass closure. countBy(function (string $email). Output:  ['gmail.com' => 2, 'yahoo.com' => 1]
+         // crossJoin()
+
+         $collection->dd(); // dump(). dd stops the execution, dump dont.
+         collect([1, 2, 3, 4, 5])->diff([2, 4, 6, 8]); // Compare with collection or array. [1, 3, 5]
+         // diffAssoc(), diffAssocUsing(), diffkeys()
     }
 }
