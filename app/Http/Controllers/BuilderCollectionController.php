@@ -580,7 +580,7 @@ class BuilderCollectionController {
         // If we use tap for Paginate, and if call get() now, will get all the flights from the database, not a paginated list.
     }
 
-    //* Can apply only after getting the collection:
+    //* Can apply only after getting the collection or to get collection instance:
     public function collectionMethods(){
         // Collection class provides a fluent, convenient wrapper for working with arrays of data.
         // So that we can chain up other methods of collection instance.
@@ -589,14 +589,38 @@ class BuilderCollectionController {
         $collection  = collect([1, 2, 3]); // Return a Collection instance.
         // The results of Eloquent queries are always returned as Collection instances.
 
+        // Checking Type:
+        $collection->ensure(User::class);
+        $collection->ensure([User::class, Customer::class]); // Any of type from the array.
+        $collection->ensure('int');
+        // If not that type, throw UnexpectedValueException.
+
+        $collection->has('product'); // Check if key exists.
+        $collection->has(['product', 'amount']);
+        $collection->hasAny(['product', 'price']);
+        collect(['1'])->hasSole(); // true, only one item.
+        collect([1, 2, 3])->hasSole(fn (int $item) => $item === 2);
+        collect([])->hasMany(); // false, true if contains multiple items.
+        collect([1, 2, 3])->hasMany();
+        // hasMany(fn ($item) => $item['age'] === 2)
+
         // Collections are macroable, we can add additional custom methods of our own. 
         // We should declare a collection macro in a service provider's boot, see AppServiceProvider.
 
         //* Available Methods:
         // All of these methods may be chained to fluently manipulate the underlying array.
         // Almost every method returns a new Collection instance, allowing us to preserve the original copy of the collection when necessary.
-        $collection->all(); // Returns the underlying array represented by the collection: [1, 2, 3]
-        collect([['foo' => 10], ['foo' => 10]])->avg('foo'); // Average for the given key. can use average() also.
+        $collection->all(); // Returns the underlying array represented by the collection: [1, 2, 3]. Like filter()->all(), if only filter it will return collecton instance.
+        $collection->only(['name', 'price']); // Return only those keys.
+        $collection->except(['price', 'discount']); // Return except those keys.
+        $collection->forget('name'); // Remove item by key.
+        collect([1, 2, 3, 4, 5, 6, 7, 8, 9])->forPage(2, 3); // [4, 5, 6]. 2 is the page number, 3 items per page.
+        Collection::fromJson($json); // Create collection from json string.
+
+        $collection->get('name');
+        $collection->get('age', 34); // Second argument is default value if not found.
+        $collection->get('email', function () { return 'taylor@example.com';}); // Callback as the defult value.
+        
         $collection->after(3); // 4. Item after a item, if not return null.
         $collection->after(3, strict: true);
         $collection->after(function(int $item, int $key){return $item >5}); // Search items greater than 5 and then return the next item of them.
@@ -613,8 +637,9 @@ class BuilderCollectionController {
          LazyCollection::make(function () { yield 1; yield 2; })->collect()->all();
          // The collect method is especially useful when you have an instance of Enumerable and need a non-lazy collection instance. 
          
-         collect(['name', 'age'])combine(['George', 29]); // ['name' => 'George', 'age' => 29]
-         collect(['John Doe'])concat(['Jane Doe'])->concat(['name' => 'Johnny Doe']); // ['John Doe', 'Jane Doe', 'Johnny Doe']
+         collect(['name', 'age'])->combine(['George', 29]); // ['name' => 'George', 'age' => 29]
+         collect(['John Doe'])->concat(['Jane Doe'])->concat(['name' => 'Johnny Doe']); // ['John Doe', 'Jane Doe', 'Johnny Doe']
+         collect(['name' => 'Taylor', 'framework' => 'Laravel'])->flip(); // ['Taylor' => 'name', 'Laravel' => 'framework']
          
          collect(['name' => 'Desk', 'price' => 100])->contains('Desk'); 
          // Can pass callback: contains(function (int $value, int $key) {}
@@ -624,6 +649,8 @@ class BuilderCollectionController {
          collect([])->containsManyItems(); // false. when aray contains multiple items then true.
          collect(['a', 'b', 'a', 'c', 'b'])->duplicates(); // [2 => 'a', 4 => 'b']. 
          // Can pass key: duplicates('emails'). duplicatesStrict().
+         
+         collect([['foo' => 10], ['foo' => 10]])->avg('foo'); // Average for the given key. can use average() also.
          // count(): Total Number of Items.
          // countBy(): Counts the occurrences of values in the collection.
          collect([1, 2, 2, 2, 3])->countBy(); // [1 => 1, 2 => 3, 3 => 1]
@@ -631,7 +658,135 @@ class BuilderCollectionController {
          // crossJoin()
 
          $collection->dd(); // dump(). dd stops the execution, dump dont.
+
          collect([1, 2, 3, 4, 5])->diff([2, 4, 6, 8]); // Compare with collection or array. [1, 3, 5]
          // diffAssoc(), diffAssocUsing(), diffkeys()
+
+         $collection->each(function (int $item, int $key) {}); // Return false for any condition if want to stop the execution.
+         // foreach is core feature, each is collection feature in object oriented way that provides chaining.
+         collect([['John Doe', 35], ['Jane Doe', 33]])->eachSpread(function (string $name, int $age) {}); // For nested values.
+        
+         $collection->every(function (int $value, int $key){ return $value > 2;}); // If all elements pass the test.
+         // If collection is empty, every returns true.
+         $collection->first(function (int $value, int $key){ return $value > 2;}); // First item that passes the test.
+         // Can call just first() to get the first element, if no element null returnted.
+         // Same goes for firstOrFail(): Throws ModelNotFoundException if no element found.
+         $collection->firstWhere('status', 'active'); // First item where key value match
+         $collection->firstWhere('age', '>=', 18);
+         $collection->firstWhere('age'); // If value is truthy.
+         
+         $collection->filter(function (int $value, int $key) { return $value > 2;}); // Return only those items that pass the test.
+         // If no callback is supplied, all entries of the collection that are equivalent to false will be removed
+         collect([1, 2, 3, null, false, '', 0, []])->filter()->all(); // [1, 2, 3]
+         // reject(): Opposite of filter.
+         
+         collect([['name' => 'Sally'],['school' => 'Arkansas'],['age' => 28]])->flatMap(function (array $values) {return array_map('strtoupper', $values);}); // Map and flatten one level- ['name' => 'SALLY', 'school' => 'ARKANSAS', 'age' => '28']
+         $collection->flatten(); // Flatten multi-dimensional collection into a single level.
+         $collection->flatten(1); // Flatten only one level of depth.
+
+         $collection->groupBy('account_id'); // Groups the collection's items by a given key
+         $collection->groupBy(function (array $item, int $key) {return substr($item['account_id'], -3);}); // Group by last three characters of account_id.
+         $data->groupBy(['skill', function (array $item) {return $item['roles'];}], preserveKeys: true); // Multiple level grouping.
+
+         //* Higher Order Messages:
+         // Performing common actions on collections
+         // They allow you to call methods directly on the collection as if We were calling them on each individual item inside that collection.
+         // Usually, if you want to perform an action on every object in a collection, you’d use a closure. Higher Order Messages replace that closure with a property-like call.
+         $users = User::where('votes', '>', 500)->get();
+         $users->each->markAsVip(); // Rather than using closure- each(function ($vipUser) { $vipUser->markAsVip(); });
+         $users->sum->votes;
+         // Supported Methods: average, avg, contains, each, every, filter, first, flatMap, groupBy, keyBy, map, max, min, partition, reject, skipUntil, skipWhile, some, sortBy, sortByDesc, sum, takeUntil, takeWhile, and unique.
+         // Exmp: $users->max->age, $users->contains->is_admin, $employees->every->is_on_vacation, $posts->filter->is_published, $tasks->reject->is_completed, $orders->unique->customer_id
+         // $books->sortBy->release_date, $tickets->sortByDesc->priority_level, $students->groupBy->graduating_year, $logs->skipUntil->is_error, $uploads->takeWhile->is_small_file etc.
+    }
+
+    public function lazyCollectionMethods(){
+         // If you try to process a 500MB CSV or 100,000 Eloquent records, your PHP script will likely hit the memory limit and crash.
+         // the LazyCollection class leverages PHP's generators to allow US to work with very large datasets while keeping memory usage low.
+         // They achieve this by loading and processing items only as they are needed, rather than loading.
+         $lazy = LazyCollection::make(function() {
+            $handle = fopen('huge_production.log', 'r');
+            while (($line = fgets($handle)) !== false) {
+                yield $line;
+            }
+         }); // Now can chain up collection methods on it.
+         $lazy->filter()->each(function ($line) {
+            // Process the line...
+         });
+
+         // LazyCollection::times(INF): Creating an infinite mathematical sequence.
+         $infinite = LazyCollection::times(INF)->map(function ($number) {
+                return $number * 9;
+          });
+          // It doesn't actually try to create an infinite array in memory (which would crash your server instantly)
+          // Instead, it creates a generator that will keep spitting out numbers (1,2,3,4,…) forever, or until you manually tell it to stop.
+         
+                  // Real life Use Cases of Lazy Collection: Processing massive log files, Large Database Exports, Huge CSV Imports
+        // Aggregating Data from an External API:
+        $allOrders = LazyCollection::make(function () {
+            $page = 1;
+            while ($page !== null) {
+                $response = Http::get("https://api.service.com/orders?page={$page}")->json();
+        
+                foreach ($response['data'] as $order) {
+                    yield $order;
+                    // The foreach loop starts. When it hits yield $order;, it "pauses" the loop and hands that one order to the sum() method.
+                    // sum() adds that order's price to its total and asks for the next item.
+                }
+
+                $page = $response['next_page_url'] ? $page + 1 : null;
+                // Once the first 50 orders are processed, the foreach ends. The while loop continues, increments the page, and makes the next API call for Page 2.
+            }
+        });
+        // The API is only called as you iterate
+        $totalValue = $allOrders->sum('price');
+         
+         // The query builder's cursor or lazy method returns a LazyCollection instance.
+         // Imagine, need to iterate through 10,000 Eloquent models:
+         foreach (User::cursor() as $user) {
+                // Process the user...
+         }
+         
+          // We can use normal collection's almost every methods on LazyCollection instance.
+          // Additionally, LazyCollection provides some methods that are specifically designed for working with large datasets:
+         
+         // takeUntilTimeout(): Allows the collection to keep processing items as fast as possible, but the moment the clock hits your limit, it gracefully stops the loop and lets the script finish.
+         // You might have a background job that is allowed to run for exactly 60 seconds before the server kills the process or the queue times out.
+         // Imagine you have 100,000 customers to email. Your server has a strict 5-minute execution limit for cron jobs.
+         // If you use a standard foreach, the server might kill the script at the 5-minute mark exactly while it's in the middle of talking to the email provider, potentially causing errors or double-sending.
+         User::lazy()
+               ->takeUntilTimeout(Carbon::now()->addMinutes(4))
+               ->each(function ($user) {
+                    $user->sendDailyReport();
+        });
+
+        // tapEach: tapEach() allows you to perform an action (like logging, debugging, or updating a progress bar) for every single item in the LazyCollection as it is being iterated, without changing the item itself or affecting the rest of the chain.
+        $lazy->tapEach(fn ($row) => Log::info("Processing: " . $row['id']))->filter(fn ($row) => $row['price'] > 100)->tapEach(fn ($row) => Log::info("Passed filter: " . $row['id']))->collect();
+        // each() terminates the chain but tapEach() not, ecah() to perform the final action while tapEach() to peek or perform side effcts, eah() runs emmidiately when tapEach() run only when the data is finally requested.
+        
+        // throttle: seful for situations where you may be interacting with external APIs that rate limit incoming requests
+        // User::where()->cursor()->throttle(seconds: 1)
+
+        // remember():
+        $users = User::cursor()->remember(); // No query has been executed yet...
+        $users->take(5)->all(); // Query executed, The first 5 users are hydrated from the database...
+        $users->take(20)->all(); // First 5 users come from the collection's cache, rests are hydrated from databse.
+
+        // withHearBeat: Useful for long-running operations that require periodic maintenance tasks, such as extending locks or sending progress updates
+        // A Heartbeat is a signal sent at regular intervals to indicate that a program is still performing its task and hasn't crashed or frozen.
+        // Imagine you are running a background job to sync thousands of products to an external Marketplace API.
+        User::lazy()->withHeartBeat(seconds: 30, function () {
+            // Extend a lock, send a progress update, or perform any other periodic task...
+        })->each(function ($user) {
+            // Sync the user to the external service...
+        });
+
+        // chunk(): Not a LazyCollection, return type boolean, Multiple queries (Batches), Memory usgae Low (Current batch), Can not chain.
+        // lazy(): return LazyCollection, Multiple queries (Batches), memory usage Low (Current batch), Chainable.
+        // cursor(): return LazyCollection instance, Single query (Streamed), Memory usgae Lowest (1 Model), Can chain.
+        // Use chunk() if you just need to update records and don't care about returning or chaining a collection.
+        // Use cursor() if you have a massive table, you aren't doing other DB queries inside the loop, and you want the absolute minimum memory footprint.
+        // Use lazy() if you want the best of both worlds: memory safety via chunking, but the ability to use Higher Order Messages and chain methods like ->filter() and ->map().
+        // LazyCollection::make() is the "manual" version used for everything else. You use it when your data source is not a Laravel model.    
     }
 }
