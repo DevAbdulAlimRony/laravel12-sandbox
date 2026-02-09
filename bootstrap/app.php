@@ -163,4 +163,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // can use if else condition to make Lottery
         // Can apply Rate Limiting also.
     })
+    ->withEvents(discover: [
+        // __DIR__.'/../app/Domain/Orders/Listeners',
+        __DIR__.'/../app/Domain/*/Listeners', // Multiple similar dirctories.
+    ])
     ->create();

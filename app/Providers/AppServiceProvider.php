@@ -279,6 +279,18 @@ class AppServiceProvider extends ServiceProvider
             info("Attempted to lazy load [{$relation}] on model [{$class}].");
         });
 
+        //* Listening Event Manually:
+        Event::listen(PodcastProcessed::class, SendPodcastNotification::class); // (Eventname, ListenerName)
+        // Rather than class, we can define closure based listener:
+        Event::listen(function (PodcastProcessed $event) {});
+        // Execute Listener using queue: Event::listen(queueable(function (PodcastProcessed $event)
+        // Event::listen(queueable(function (PodcastProcessed $event){})->onConnection('redis')->onQueue('podcasts')->delay(now()->plus(seconds: 10)))
+        // If queue failed, can chain catch: ->catch(function (PodcastProcessed $event, Throwable $e)
+        // Catch multiple listener using * as a wildcard parameter: Event::listen('event.*', function (string $eventName, array $data).
+
+        //* Manually Registering Event Subscriber:
+        Event::subscribe(UserEventSubscriber::class);
+
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.
         // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 
