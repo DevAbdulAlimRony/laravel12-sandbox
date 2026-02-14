@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Podcast;
+use App\Services\AudioProcessor;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
+
+class ProcessPodcast implements ShouldQueue, ShouldBeUnique
+{
+    use Queueable;
+
+    // Create a new Job Instance,
+    public function __construct(
+        // If different queue: $this->onQueue('processing'). Or call onQueue before dispatch if controller.
+        // Same goes for connection: $this->onConnection('sqs')
+
+        public Podcast $podcast, // Can pass eloquent model because of Queueable trait.
+        // Eloquent models and their loaded relationships will be gracefully serialized and unserialized when the job is processing.
+        // Can access the model's properties and relationships as usual when the job is processed. $podcast->title.
+        
+        // Binary data, such as raw image contents, should be passed through the base64_encode function before being passed to a queued job, if not serialization wont be perfect.
+    ) 
+    {
+        // Because all loaded Eloquent model relationships also get serialized when a job is queued, the serialized job string can sometimes become quite large.
+        // Dont load any relationship: $this->podcast = $podcast->withoutRelations();
+        // If use constructor property pomotion without relationship, just above the Podcast $podcast property: #[WithoutRelations]
+        // If we inject multiple model, we can call #[WithoutRelations] above ProcessPodcast class to serialize all models without relationships.
+    }
+
+    // Execut the Job
+    // we are able to type-hint dependencies on the handle method of the job, automatic binding.
+    public function handle(AudioProcessor $processor): void
+    {
+        // Implementation here...
+
+        // Job Chaining: See Queue controller. 
+        $this->prependToChain(new TranscribePodcast); // Run job immediately after current job
+        $this->appendToChain(new TranscribePodcast);
+    }
+
+    //* Unique Job: 
+    // In a standard queue, if a user clicks a button 10 times, the queue will process that task 10 times.
+    // Usually, that's fine. But sometimes, duplicate tasks cause "race conditions," data corruption, or wasted server resources.
+    // A Unique Job is a specific type of Laravel queue job that ensures only one instance of that job is waiting in the queue at any given time.
+    // If you try to dispatch the same job multiple times with the same parameters, Laravel will look at the queue and say, "Wait, I'm already planning to do this. I'll ignore this new request."
+    // Unique jobs require a cache driver that supports locks. 
+    // memcached, redis, dynamodb, database, file, and array cache drivers support atomic locks.
+    //* use shouldBeUnique interface.
+    // Can define duration:
+    public $uniqueFor = 3600;
+    // Can define uniqueness key:
+    public function uniqueId(): string
+    {
+        return $this->podcast->id;
+    }
+    // Unique jobs are "unlocked" after a job completes processing or fails all of its retry attempts. 
+    // Unlock immediately before it is processed: implements ShouldBeUniqueUntilProcessing interface.
+    // If we want to handle unique job locking using another drive rather than default cache driver:
+    public function uniqueVia(): Repository
+    {
+        return Cache::driver('redis');
+    }
+
+    //* Encrypted Job:
+    // To ensure privacy and security, Laravel allows you to encrypt the data of your queued jobs. This means that the job's payload is encrypted before being stored in the queue and decrypted when the job is processed.
+    //  implements ShouldQueue, ShouldBeEncrypted
+
+    //* Job Middleware:
+    public function middleware(): array{
+        // Rate Limiting:
+        // Set Rate Limitter in a ServiceProvider, let'sa say backupus.
+        // Each time the job exceeds the rate limit, this middleware will release the job back to the queue with an appropriate delay based on the rate limit duration
+        return [new RateLimited('backups')->releaseAfter(60)];
+        // Can use tries, retryUntil method, and maxExceptions properties, releaseAfter( elapse before the released job will be attempted again)
+        // If we dont want retries: ->dontRelease()
+        // Fine tuned for redis: [new RateLimitedWithRedis('backups')
+        // Can use ->connection('limiter') also to specify which redis connection.
+
+        // Preventing Overlaps:
+        // Helpful when a queued job is modifying a resource that should only be modified by one job at a time.
+        // Let's say want to prevent credit score update job overlaps for the same user ID.
+        return [new WithoutOverlapping($this->user->id)]; // Can use releaseAfterr()
+        // new WithoutOverlapping($this->order->id))->dontRelease(): Immediately delete any overlapping jobs so that they will not be retried.
+        // If unexpectedly cant atomic lock feature failed: ->expireAfter(180)
+        // By default, it will only prevent overlapping jobs of the same class. . But we can do for multiple class:
+        // (new WithoutOverlapping("status:{$this->provider}"))->shared()
+
+        // Throttle:
+        // Useful when: Throttling is a way to limit how many times an action can be performed within a specific timeframe.
+        // Imagine a queued job that interacts with a third-party API that begins throwing exceptions again and again.
+        return [new ThrottlesExceptions(10, 5 * 60)]; // implement retryUntil() method also
+        // ->backOff(5): Number of minutes such a job should be delayed.
+        // ->by('key'): share a common throttling "bucket" ensuring they respect a single shared limit
+        // ->when(fc()): dont throw every exception, just what when specifies.
+        // Delete the job entirely when a given exception occurs: ->deleteWhen(CustomerDeletedException::class)]
+        // ->report(fn()): Report throttled exception using app's exception handler.
+        // For Redis: new ThrottlesExceptionsWithRedis(10, 10 * 60). Can use connection() also.
+
+        // Skipping Jobs:
+        // Skip or Delete the Job when specific condition meets:
+        return [Skip::when($condition)]; // Skip::unless(). Can pass callback for condition.
+    }
+
+    public function retryUntil(): DateTime
+    {
+        return now()->plus(minutes: 30);
+    }
+
+    //* Max Attempts:
+    // When a job is dispatched, it is pushed onto the queue. A worker then picks it up and attempts to execute it. This is a job attempt.
+    // Job can be successful, can encounter exception, can release, can fails or withOutOverlappings, can be timed out.
+    // We can specify how many times or for how long a job may be attempted.
+    // php artisan queue:work --tries=3
+    // If a job exceeds its maximum number of attempts, it will be considered a "failed" job. 
+}
