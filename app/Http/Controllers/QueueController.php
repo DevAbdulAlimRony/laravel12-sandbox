@@ -31,6 +31,7 @@ class QueueController {
     // If any default delay have like Amazon SQS have max 15 mins delay, we can ignore it: ->withoutDelay().
 
     // Synchronous dispatching:
+    // Do not need to run worker for them, cause they process jobs within the current PHP process.
     ProcessPodcast::dispatchSync($podcast); // Dispatch a job immediately.
     // Job will not be queued and will be executed immediately within the current process.
     RecordDelivery::dispatch($order)->onConnection('deferred'); // Synchronous but in background after sending response to the user.
@@ -52,4 +53,50 @@ class QueueController {
     // Chain Failures: ->catch(function (Throwable $e) {}
     // $this->delete() method within the job will not prevent chained jobs from being processed.
     // The chain will only stop executing if a job in the chain fails.
+
+    // SQS FIFO Calling:
+    ProcessOrder::dispatch($order)->onGroup("customer-{$order->customer_id}");
+
+    //* Job Batching:
+    // Execute a batch of jobs and then perform some action when the batch of jobs has completed executing.
+    // php artisan make:queue-batches-table
+    // Use Batchable trait in job class.
+    // When running multiple queue workers, the jobs in the batch will be processed in parallel.
+    $batch = Bus::batch([new ImportCsv(1, 100), new ImportCsv(101, 200), 
+                new ImportCsv(201, 300)
+    ])->before(function (Batch $batch){
+        // The batch has been created but no jobs have been added...
+    })->progress(function (Batch $batch) {
+        // A single job has completed successfully...
+    })->then(function (Batch $batch) {
+        // All jobs completed successfully...
+    })->catch(function (Batch $batch, Throwable $e) {
+        // Batch job failure detected...
+    })->finally(function (Batch $batch) {
+        // The batch has finished executing...
+    })
+    ->name('Import CSV')// Name will be used in Horizon, telescope etc.
+    ->allowfailures(); // By default, When a job within a batch fails, Laravel will automatically mark the batch as "cancelled". allowFailures prevents this.
+    // Can use callback: allowFailures(function (Batch $batch, $exception) 
+    ->dispatch();
+    // Do not use $this in callbacks, database statements that trigger implicit commits should not be executed within the jobs.
+    // Can use: onConnection(), onQueue() etc. before dispatching.
+    // Chaining: Bus::batch([..jobs], [..other jobs])
+    // Bus::chain(new Job1, Bus::batch([new Job2()]), Bus::batch());
+    // Inspecting Batch: $batch->id (uuid of the batch), ->name, ->totalJobs, ->pendingJobs, ->failedJobs, ->processedJobs(), ->cancel(), ->cancelled(), ->finished(), ->progress().
+
+    // Retrying Failed Batch Jobs: php artisan queue:retry-batch 32dbc76c-4f82-4749-b610-a639fe0099b5
+
+    //* Pruning Batches:
+    // By default, all finished batches that are more than 24 hours old will be pruned. Customize it:
+    // Schedule a command: Schedule::command('queue:prune-batches --hours=48')->daily();
+    // Prune unfinished job which failed and never retries successfully: command('queue:prune-batches --hours=48 --unfinished=72')
+    // Prune Cancelled Batches: command('queue:prune-batches --hours=48 --cancelled=72')
+
+    //* Storing batches in DynamoDB:
+    // The job_batches table should have a string primary partition key named application and a string primary sort key named id. 
+    // For automatic batch pruning, may define ttl attribute.
+    // Install the AWS SDK: composer require aws/aws-sdk-php
+    // Set the queue.batching.driver configuration option's value to dynamodb.
+    // Define key, secret, and region configuration options within the batching configuration array.
 }

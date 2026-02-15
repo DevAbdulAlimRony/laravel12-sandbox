@@ -16,6 +16,8 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
 {
     use Queueable;
 
+    use Batchable; // Make a job as batchable.
+
     // Create a new Job Instance,
     public function __construct(
         // If different queue: $this->onQueue('processing'). Or call onQueue before dispatch if controller.
@@ -43,6 +45,27 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         // Job Chaining: See Queue controller. 
         $this->prependToChain(new TranscribePodcast); // Run job immediately after current job
         $this->appendToChain(new TranscribePodcast);
+
+        // When a job exception thrown, it will be released ack onto the queue until max attempts meet.
+        // Manually release a job:
+        $this->release();
+        $this->release(10); // 10s before it will be attempted again.
+
+        // Manually failing a job:
+        $this->fail();
+        $this->fail(new Exception('Something went wrong'));
+
+        // Work with Batchable Job:
+        if() {$this->batch()->cancel();}
+        if($this->batch()->cancelled()){
+            return;
+        }
+        
+
+        // Can call another job belongs to the same job, useful when we need so many bacthes.
+        $this->batch()->add(Collection::times(1000, function () {
+            return new ImportContacts;
+        }));
     }
 
     //* Unique Job: 
@@ -106,6 +129,11 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         // Skipping Jobs:
         // Skip or Delete the Job when specific condition meets:
         return [Skip::when($condition)]; // Skip::unless(). Can pass callback for condition.
+
+        return [new SkipIfBatchCancelled]; // Skip the job if its batch has been cancelled.
+
+        // Failing Jobs on Specific Exceptions:
+        return [new FailOnException([AuthorizationException::class])];
     }
 
     public function retryUntil(): DateTime
@@ -118,5 +146,43 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
     // Job can be successful, can encounter exception, can release, can fails or withOutOverlappings, can be timed out.
     // We can specify how many times or for how long a job may be attempted.
     // php artisan queue:work --tries=3
-    // If a job exceeds its maximum number of attempts, it will be considered a "failed" job. 
+    // If a job exceeds its maximum number of attempts, it will be considered a "failed" job.
+    public $tries = 5; // Max attempts before it fails. Can also define retryUntil() method to specify how long a job may be attempted.
+    // or get dynamic control:
+    public function tries(): int{
+        return 5;
+    }
+    public function retryUntil(): DateTime{
+        return now()->addMinutes(30);
+    }
+    // If tries() and retryUntil() both exist, retryUntil() will take precedence.
+
+    public $maxExceptions = 3; // Should fail if the retries are triggered by a given number of unhandled exceptions.
+    
+    // By default, the timeout value is 60 seconds, how long you expect your queued jobs to take.
+    // Custom timeout: php artisan queue:work --timeout=30. or,
+    public $timeout = 120;
+    // The PCNTL PHP extension must be installed in order to specify job timeouts.
+    // For IO blocking processes such as sockets or outgoing HTTP connections  like Guzzle, should always attempt to specify a timeout using their APIs as well.
+    
+    // By default, when a job times out, it consumes one attempt and is released back to the queue (if retries are allowed). 
+    public $failOnTimeout = true; // Mark as failed job if timeout.
+
+    //* SQS FIFO:
+    // Laravel supports Amazon SQS FIFO (First-In-First-Out) queues, allowing
+    // Strict Ordering: Jobs are processed exactly in the order they were sent.
+    // Exactly-Once Processing: It automatically removes duplicate jobs (de-duplication) within a 5-minute window.
+    // Imagine user deposite 100Taka and withdrw 50 taka. If we have multiple workers, withdraw might be start processing first and it will be problematic.
+     public function deduplicationId(): string
+     {
+        return "renewal-{$this->subscription->id}";
+     }
+     // When call(This is where SQS FIFO called): ->onGroup('invoices')->withDeduplicator(fn () => 'invoices-'.$invoice->id);
+     // For FIFO event listener, define messageGoup(), duplicationId() in listener.
+
+     //* Failover:
+     // If one connection failed, another connection will be used, this ensures high availability in production.
+     // In config/queue.php, specify the failover driver  and provide an array of connection names to attempt in order.
+     // In .env, QUEUE_CONNECTION=failover.
+     // php artisan queue:work redis, php artisan queue:work database.
 }

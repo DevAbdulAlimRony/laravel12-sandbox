@@ -625,6 +625,7 @@ class BuilderCollectionController {
         $collection->ensure('int');
         // If not that type, throw UnexpectedValueException.
 
+        $collection->isEmpty(); // isNotEmpty()
         $collection->has('product'); // Check if key exists.
         $collection->has(['product', 'amount']);
         $collection->hasAny(['product', 'price']);
@@ -650,7 +651,8 @@ class BuilderCollectionController {
         $collection->get('name');
         $collection->get('age', 34); // Second argument is default value if not found.
         $collection->get('email', function () { return 'taylor@example.com';}); // Callback as the defult value.
-        
+        $collection->keys(); // Return all keys.
+
         $collection->after(3); // 4. Item after a item, if not return null.
         $collection->after(3, strict: true);
         $collection->after(function(int $item, int $key){return $item >5}); // Search items greater than 5 and then return the next item of them.
@@ -704,6 +706,7 @@ class BuilderCollectionController {
          $collection->firstWhere('status', 'active'); // First item where key value match
          $collection->firstWhere('age', '>=', 18);
          $collection->firstWhere('age'); // If value is truthy.
+         // last(): Returns the last element in the collection that passes a given truth test.
          
          $collection->filter(function (int $value, int $key) { return $value > 2;}); // Return only those items that pass the test.
          // If no callback is supplied, all entries of the collection that are equivalent to false will be removed
@@ -728,6 +731,23 @@ class BuilderCollectionController {
          // Supported Methods: average, avg, contains, each, every, filter, first, flatMap, groupBy, keyBy, map, max, min, partition, reject, skipUntil, skipWhile, some, sortBy, sortByDesc, sum, takeUntil, takeWhile, and unique.
          // Exmp: $users->max->age, $users->contains->is_admin, $employees->every->is_on_vacation, $posts->filter->is_published, $tasks->reject->is_completed, $orders->unique->customer_id
          // $books->sortBy->release_date, $tickets->sortByDesc->priority_level, $students->groupBy->graduating_year, $logs->skipUntil->is_error, $uploads->takeWhile->is_small_file etc.
+
+         collect([['account_id' => 1, 'product' => 'Desk'], ['account_id' => 2, 'product' => 'Chair']])->implode('product', ', '); // 'Desk, Chair'
+         // Can pass callback: implode(function (array $item, int $key) {  return strtoupper($item['product']); }, ', ' }
+
+         $collection->intersect(['Desk', 'Chair', 'Bookcase']);
+         // Use callback: intersectUsing()
+         // For associative array: intersectAssoc(), intersectAssocUsing(), intersectBykeys()
+
+         collect(['a', 'b', 'c'])->join(', ', ', and '); // 'a, b, and c'
+         collect(['a'])->join(', ', ' and '); // 'a'
+         collect([])->join(', ', ' and '); // ''
+
+         $collection->keyBy('product_id'); // [ 'prod-100' => ['product_id' => 'prod-100', 'name' => 'Desk'], ...]
+         // If multiple keys then last one will appear.
+         // Can pass callback.
+
+         collect([1, 2, 3, 4])->lazy()->where('country', 'FR')->all(); // Returns a lazy collection.
     }
 
     public function lazyCollectionMethods(){

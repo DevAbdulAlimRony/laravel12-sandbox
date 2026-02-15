@@ -5,6 +5,7 @@ use App\Enum\FileType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BasicController;
+use Illuminate\Support\Facades\Bus;
 
 // web.php defines http  routes
 // We can split this route file into multiple route file like admin.php, user.php
@@ -407,3 +408,8 @@ Route::post('/profile', function () {})
 // any incoming requests to the /profile or /order endpoints which share the same session ID will wait for the first request to finish executing before continuing their executio.
 // An Illuminate\Contracts\Cache\LockTimeoutException will be thrown if the request is unable to obtain a session lock within the given number of seconds.
 // If no argument passed, just block(), then automatically get 10 seconds for both arguments.
+
+// Returning Queue Job batches:
+Route::get('/batch/{batchId}', function (string $batchId) {
+    return Bus::findBatch($batchId);
+});
