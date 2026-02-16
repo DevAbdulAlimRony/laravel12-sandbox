@@ -25,6 +25,8 @@ class QueueController {
     ProcessPodcast::dispatch($podcast);
     ProcessPodcast::dispatchIf($accountActive, $podcast);
     ProcessPodcast::dispatchUnless($accountSuspended, $podcast);
+    dispatch((new Job)->onQueue('high')); // Set priority using high low, can do in queue config file also.
+    dispatch(function() use ($podcast) {})->name('Publish Podcast')->catch(function (Throwable $e) {}); // Dispatching callback instantly rather than job. name and catch optional.
 
     // Delayed dispatch:
     ProcessPodcast::dispatch($podcast)->delay(now()->plus(minutes: 10)); // Should not be available for processing by queue worker until 10 minutes after it has been dispatched.
@@ -99,4 +101,50 @@ class QueueController {
     // Install the AWS SDK: composer require aws/aws-sdk-php
     // Set the queue.batching.driver configuration option's value to dynamodb.
     // Define key, secret, and region configuration options within the batching configuration array.
+
+    //* Queue Worker:
+    // A queue worker is a long-running process that listens to a specified queue and processes jobs.
+    // Start a worker: php artisan queue:work
+    // It will continue to run until it is manually stopped or you close your terminal.
+    // Queue workers are long-lived process. During deployment, restart the worker: php artisan queue:restart
+    // Include job id-connection-queue in the output: php artisan queue:work -v
+    // Dont need reset the state but less efficient to run worker: php artisan queue:listen
+    // Specifying connection: php artisan queue:work redis
+    // Specify particular queue for a connection: php artisan queue:work redis --queue=emails
+    // Process a single job: php artisan queue:work --once
+    // Run 1000 the exit: php artisan queue:work --max-jobs=1000
+    // Process all jobs hen exit (useful for docker container- shutdown the container after queue empty): php artisan queue:work --stop-when-empty
+    // Process jobs for one hour and then exit: php artisan queue:work --max-time=3600
+    // php artisan queue:work --sleep=3
+    // Run worker in maintenance mode: php artisan queue:work --force
+    // Priority- high queue jobs are processed before continuing to any jobs on the low queue: php artisan queue:work --queue=high,low
+    // Job Expiration: Set retry_after in config file.
+    // php artisan queue:work --timeout=60. Default is 60 always.
+    // php artisan queue:work redis --tries=3 --backoff=3
+    // The --timeout value should always be at least several seconds shorter than your retry_after configuration value.
+    //  If your --timeout option is longer than your retry_after configuration value, your jobs may be processed twice.
+    // Pause (Exmp in system maintenance): php artisan queue:pause database:
+    // Resume: php artisan queue:continue database:default
+    // May disable restart or pause polling individually by setting the static $restartable or $pausable properties on the Illuminate\Queue\Worker class.
+    // When interruption polling is disabled, workers will not respond to queue:restart or queue:pause commands.
+
+    //* Supervisor:
+    // When we are dispatching the job, its just storing the job in the queue, but we need a process to run the worker to process the jobs.
+    // Thats the wroker to process the job, but we need to make sure that the worker is always running, even if it crashes or the server restarts. 
+    // Use Supervisor to keep php artisan queue:work running 24/7.
+    // Supervisor is a process monitor for the Linux operating system, and will automatically restart your queue:work processes if they fail.
+    // Install in Ubuntu: sudo apt-get install supervisor. Rather than manually manage, we can use Laravel Cloud also.
+    // Create a configuration file for your queue worker: /etc/supervisor/conf.d/custom-name-worker.conf
+    // Start supervisor: sudo supervisorctl reread, sudo supervisorctl update, sudo supervisorctl start custom-name-worker:*
+
+    //* Clear Jobs in Queue: (only available for the SQS, Redis, and database queue drivers.)
+    // php artisan queue:clear
+    // php artisan queue:clear redis --queue=emails
+
+    //* Monitoring Queues:
+    // php artisan queue:monitor redis:default,redis:deployments --max=100
+    // Scheduling this command alone is not enough to trigger a notification alerting you of the queue's overwhelmed status. 
+    // In AppServiceProvider, listen to the Illuminate\Queue\Events\QueueBusy event.
+
+    //* Testing: See in documentation.
 }

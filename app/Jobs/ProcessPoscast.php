@@ -166,7 +166,17 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
     // For IO blocking processes such as sockets or outgoing HTTP connections  like Guzzle, should always attempt to specify a timeout using their APIs as well.
     
     // By default, when a job times out, it consumes one attempt and is released back to the queue (if retries are allowed). 
-    public $failOnTimeout = true; // Mark as failed job if timeout.
+    public $failOnTimeout = true; // Mark as failed job if timeout. Or if need more complex logic:
+    
+    public function backoff(): int
+    {
+        return 3;
+
+        // 1 second for the first retry, 5 seconds for the second retry, 10 seconds for the third retry, and 10 seconds for every subsequent retry if there are more attempts remaining
+        return [1, 5, 10];
+    }
+
+    public $backoff = 3; // The number of seconds to wait before retrying the job.
 
     //* SQS FIFO:
     // Laravel supports Amazon SQS FIFO (First-In-First-Out) queues, allowing
@@ -185,4 +195,23 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
      // In config/queue.php, specify the failover driver  and provide an array of connection names to attempt in order.
      // In .env, QUEUE_CONNECTION=failover.
      // php artisan queue:work redis, php artisan queue:work database.
+
+     //* Handling failed job:
+     // Laravel automatically have a migration file for failed job table, if job failed, it will stored in that table. If migration not have:
+     // php artisan make:queue-failed-table
+     public function failed(?Throwable $exception): void
+     {
+        // Send user notification of failure, etc...
+     } // Based on criterias, MaxAttemptsExceededException and timeoutExceededException instance will be thrown.
+    // List of failed jobs in database: php artisan queue:failed
+    // php artisan queue:retry ce7bb17c-cdd8-41f0-a8ec-7b4fef4e5ece
+    // php artisan queue:retry --queue=name
+    // php artisan queue:retry all
+    // Delete failed job: php artisan queue:forget 91401d2c-0784-4f43-824c-34f94a33c24d
+    // Delete all failed jobs: php artisan queue:flush, php artisan queue:flush --hours=48
+    public $deleteWhenMissingModels = true; //  Delete the job if its models no longer exist.
+    // We can prune failed jobs, by default it takes 24 hours to prune.
+    // We can store failed jobs in Dynamodb.
+    // Discard failed jobs without storing: In env: QUEUE_FAILED_DRIVER=null
+    // We can make an event for failed job and register in Service Provider's boot: Queue::failing(function (JobFailed $event) {});
 }

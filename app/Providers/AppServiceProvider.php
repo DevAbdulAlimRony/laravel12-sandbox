@@ -233,6 +233,12 @@ class AppServiceProvider extends ServiceProvider
         // Monitoring Qumulative Query Time:
         DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {echo 'Notify developers.'});
 
+        //* Register the subfolder so Laravel merge it with migration files while riunning migrations.
+        $this->loadMigrationsFrom(database_path('migrations/integrations'));
+        // loadSeedersFrom(), loadRoutesFrom(), loadTranslationsFrom(), loadViewsFrom(), loadFactoriesFrom(), loadJsonTranslationsFrom().
+        // loadViewComponentsAs(): Register the given view components with a custom prefix.
+        // mergeConfigFrom(), commands()- register packages custom commands, optimizes()- should run on optimize or optimize:clear.
+
         //* Default password validation rule:
         Password::defaults(function(){
             $rule = Password::min(8);
@@ -290,6 +296,30 @@ class AppServiceProvider extends ServiceProvider
 
         //* Manually Registering Event Subscriber:
         Event::subscribe(UserEventSubscriber::class);
+
+        //* Optimize performnace for queue worker by disabling polling globally which interupts.
+        Queue::withoutInterruptionPolling();
+
+        //* Event for failed queue job:
+        Queue::failing(function (JobFailed $event) {});
+
+        //* Monitor Queue and do something when it is overwhelmed-taking long time to start processing a job or there are too many jobs waiting to be processed.:
+        Event::listen(function (QueueBusy $event) {
+            // Notify developers that the queue is overwhelmed...
+        });
+
+        //* Callbacks to be executed before or after a queued job is processed.
+        Queue::before(function (JobProcessing $event) {
+            // Do something before the job is processed...
+        });
+        Queue::after(function (JobProcessed $event) {
+            // Do something after the job is processed...
+        });
+
+        //* Callbacks that execute before the worker attempts to fetch a job from a queue.
+        Queue::looping(function () {
+            // Do something
+        });
 
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.

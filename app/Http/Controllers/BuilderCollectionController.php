@@ -618,6 +618,7 @@ class BuilderCollectionController {
     
         $collection  = collect([1, 2, 3]); // Return a Collection instance.
         // The results of Eloquent queries are always returned as Collection instances.
+        Collection::make([1, 2, 3]); // Same as collect() helper function.
 
         // Checking Type:
         $collection->ensure(User::class);
@@ -748,6 +749,12 @@ class BuilderCollectionController {
          // Can pass callback.
 
          collect([1, 2, 3, 4])->lazy()->where('country', 'FR')->all(); // Returns a lazy collection.
+
+         // map(): New collection instance based on callback.
+         collect(['USD', 'EUR', 'GBP'])->mapInto(Currency::class); // ['USD' => new Currency('USD'), 'EUR' => new Currency('EUR'), 'GBP' => new Currency('GBP')], pass the values into constructor of the class.
+         collect([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])->chunk(2)->mapSpread(function (int $even, int $odd) {  return $even + $odd; })->all(); // [1, 5, 9, 13, 17]. 
+         // mapToGroups(): Map the collection into groups based on the given callback. 
+         collect(['Alice', 'Bob', 'Charlie'])->mapWithKeys(function (string $name) { return [strtolower($name) => strlen($name)]; })->all(); // ['alice' => 5, 'bob' => 3, 'charlie' => 7]
     }
 
     public function lazyCollectionMethods(){
