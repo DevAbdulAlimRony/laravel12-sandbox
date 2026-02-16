@@ -157,6 +157,53 @@ class BuilderCollectionController {
         return User::paginate()->toResourceCollection();
         new UserResource($user->loadCount('posts')); // Count conditional relationship
         User::find(1) ->toResource()->response()->header('X-Value', 'True'); // Customize resource or do it in resource class.
+
+        //* Full Text Search:
+        // A LIKE search for "running" won't find a record containing "run", and results aren't ranked by relevance.
+        // Full-Text Search (FTS) is a sophisticated way of searching through large amounts of text data. 
+        // FTS looks for keywords, phrases, and even similar-sounding words across one or multiple columns.
+        // Traditional way WHERE content LIKE '%apple%' is slow on large datasets, fts knows exactly which rows contains it.
+        // Support on MariaDB, MySQL, PostgreSQL.
+        // Add a full-text index to the columns want to search, and then use the whereFullText query builder method to search against them.
+        // Add Index in Scema of migration file: $table->fullText(['title', 'body']);
+        // Can specify language on Postgres: $table->fullText('body')->language('english');
+        Article::whereFullText('body', 'web developer')->get(); // Running the query
+        // Mysql and mariaDB will do auto ordering, if want in postgres also consider using scoutsearch.
+        Article::whereFullText(['title', 'body'], 'web developer')->get(); // orWhereFullText()
+
+        //* Semantic or Vector Search:
+        // For AI-powered semantic search that matches results by meaning rather than exact keywords.
+        // Vector search requires PostgreSQL with the pgvector extension and the Laravel AI SDK.
+        // An embedding is a high-dimensional numeric array (typically hundreds or thousands of numbers) that represents the semantic meaning of a piece of text. 
+        Str::of('Napa Valley has great wine.')->toEmbeddings(); // generating an embedding.
+        Embeddings::for([ 'Napa Valley has great wine.', 'Laravel is a PHP framework.',])->generate(); // generating embading for multiple.
+        // Ensure the extension exists in migration: Schema::ensureVectorExtensionExists()
+        // Indexing vectors in migration schema: $table->vector('embedding', dimensions: 1536)->index();
+        //  1536 for OpenAI's text-embedding-3-small model), how many matches.
+        // In model, cast the vector column, embedding, as array.
+        Document::query()->whereVectorSimilarTo('embedding', $queryEmbedding, minSimilarity: 0.4)->->limit(10)->get();
+        // ->whereVectorSimilarTo('embedding', 'best wineries in Napa Valley')
+        // Lower level control: whereVectorDistanceLessThan(), selectvectorDistance(), orderByvectorDistance()
+
+        //* Reranking Results:
+        // Reranking is a technique where an AI model reorders a set of results by how semantically relevant each result is to a given query. 
+        // Full-text search to quickly narrow thousands of records down to the top 50 candidates, and then use reranking to put the most relevant results at the top.
+        Reranking::of('Django is a Python web framework.', 'Laravel is a PHP ')->rerank('PHP frameworks');
+        Article::all()->rerank('body', 'Laravel tutorials');
+
+        //* Laravel scout Search:
+        // Searchable trait that automatically keeps search indexes in sync with Eloquent models.
+        // Laravel Scout offers both a built-in database engine and drivers for third-party services like Algolia, Meilisearch, and Typesense.
+        // Scout's built-in database engine performs full-text and LIKE searches against your existing database — no external service or extra infrastructure required.
+        // Go to the Flight model to see. After doing in model:
+        Article::search('Laravel')->get();
+        // Its using now database engine, but we can use Algolia, Meilisearch, Typesense engine to get advantages what they provide.
+
+        //* Search by Combining Techniques:
+        // Full-Text Retrieval + Reranking: speed of full text with accuracy of AI powered relavance scoring:
+        Article::query()->whereFullText('body', $request->input('query'))->limit(50)->get()->rerank('body', $request->input('query'), limit: 10);
+        // Vector Search + Traditional Filters: Meaning-based search but need to restrict results by ownership, category, or any other attribute:
+        Document::query()->where('team_id', $user->team_id)->whereVectorSimilarTo('embedding', $request->input('query'))->limit(10)->get();
     }
 
     public function accessRelationships(Flight $flight){

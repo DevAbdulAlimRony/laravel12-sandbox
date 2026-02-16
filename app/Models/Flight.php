@@ -6,7 +6,10 @@ namespace App\Models;
  use Illuminate\Database\Eloquent\Prunable;
  use Illuminate\Database\Eloquent\SoftDeletes;
  use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Casts\AsStringable;
+ use Illuminate\Database\Eloquent\Casts\AsStringable;
+ use Laravel\Scout\Attributes\SearchUsingFullText;
+ use Laravel\Scout\Attributes\SearchUsingPrefix;
+ use Laravel\Scout\Searchable;
 
 // ORM: Object-relational mapper (ORM) that makes it enjoyable to interact with database.
 // Each database table has a corresponding "Model" that is used to interact with that table.
@@ -398,4 +401,18 @@ class Flight extends Model{
 
     // Update Parent Timestamp when child is updated while using save() method:
     protected $touches = ['countries', ]; // When country updated, parent timestamp will be updated.
+
+    //* Search by Laravel Scout:
+    use Searchable;
+    #[SearchUsingPrefix(['id'])]
+    #[SearchUsingFullText(['title', 'body'])] // Need full text index in migration.
+    // If no attribute given for a column, it will be searched using traditional Like query.
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'body' => $this->body,
+        ];
+    }
  }
