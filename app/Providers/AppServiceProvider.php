@@ -323,7 +323,9 @@ class AppServiceProvider extends ServiceProvider
 
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.
-        // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class. 
+        // Limit configuration are instances of the Illuminate\Cache\RateLimiting\Limit class.
+        // The rate limiter utilizes your default application cache as defined by the default key within your application's cache configuration file.
+        // We can specify cache driver in cache config file: 'default' => env('CACHE_STORE', 'database'),, 'limiter' => 'redis', 
         // If exceed, 429 status code
         RateLimiter::for('global', function (Request $request){
             return Limit::perMinute(1000)->response(function (Request $request, array $headers){

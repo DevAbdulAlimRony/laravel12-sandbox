@@ -45,6 +45,16 @@ class BasicController implements HasMiddleware
         // Generating URLs to Named Routes:
         route('transactions'); // We passed the route name, it will generate full url
         return 'Transaction';
+
+        //* Rate Limiter: (See Appserviceprovider also)
+        $executed = RateLimiter::attempt('send-message:'.$user->id, $perMinute = 5, function(){}, $decayRate = 120,);
+        if (! $executed) { return 'Too many messages sent!'; }
+        // decay rate is optional, 5 Attempts every two minutes
+        // Check if attemps exceed: RateLimiter::tooManyAttempts()
+        // Automatically increment attempt: RateLimiter::increment('send-message:'.$user->id);
+        // Return remaining attempts: RateLimiter::remaining()
+        // How many seconds to wait for another attempt after exceeding attempt: RateLimiter::availableIn('send-message:'.$user->id)
+        // Reset the number of attemts: RateLimiter::clear('send-message:'.$message->user_id)
    }
 
    public function show(int $transactionId): string{
