@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Database\Eloquent\Collection;
 use App\Models\Flight;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class BuilderCollectionController {
     public function index(){
@@ -608,6 +609,53 @@ class BuilderCollectionController {
         // Tap: Pass the query to this class, let it do something, but then give me back the query so I can keep going.
         // Pipe: Pass the query to this class, and whatever that class returns is the new value of this chain.
         // If we use tap for Paginate, and if call get() now, will get all the flights from the database, not a paginated list.
+
+        //* MongoDB:
+        // MongoDB is one of the most popular NoSQL document-oriented database, used for its high write load (useful for analytics or IoT) and high availability.
+        // Can easily do horizontal scaling.
+        // MongoDB database is a document described in BSON, a binary representation of the data.
+        // Supports documents, arrys, embedded documents and binary data types.
+        // To use, install at first: composer require mongodb/laravel-mongodb
+        // Install driver if already not present: pecl install mongodb
+        // Set MONGODB_URI and MONGODB_DATABASE in env file.
+        // For hosting MongoDB in the cloud, consider using MongoDB Atlas.
+        // Configure in database configuration file.
+        // MongoDB Documentation: https://www.mongodb.com/docs/drivers/php/laravel-mongodb/current/quick-start/
+
+        //* Redis: Redis is an open source, advanced key-value store.
+        // To use, install PhpRedis extension or predis/predis package or just use sail.
+        // Configure in database configuration file.
+        // If we use cluster, we have to configure cluster options.
+        // Redis clustering is a great default option, as it gracefully handles failover.
+        // All configurations as per documentation when need.
+        // To interact with Redis, we use Redis Facade:
+        Redis::set('name', 'Taylor');
+        Redis::get('user:profile:'.$id);
+        Redis::lrange('names', 5, 10);
+        Redis::command('lrange', ['name', 5, 10]); // Command to the server.
+        Redis::connection('connection-name'); // If we have multiple connection.
+        Redis::transaction(function (Redis $redis){$redis->incr('user_visits', 1);});
+        // If we need atomic operation and also want to interact with and inspect Redis key values, rather than using transaction,
+        // We can use lua scripts using eval method since Redis is written in Lua programming language.
+        Redis::eval(<<<'LUA'
+                local counter = redis.call("incr", KEYS[1])
+                if counter > 5 then
+                    redis.call("incr", KEYS[2])
+                end
+                return counter
+            LUA, 2, 'first-counter', 'second counter'
+        );
+        Redis::pipeline(function(Redis $r){
+            for ($i = 0; $i < 1000; $i++) {
+                $pipe->set("key:$i", $i);
+            } // Execute dozens of Redis commands.
+        });
+        
+        //* Redis PUB SUB:
+        // We can publish messages to the channel fom another application, even from another programming language to communicae between application and processes.
+        // Step 1: Set up a channel listener using subscriber method in App\Console\Commands
+        // Step 2: Can publish message from controller using Redis::publish()
+        // Catch all messages on all channels: Redis::pubscribe(['*'], function(){})
     }
 
     //* Can apply only after getting the collection or to get collection instance:
@@ -755,6 +803,8 @@ class BuilderCollectionController {
          collect([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])->chunk(2)->mapSpread(function (int $even, int $odd) {  return $even + $odd; })->all(); // [1, 5, 9, 13, 17]. 
          // mapToGroups(): Map the collection into groups based on the given callback. 
          collect(['Alice', 'Bob', 'Charlie'])->mapWithKeys(function (string $name) { return [strtolower($name) => strlen($name)]; })->all(); // ['alice' => 5, 'bob' => 3, 'charlie' => 7]
+
+         collect([1, 1, 2, 4])->median(); // 1.5. avg(), min(), max(), sum() etc.
     }
 
     public function lazyCollectionMethods(){
