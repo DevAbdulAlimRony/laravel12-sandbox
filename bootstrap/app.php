@@ -167,4 +167,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // __DIR__.'/../app/Domain/Orders/Listeners',
         __DIR__.'/../app/Domain/*/Listeners', // Multiple similar dirctories.
     ])
+    ->withCommands([
+        // Custom directory for artisan commands. If directory is console/commands, no need to add.
+        __DIR__.'/../app/Domain/Orders/Commands',
+        // Or, manually give the class name:
+        SendEmails::class,
+    ])
     ->create();

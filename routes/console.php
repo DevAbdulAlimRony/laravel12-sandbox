@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Artisan;
 
 use Illuminate\Support\Facades\Schedule;
 
-// console.php stores closure based commands
-// Though they are not any http route, but entry point.
-
+// Rather than making custom command class, we made a closure based command directly:
+// Can type-hint any dependency in the callback. purpose is the description of the command which will be shown in command list and help.
+// php artisan inspire.
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
