@@ -70,7 +70,7 @@ class SendEmails extends Command implements Isolatable, PromtsForMissingInput
         $this->callSilently('mail:send', []); // call and supress all of its outputs.
 
         //* Signal Handling:
-        // Operating systems allow signals to be sent to running processes. 
+        // Signal handling allows your command to "listen" to the Operating System.
         // Listen for signals in your Artisan console commands and execute code when they occur.
         // For example, the SIGTERM signal is how operating systems ask a program to terminate.
         $this->trap(SIGTERM, fn () => $this->shouldKeepRunning = false);

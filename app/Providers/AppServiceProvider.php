@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Pluralizer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -364,6 +365,16 @@ class AppServiceProvider extends ServiceProvider
                             return $response->status() === 404;
             });
 
+        });
+
+        //* Locale lang pluralization:
+        Pluralizer::useLanguage('spanish'); // As version 12, supported for french, norwegian-bokmal, portuguese, spanish, and turkish.
+
+        //* Object Replacement formatting:
+        // For localization, if we provide object a placeholder, __toString method will be invoked.
+        // But sometimes it may not have control. Solve by:
+        Lang::stringable(function (Money $money) {
+            return $money->formatTo('en_GB');
         });
     }
 
