@@ -7,9 +7,11 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Batch;
+use Illuminate\Support\Facades\Process;
 use Exception;
 
 class HttpClientController{
+   public function HttpClient(){
     // Using Guzzle HTTP client, make outgoing HTTP requests to communicate with other web applications. 
     $response = Http::get('http://example.com');
 
@@ -89,4 +91,53 @@ class HttpClientController{
 
     //* Testing:
     // https://laravel.com/docs/12.x/http-client#testing
+   }
+
+   public function process(){
+        // Interact with operating system.
+        // Laravel provides an expressive, minimal API around the Symfony Process component, allowing you to conveniently invoke external processes from your Laravel application. 
+        $result = Process::run('ls -la');
+        $result->output(); // command(), successful(), failed(0), errorOutput(), exitCode()
+        // throw(): ProcessFailedException if the exit code is greater than zero, throwIf($condition)
+        // Process::run('ls -la', function (string $type, string $output){}: Output by callback.
+        // Process::run('ls -la')->seeInOutput('laravel'): if contained in the process output.
+
+        Process::path(__DIR__)->run('ls -la'); // Working directory of the process.
+        Process::input('Hello World')->run('cat');
+        Process::timeout(120)->run('bash import.sh'); // ProcessTimedOutException if exceeds, by default 60s.
+        Process::forever()->run('bash import.sh'); // Timeout disabled.
+        Process::timeout(60)->idleTimeout(30)->run('bash import.sh'); // Run max 30s before showing output.
+        Process::forever()->env(['IMPORT_PATH' => __DIR__])->run('bash import.sh'); // Environment var
+        Process::forever()->tty()->run('vim'); // Enable tty mode, not supported on Windows.
+        Process::quietly()->run('bash import.sh'); // Output disabled.
+
+        // Pipelines: Output of the one process is the input of the next process
+        Process::pipe(function (Pipe $pipe) {
+            $pipe->command('cat example.txt');
+            $pipe->command('grep -i "laravel"');
+            // $pipe->as('first')->command('cat example.txt');
+        });
+        Process::pipe(['cat example.txt', 'grep -i "laravel"',]); // If do not need to customize the individual processes 
+        // Second argument can be a callback for output.
+
+        // Asynchronous Process: 
+        // start() method may be used to invoke a process asynchronously. instead of run().
+        Process::timeout(120)->start('bash import.sh');
+        // Return process id: $process->id();
+        // Send a signal to the running process: $process->signal(SIGUSR2);
+        // $process->running(), latestOutput(), latestErrorOutput(), $process->wait(), waitUntil(), ensureNotTimedOut()
+
+        // Concurrent Process:
+        Process::pool(function (Pool $pool) {
+            $pool->path(__DIR__)->command('bash import-1.sh');
+             $pool->as('second')->command('bash import-2.sh'); // naming pool process.
+        })->start(function (string $type, string $output, int $key) {});
+        while ($pool->running()->isNotEmpty()) {}
+        $results = $pool->wait();
+        // Process::concurrently(function (Pool $pool) {})
+        // $pool->running()->each->id(); $pool->signal(SIGUSR2);
+
+        // Testing:
+        // https://laravel.com/docs/12.x/processes#testing
+    }        
 }
