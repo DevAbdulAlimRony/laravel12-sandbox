@@ -376,6 +376,16 @@ class AppServiceProvider extends ServiceProvider
         Lang::stringable(function (Money $money) {
             return $money->formatTo('en_GB');
         });
+
+        //* Using global guzzle option for Http Client:
+        Http::globalOptions([
+            'allow_redirects' => false,
+        ]);
+
+        //* Http Client Macro:
+        Http::macro('github', function () {
+            return Http::withHeaders([ 'X-Example' => 'example',])->baseUrl('https://github.com');
+        });
     }
 
     //* Facades: See app/Facades/Payment.php

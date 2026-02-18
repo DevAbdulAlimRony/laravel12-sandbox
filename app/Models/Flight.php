@@ -414,5 +414,14 @@ class Flight extends Model{
             'title' => $this->title,
             'body' => $this->body,
         ];
+
+        // return $this->toArray();
+    }
+    // Customizing engine:
+    public function searchableUsing(): Engine
+    {
+        return Scout::engine('meilisearch');
+        // Database engine currently supports MySQL and PostgreSQL
+        // SCOUT_DRIVER=database. SCOUT_DRIVER=collection.
     }
  }

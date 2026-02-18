@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use App\Http\Middleware\EnsureTokenIsValid;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Client\RequestException;
 
 use PDOException;
 use Psr\Log\LogLevel;
@@ -173,4 +174,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Or, manually give the class name:
         SendEmails::class,
     ])
+    ->registered(function (): void {
+        RequestException::truncateAt(240);
+        RequestException::dontTruncate();
+    })
     ->create();

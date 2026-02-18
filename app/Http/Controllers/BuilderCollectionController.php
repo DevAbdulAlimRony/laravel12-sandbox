@@ -192,12 +192,15 @@ class BuilderCollectionController {
         Article::all()->rerank('body', 'Laravel tutorials');
 
         //* Laravel scout Search:
+        // composer require laravel/scout
+        // php artisan vendor:publish --provider="Laravel\Scout\ScoutServiceProvider"
         // Searchable trait that automatically keeps search indexes in sync with Eloquent models.
         // Laravel Scout offers both a built-in database engine and drivers for third-party services like Algolia, Meilisearch, and Typesense.
         // Scout's built-in database engine performs full-text and LIKE searches against your existing database — no external service or extra infrastructure required.
         // Go to the Flight model to see. After doing in model:
         Article::search('Laravel')->get();
         // Its using now database engine, but we can use Algolia, Meilisearch, Typesense engine to get advantages what they provide.
+        // If we use other engine rather than database or collection, we should make 'queue' => true in scout config file.
 
         //* Search by Combining Techniques:
         // Full-Text Retrieval + Reranking: speed of full text with accuracy of AI powered relavance scoring:
