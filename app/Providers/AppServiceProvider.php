@@ -386,6 +386,9 @@ class AppServiceProvider extends ServiceProvider
         Http::macro('github', function () {
             return Http::withHeaders([ 'X-Example' => 'example',])->baseUrl('https://github.com');
         });
+
+        //* For storage, how temprary urls will be built:
+        Storage::disk('local')->buildTemporaryUrlsUsing(function(){});
     }
 
     //* Facades: See app/Facades/Payment.php

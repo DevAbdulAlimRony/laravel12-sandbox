@@ -5,8 +5,10 @@ use Illuminate\Database\Eloquent\Collection;
 use App\Models\Flight;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\File;
 
-class BuilderCollectionController {
+class MainController {
     public function index(){
         Flight::all(); // all models.
         $flight = Flight::where('status', 1)->get(); // We can chain any method of query builder.
@@ -945,5 +947,122 @@ class BuilderCollectionController {
         // Use cursor() if you have a massive table, you aren't doing other DB queries inside the loop, and you want the absolute minimum memory footprint.
         // Use lazy() if you want the best of both worlds: memory safety via chunking, but the ability to use Higher Order Messages and chain methods like ->filter() and ->map().
         // LazyCollection::make() is the "manual" version used for everything else. You use it when your data source is not a Laravel model.    
+    }
+
+    public function fileSystem(Request $request){
+        // Laravel provides a powerful filesystem abstraction  using Flysystem PHP package by Frank de Jonge.
+        // Configuration: config/filesystems.php. Each disk represents a particular storage driver and storage location. 
+        // Can configure as many disks as we like and may even have multiple disks that use the same driver.
+        // May wish to sanitize your file paths before passing them to Laravel's file storage methods.
+
+        //* Symbolic Link:
+        // If your public disk uses the local driver and you want to make these files accessible from the web, you should create a symbolic link from source directory:
+        // Create symbolic link: php artisan storage:link
+        asset('storage/file.txt');
+        // We can configure additional symbolic link in config file: 'links' =>[public_path('images') => storage_path('app/images')]
+        // Unlink: php artisan storage:unlink
+
+        //* Storing Files:
+        Storage::put('avatars/1', 'Contents'); // Put content on default disk. 
+        if (! Storage::put('file.jpg', $contents)) {} // If unable to write, return false.
+        // In in cofig file, we use: 'throw' => true, throw an instance of League\Flysystem\UnableToWriteFile when write operations fail.
+        Storage::disk('local')->put('example.txt', 'Contents'); // Store in storage/app/private/example.txt
+        Storage::build(['driver' => 'local', 'root' => '/path/to/root'])->put('image.jpg', 'Contents'); // On demnd disk with necessary configurations.
+        // Public Disk: storage/app/public, public disk uses the local driver.
+        Storage::prepend('file.log', 'Prepended Text'); // write to the beginning.
+        Storage::append('file.log', 'Appended Text');
+        
+        //* Retrieving Files:
+        Storage::disk('s3')->exists('file.jpg'); // Check existence.
+        Storage::disk('s3')->missing('file.jpg'); // Check if not exists.
+        Storage::get('file.jpg'); // Get content of the file.
+        Storage::json('orders.json'); // retriev json content and decode.
+        Storage::url('file.jpg'); // Get url of the file.
+        Storage::files($directory); // Get all files of a directory.
+        Storage::allFiles($directory); // Get all files and sub directories of a directory.
+        // directories(), allDirectories(), makeDirectory(), deleteDirectory().
+        
+        Storage::download('file.jpg', $name, $headers); // Forces the browser to download at given path, $name will show in user's device.
+        Storage::copy('old/file.jpg', 'new/file.jpg');
+        Storage::move('old/file.jpg', 'new/file.jpg');
+
+        //* Temporary Url:
+        // Your files are locked in a safe (Private Storage), but you give someone a key that only works for 5 minutes.
+        // Imagine you are building a SaaS platform where users can download their monthly invoices (PDFs).
+        // The Risk: If you store invoices in public/storage/invoices/1.pdf, anyone could guess the URL and see another user's financial data by just changing the 1 to a 2.
+        // The Solution: You store all invoices in a private S3 bucket or a private local folder.
+        Storage::temporaryUrl('file.jpg', now()->plus(minutes: 5)); // Last arg is expiration time of url, can pass s3 request parameters as third arg in [].
+        // If want to change url by Storage facade to show in cofig: 'url' => env('APP_URL').'/storage'.
+        ['url' => $url, 'headers' => $headers] = Storage::temporaryUploadUrl('file.jpg', now()->plus(minutes: 5));
+        // Temporary upload URL is useful in serverless environments that require the client-side application to directly upload files to a cloud storage system such as Amazon S3.
+        
+        //* File Metadata: Information about the files.
+        Storage::size('file.jpg'); // Get the size of the file.
+        Storage::lastModified('file.jpg');
+        Storage::mimeType('file.jpg');
+        Storage::path('file.jpg'); // return absolute path of the file if local driver, relative path if s3 driver.
+
+        //* Automatic Streaming:
+        // Streaming files to storage offers significantly reduced memory usage.
+        // Streaming is the process of moving a file in small "chunks" (pieces) rather than loading the entire file into your computer's memory (RAM) all at once.
+        // Laravel opens a tiny "pipe." It reads 5MB, moves it to the storage, deletes it from RAM, and repeats. The server only ever uses a few megabytes of RAM, no matter how big the file is.
+        // Necessary when video uploads, database expots, high resolution images.
+        Storage::putFile('photos', new File('/path/to/photo')); // Automatically generate a unique ID for filename
+        Storage::putFileAs('photos', new File('/path/to/photo'), 'photo.jpg'); // Manually specify a filename
+        Storage::putFile('photos', new File('/path/to/photo'), 'public'); // visibility seful if you are storing the file on a cloud disk such as Amazon S3 and would like the file to be publicly accessible via generated URLs.
+
+        //* File Upload:
+        $file = $request->file('avatar');
+        $file->store('avatars'); // will generate a unique ID to serve as the filename.
+        Storage::putFile('avatars', $file);
+        $file->storeAs('avatars', $request->user()->id);
+        Storage::putFileAs('avatars', $file, $request->user()->id);
+        $file->store( 'avatars/'.$request->user()->id, 's3'); // spcify disk.
+        
+        $file->getClientOriginalName(); // other info.
+        $file->getClientOriginalExtension();
+        // But they are unsafe, because name and extension could have maliscious script or thing. Rather than:
+        $file->hashName(); // Generate a unique, random name
+        $file->extension(); // Determine the file's extension based on the file's MIME type.
+        // storePublicly(), storePubliclyAs()
+
+        //* File Visibility:
+        // An abstraction of file permissions across multiple platforms.
+        Storage::put('file.jpg', '$contents', 'public');
+        Storage::getVisibility('file.jpg');
+        Storage::setVisibility('file.jpg', 'public');
+
+        //* Deleting Files:
+        Storage::delete('file.jpg');
+        Storage::delete(['file.jpg', 'file2.jpg']);
+        Storage::disk('s3')->delete('path/file.jpg');
+
+        //* S3 Driver:
+        // Install Filesystem S3 Package: composer require league/flysystem-aws-s3-v3 "^3.0" --with-all-dependencies.
+        // Configure credentials in config file with env variables.
+        // S3 compatible filesystems such as rustFS, Cludfare, digitalOcean spaces etc: 'endpoint' => env('AWS_ENDPOINT', 'https://rustfs:9000'),
+
+        //* FTP Driver:
+        // Install Package: composer require league/flysystem-ftp "^3.0"
+        // Configure credentials.
+
+        //* SFTP Driver:
+        // composer require league/flysystem-sftp-v3 "^3.0"
+
+        //* Scoped and Read Only Filesystem:
+        // Allows us to define a filesystem where all paths are automatically prefixed with a given path prefix.
+        // "Read-only" disks allow you to create filesystem disks that do not allow write operations. 
+        // composer require league/flysystem-path-prefixing "^3.0", composer require league/flysystem-read-only "^3.0"
+        // Configure 'driver' => 'scoped',  'read-only' => true.
+
+        //* Testing:
+        // https://laravel.com/docs/12.x/filesystem#testing
+
+        //* Making custom filesystem:
+        // We can use any adapter like dropbox or google drive for our file system.
+        // https://laravel.com/docs/12.x/filesystem#custom-filesystems
+
+        //* Packages:
+        // intervention/image, spatie media library.
     }
 }
