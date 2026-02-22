@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureTokenIsValid;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Console\Scheduling\Schedule;
 
 use PDOException;
 use Psr\Log\LogLevel;
@@ -174,6 +175,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Or, manually give the class name:
         SendEmails::class,
     ])
+    ->withSchedule(function (Schedule $schedule) {
+        // Calling task schedule here rather than in console.php
+        $schedule->call(new DeleteRecentUsers)->daily();
+    })
     ->registered(function (): void {
         RequestException::truncateAt(240);
         RequestException::dontTruncate();
