@@ -2,7 +2,6 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-
 use Illuminate\Support\Facades\Schedule;
 
 // Rather than making custom command class, we made a closure based command directly:

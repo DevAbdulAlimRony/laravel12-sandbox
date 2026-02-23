@@ -11,6 +11,11 @@ namespace App\Models;
  use Laravel\Scout\Attributes\SearchUsingPrefix;
  use Laravel\Scout\Searchable;
 
+ use Illuminate\Broadcasting\Channel;
+ use Illuminate\Broadcasting\PrivateChannel;
+ use Illuminate\Database\Eloquent\BroadcastsEvents;
+ use Illuminate\Database\Eloquent\BroadcastableModelEventOccurred;
+
 // ORM: Object-relational mapper (ORM) that makes it enjoyable to interact with database.
 // Each database table has a corresponding "Model" that is used to interact with that table.
 // Eloquent models allow us to insert, update, and delete records from the table as well.
@@ -424,4 +429,28 @@ class Flight extends Model{
         // Database engine currently supports MySQL and PostgreSQL
         // SCOUT_DRIVER=database. SCOUT_DRIVER=collection.
     }
+
+    //* Model Broadcasting:
+    use BroadcastsEvents;
+    public function broadcastOn(string $event): array{
+       return [$this, $this->flight]; // automatically instantiate private channel.with a name of App.Models.Flight.1
+       // automatically broadcasting events when a model instance is created, updated, deleted, trashed, or restored. 
+       // Can return full instance also:
+       return [new PrivateChannel('user.'.$this->id)];
+       return [new Channel($this->flight)];
+
+       // Can specify created, deleted also:
+       return match ($event) {  'deleted' => [],  default => [$this, $this->user]};
+
+       // Determine channel name: $flight->broadcastChannel();
+    }
+
+    // Customize how Laravel creates the underlying model broadcasting event:
+    protected function newBroadcastableEvent(string $event): BroadcastableModelEventOccurred{
+         return (new BroadcastableModelEventOccurred($this, $event))->dontBroadcastToCurrentUser();
+    }
+    // EventConventions: an update to the App\Models\Post model would broadcast an event to your client-side application as PostUpdated with the following payload
+    // We can use broadCastAs() to give a different name, broadcastWith() also.
+    // Listening for model broadcasting: Echo.private(`App.Models.User.${this.user.id}`).listen()
+    // In Vue: useEchoModel("App.Models.User", userId, ["UserUpdated"], (e) => {})
  }
