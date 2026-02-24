@@ -51,6 +51,11 @@ class EventListenerController
         // A Subscriber allows you to put all "Order-related" logic into one clean file.
         // See Listeners/OrderEventSubscriber.php.
 
+        //* Queued Event Listeners:
+        // Queueing listeners can be beneficial if your listener is going to perform a slow task such as sending an email or making an HTTP request.
+        // Configure a queue and run a worker at first.
+        // Add ShouldQueueinterface in listener class, See SendShipmentNotification listener class.
+
         //* Testing:
         // Using the Event facade's fake method, may prevent listeners from executing
         // Use: assertDispatched(), assertNotDispatched(), assertNothingDispatched()

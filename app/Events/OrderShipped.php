@@ -84,6 +84,4 @@ class OrderShipped implements ShouldDispatchAfterCommit, ShouldBroadcast
     //* Model Broadcasting:
     // Broadcast when model created, updated, deleted.
     // See Flight Model.
-
-    
 }
