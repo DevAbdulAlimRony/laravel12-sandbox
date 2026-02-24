@@ -12,6 +12,8 @@ namespace App\Models;
  use Laravel\Scout\Searchable;
  use Illuminate\Notifications\Notifiable;
  use Illuminate\Notifications\Notification;
+ use Illuminate\Contracts\Mail\Attachable;
+ use Illuminate\Mail\Attachment;
 
  use Illuminate\Broadcasting\Channel;
  use Illuminate\Broadcasting\PrivateChannel;
@@ -26,7 +28,7 @@ namespace App\Models;
 // More options: --factory or -f, --seed or -s, --controller or -c, --controller --resource --requests or -crR, --policy, -mfsc, --pivot or -p
 // --all or -a: a model, migration, factory, seeder, policy, controller, and form requests
 
-class Flight extends Model implements HasLocalePreference{
+class Flight extends Model implements HasLocalePreference, Attachable {
     // If we have different database connection rather than default:
     protected $connection = 'pgsql';
     
@@ -470,5 +472,10 @@ class Flight extends Model implements HasLocalePreference{
     public function preferredLocale(): string
     {
         return $this->locale;
+    }
+
+    //* Attach objects to the mail (Let's say its a Photo class)
+    public function toMailAttachment(): Attachment {
+        return Attachment::fromPath('/path/to/file');
     }
 } 

@@ -107,4 +107,63 @@ class NotificationController {
         // may want to write your own drivers to deliver notifications via other channels.
         // https://laravel.com/docs/12.x/notifications#custom-channels
     }
+
+    public function mail(){
+        // Laravel provides a clean, simple email API powered by the popular Symfony Mailer component. 
+        // Drivers: SMTP, Mailgun, Postmark, Resend, Amazon SES, and sendmail.
+        // The API based drivers such as Mailgun, Postmark, and Resend are often simpler and faster than sending mail via SMTP servers. 
+        // To use Mailgun: composer require symfony/mailgun-mailer symfony/http-client
+        // In mail config file, make the default mailer. Make sure mailurs array have that driver.
+        // Put mailgun credentials like domain, secret, endpoint etc in config/services.php
+        // If not using US mailgun region, can use your region using in services: 'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'), 
+        // See documentations for other drivers configuration.
+        // Failover Driver: Sometimes, an external service you have configured to send your application's mail may be down.
+        // We can use multiple drivers as failover if mailgun is down in mail config file- 'mailers' => [ 'failover' => [...
+        // Have to make the default driver then: MAIL_MAILER=failover. It provides high availability.
+        // The roundrobin transport which provides load balancing allows you to distribute your mailing workload across multiple mailers.
+        // Define a mailer within your application's mail configuration file that uses the roundrobin transport. and 'default' => env('MAIL_MAILER', 'roundrobin').
+        // The round robin transport selects a random mailer from the list of configured mailers and then switches to the next available mailer for each subsequent email. 
+
+        //* Local Development:
+        // When developing an application that sends email, you probably don't want to actually send emails to live email addresses. 
+        // Can use log driver. Instead of sending your emails, the log mail driver will write all email messages to your log files.
+        // Alternatively, you may use a service like HELO or Mailtrap and the smtp driver to send your email messages to a "dummy" mailbox.
+        // If you are using Laravel Sail, you may preview your messages using Mailpit- http://localhost:8025.
+        // Finally, use alwaysTo() in boot of service provider when developmen. See AppServiceProvider.
+
+        // Create Mailable class: php artisan make:mail OrderShipped 
+        // See app/mail.
+
+        //* Sending Email:
+        $flight = Flight::findOrFail(1);
+        Mail::to(User::find(1))
+              ->cc($moreUsers) // cc: carbon copy, you are sending them a "public" copy of the email. It signals that these people should stay informed but aren't necessarily the ones expected to take action.
+              ->bcc($evenMoreUsers) // bcc: blind carbon copy. No one in the "To" or "CC" fields can see the people in the BCC field. In fact, BCC recipients cannot even see each other.
+              // You put all 50 addresses in the BCC field so that Customer A doesn't see Customer B's personal email address.
+              ->send(new OrderShipped($flight));
+        // We can loop over multiple reciepents to send mail.
+        // If different mailer, not default: Mail::mailer('postmark')
+        // Queueing a mail: ->queue(new OrderShipped($order)). Use queue method rather than send().
+        // Delay the queue: ->later(now()->plus(minutes: 10), new OrderShipped($order)).
+        // Can use ->onConnection('sqs')->onQueue('emails') if not using default.
+        // If we want always be queued, just implements ShouldQueue interface in Mailable class. So, even if we use send, it will be queued always.
+        // For db transaction: ->afterCommit(). or in Mailable class constructor: $this->afterCommit().
+        // Queue failed exception: In mailable class can call failed(Throwable $exception).
+
+        return (new InvoicePaid($invoice))->render(); // Capture the HTML content rather than sending.
+        return new InvoicePaid($invoice); // Just show the preview in browser.
+
+        // Localizing: 
+        Mail::to($request->user())->locale('es')->send()
+        // If user preferred locale then call preferredLocale() in model , implementing HasLocalePreference interface.
+
+        //* Testing:
+        // https://laravel.com/docs/12.x/mail#testing-mailables
+
+        //* Events:
+        // MessageSending, MessageSent. These events are dispatched when the mail is being sent, not when it is queued.
+        
+        //* Custom and Additional Symphony Transport:
+        // https://laravel.com/docs/12.x/mail#custom-transports
+    }
 }

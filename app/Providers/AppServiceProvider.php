@@ -9,6 +9,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Pluralizer;
+use Illuminate\Support\Facades\Mail;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -389,6 +390,11 @@ class AppServiceProvider extends ServiceProvider
 
         //* For storage, how temprary urls will be built:
         Storage::disk('local')->buildTemporaryUrlsUsing(function(){});
+
+        //* Work with mail when local developemnt:
+        if ($this->app->environment('local')) {
+            Mail::alwaysTo('taylor@example.com');
+        }
     }
 
     //* Facades: See app/Facades/Payment.php

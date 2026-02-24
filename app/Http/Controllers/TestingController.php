@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 class TestingController {
+    
     public function httpTest(){
 
     }
