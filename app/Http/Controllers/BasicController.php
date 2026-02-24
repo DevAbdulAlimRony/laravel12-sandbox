@@ -88,5 +88,8 @@ class BasicController implements HasMiddleware
         ];
     } // or we can make a closure and implement it there.
 
+    //* Deployment:
+    // https://laravel.com/docs/12.x/deployment.
+
     //* Model: See Flight Model in directory.
 }

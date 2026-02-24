@@ -10,11 +10,14 @@ namespace App\Models;
  use Laravel\Scout\Attributes\SearchUsingFullText;
  use Laravel\Scout\Attributes\SearchUsingPrefix;
  use Laravel\Scout\Searchable;
+ use Illuminate\Notifications\Notifiable;
+ use Illuminate\Notifications\Notification;
 
  use Illuminate\Broadcasting\Channel;
  use Illuminate\Broadcasting\PrivateChannel;
  use Illuminate\Database\Eloquent\BroadcastsEvents;
  use Illuminate\Database\Eloquent\BroadcastableModelEventOccurred;
+ use Illuminate\Contracts\Translation\HasLocalePreference;
 
 // ORM: Object-relational mapper (ORM) that makes it enjoyable to interact with database.
 // Each database table has a corresponding "Model" that is used to interact with that table.
@@ -23,7 +26,7 @@ namespace App\Models;
 // More options: --factory or -f, --seed or -s, --controller or -c, --controller --resource --requests or -crR, --policy, -mfsc, --pivot or -p
 // --all or -a: a model, migration, factory, seeder, policy, controller, and form requests
 
-class Flight extends Model{
+class Flight extends Model implements HasLocalePreference{
     // If we have different database connection rather than default:
     protected $connection = 'pgsql';
     
@@ -85,6 +88,8 @@ class Flight extends Model{
     // $user->makeVisible('password')->toArray();
     // $user->mergeVisible(['name', 'email'])->toArray();
     // makeHidden(), mergeHidden(), setVisible(), setHidden()
+
+     use Notifiable; // To send notification.
 
     // If we want to append a value as attribute which is not a column:
     protected function isAdmin(): Attribute{
@@ -453,4 +458,17 @@ class Flight extends Model{
     // We can use broadCastAs() to give a different name, broadcastWith() also.
     // Listening for model broadcasting: Echo.private(`App.Models.User.${this.user.id}`).listen()
     // In Vue: useEchoModel("App.Models.User", userId, ["UserUpdated"], (e) => {})
- }
+
+    //* Custom Recipients Column for Mail Notification:
+    public function routeNotificationForMail(Notification $notification): arry|string {
+        return $this->email_address; // email address only.
+        return [$this->email_address => $this->name]; // email address and name.
+    }
+
+    //* Localizing Notification by user preference:
+    // First implements HasLocalePreference
+    public function preferredLocale(): string
+    {
+        return $this->locale;
+    }
+} 
