@@ -710,7 +710,6 @@ class MainController {
         // Catch all messages on all channels: Redis::pubscribe(['*'], function(){})
     }
 
-    //* Can apply only after getting the collection or to get collection instance:
     public function collectionMethods(){
         // Collection class provides a fluent, convenient wrapper for working with arrays of data.
         // So that we can chain up other methods of collection instance.
@@ -758,6 +757,16 @@ class MainController {
         $collection->after(3, strict: true);
         $collection->after(function(int $item, int $key){return $item >5}); // Search items greater than 5 and then return the next item of them.
         // Same goes for before.
+        
+        collect([1, 2, 3, 4, 5])->pop(); // Remove last item and return: [5]. and [1,2,3,4] will return if we perform all on the collection.
+        
+        collect([1, 2, 3, 4, 5])->prepend(0); // [0, 1, 2, 3, 4, 5]. Can give key: prepend(0, 'zero'): 'zero' => 0
+        $p = collect(['product_id' => 'prod-100', 'name' => 'Desk']);
+        $p->pull('name'); // 'Desk'
+        $p->all(); // ['product_id' => 'prod-100'].
+        
+        // push(): If we push then call all on that collection, items will be push at last.
+        collect(['product_id' => 1, 'name' => 'Desk'])->put('price', 100); // 'product_id' => 1, 'name' => 'Desk', 'price' => 100] 
 
         collect([1, 2, 3, 4, 5, 6, 7])->chunk(4); // [[1, 2, 3, 4], [5, 6, 7]]
         // Can use in blade views to make responsive grid system.
@@ -792,6 +801,8 @@ class MainController {
 
          $collection->dd(); // dump(). dd stops the execution, dump dont.
 
+         collect(['a', 'b', 'c', 'd', 'e', 'f'])->nth(4); // Take first index, and nth index.
+         // nth(4, 1): ['b', 'f']. The Offset (1): The method skips index 0 ('a') and starts immediately at index 1, which is 'b'. This is your first captured item. The Interval (4): It then counts 4 positions forward from 'b'.
          collect([1, 2, 3, 4, 5])->diff([2, 4, 6, 8]); // Compare with collection or array. [1, 3, 5]
          // diffAssoc(), diffAssocUsing(), diffkeys()
 
@@ -813,6 +824,16 @@ class MainController {
          // If no callback is supplied, all entries of the collection that are equivalent to false will be removed
          collect([1, 2, 3, null, false, '', 0, []])->filter()->all(); // [1, 2, 3]
          // reject(): Opposite of filter.
+
+         // Separate elements that pass a truth test:
+         [$underThree, $equalOrAboveThree] = collect([1, 2, 3, 4, 5, 6])->partition(function (int $i) {
+            return $i < 3;
+         });
+         $underThree->all(); // [1, 2]
+         $equalOrAboveThree->all(); // [3, 4, 5, 6]
+
+         $collection->percentage(fn (int $value) => $value === 1); // Give percentage if pass a truth test. 33.33
+         // By default rouded to two decimal places. Can provide- precision: 3
          
          collect([['name' => 'Sally'],['school' => 'Arkansas'],['age' => 28]])->flatMap(function (array $values) {return array_map('strtoupper', $values);}); // Map and flatten one level- ['name' => 'SALLY', 'school' => 'ARKANSAS', 'age' => '28']
          $collection->flatten(); // Flatten multi-dimensional collection into a single level.
@@ -839,10 +860,17 @@ class MainController {
          $collection->intersect(['Desk', 'Chair', 'Bookcase']);
          // Use callback: intersectUsing()
          // For associative array: intersectAssoc(), intersectAssocUsing(), intersectBykeys()
+         collect([['name' => 'User #1', 'email' => 'user1@example.com']])->multiply(3); // Three copies of same data.
 
+         collect(['product_id' => 1, 'price' => 100])->merge(['price' => 200, 'discount' => false]); // ['product_id' => 1, 'price' => 200, 'discount' => false]
+         collect(['product_id' => 1, 'price' => 100])->mergeRecursive(['product_id' => 2,'price' => 200, 'discount' => false]); // ['product_id' => [1, 2], 'price' => [100, 200], 'discount' => false]
+         // While a standard merge is "shallow" and simply replaces the old value with the new one, recursiveMerge drills down into the sub-arrays to combine them.
+         
          collect(['a', 'b', 'c'])->join(', ', ', and '); // 'a, b, and c'
          collect(['a'])->join(', ', ' and '); // 'a'
          collect([])->join(', ', ' and '); // ''
+         collect(['A', 'B', 'C'])->pad(5, 0); // ['A', 'B', 'C', 0, 0]. Fill the arry with 0 until it have 5 elements.
+         // Add at start: pad(-5, 0)
 
          $collection->keyBy('product_id'); // [ 'prod-100' => ['product_id' => 'prod-100', 'name' => 'Desk'], ...]
          // If multiple keys then last one will appear.
@@ -857,6 +885,26 @@ class MainController {
          collect(['Alice', 'Bob', 'Charlie'])->mapWithKeys(function (string $name) { return [strtolower($name) => strlen($name)]; })->all(); // ['alice' => 5, 'bob' => 3, 'charlie' => 7]
 
          collect([1, 1, 2, 4])->median(); // 1.5. avg(), min(), max(), sum() etc.
+
+         collect([1, 2, 3])->pipe(function (Collection $collection) {
+            return $collection->sum();
+         }); // 6. Pipe exists for when you need to perform custom logic or external processing while staying inside the "fluent" chain.
+         // Real Life Exmp: collect([10, 20, 30])->sum()->pipe(fn($sum) => $myAccountingService->calculateTax($sum))
+         // Pipeline pattern: collect($userData)->pipe(new GenerateUserStats)->pipe(new FormatForExcel)->pipe(new ApplyCompanyBranding).
+         
+         collect([1, 2, 3])->pipeInto(ResourceCollection::class); // Now [1,2,3] will be passed into ResourceCollection's connstructor.
+         // It is same as: new ResourceCollection(collect([1, 2, 3])). So why need it?
+         // Exmp: $report = $orders->filter(fn($o) => $o->active)->values()->pipeInto(MonthlyFinancialReport::class); $report->calculateTax();. corresponding to new MonthlyFinancialReport($orders->filter(fn($o) => $o->active)->values())- Better readability using pipeInto.
+         // While pipe takes a closure (a function), pipeInto takes a Class Name.
+        
+         // pipeThrough method passes the collection to the given array of closures and returns the result of the executed closures:
+         collect([1, 2, 3])->pipeThrough([function(Collectiion $c){}, function(Collection $c){}]); // Logic should be sequential. Reordering can give different result.
+
+         // pluck method retrieves all of the values for a given key:
+         $collection->pluck('name'); // ['Desk', 'Chair']
+         $collection->pluck('name', 'product_id'); // Can speficy how values will be keyed: ['prod-100' => 'Desk', 'prod-200' => 'Chair'].
+         // If duplicate keys exist, the last matching element will be inserted into the plucked collection.
+         $collection->pluck('speakers.first_day'); // Nested values with dot notation.
     }
 
     public function lazyCollectionMethods(){
