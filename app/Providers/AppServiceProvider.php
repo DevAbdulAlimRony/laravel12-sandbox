@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Pluralizer;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\ParallelTesting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -407,4 +408,12 @@ class AppServiceProvider extends ServiceProvider
     // Some parts of applications may use facades while others depend on contracts.
     // To use the contract, just type hint the interface in constructor.
     // Example: Illuminate\Contracts\Cookie\Factory, Illuminate\Contracts\Debug\ExceptionHandler, Paginator etc. (See Documentation for full list)
+
+    //* Parallel Testing Hooks:
+    ParallelTesting::setUpProcess(function (int $token) {});
+    ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
+        Artisan::call('db:seed');
+    });
+    // tearDownProcess(), setUpTestCase(), tearDownTestCase().
+    // Access token from anywhere: ParallelTesting::token() 
 }

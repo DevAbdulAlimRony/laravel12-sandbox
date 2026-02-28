@@ -479,6 +479,24 @@ class MainController {
         Flight::onlyTrashed()->get();
     }
 
+    //* Clearing confusion about when to use builder and when to collection methods:
+    //# Rule 1: Filter in the Builder, Format in the Collection.
+    // Bad: User::all()->where('active', 1); (You downloaded every user, even inactive ones, just to throw them away in PHP).
+    // Good: User::where('active', 1)->get(); (The database only sent you the active ones).
+    //# Rule 2: Use Collections for "Heavy Lifting" Logic:
+    // Some things are hard to do in SQL but easy in PHP. If you need to check a complex PHP permission or format a string using a Laravel helper, use a Collection.
+    // User::where('role', 'admin')->get()->filter(return $user->hasSpecialPermission();)
+
+    // User:: (You are in Builder mode- database level).
+    // ->where()->limit() (Still in Builder mode).
+    // ->get() (The "Bridge"—you just jumped from Builder to Collection- php level).
+    // ->map()->groupBy() (You are now in Collection mode).
+
+    // When methods act as builder, it Converts to SQL and runs on the DB.. When collection instance, Runs as PHP code on an array.
+    // Query builder handles millions of rows easily, but collection is limited by the server RAM.
+
+    // We can use these methods in only database level.
+    // If you try to use these on a Collection after you've already fetched the data, your code will crash.
     public function builderMethods(){
        //* Migrations: See users table migration file.
 
@@ -603,7 +621,7 @@ class MainController {
         // Offset: Skip the first 10 rows of the result set.
         // Limit: Maximum of 5 rows after the offset has been applied.
 
-        // Conditional where"
+        // Conditional where
         DB::table('users')->when($role, function (Builder $query, string $table){
             $query->where('role_id', $role);
         }); // If $role is true then execute the closure.
@@ -710,6 +728,12 @@ class MainController {
         // Catch all messages on all channels: Redis::pubscribe(['*'], function(){})
     }
 
+    // User::all(): Runs SELECT * and returns a Collection.
+    // $collection->all(): Returns the underlying array inside the collection.
+
+    // The "Memory-Only" Methods (Collection):
+    // These methods are for high-level logic. SQL (the database language) is very fast but "dumb"—it doesn't know how to run complex PHP functions.
+    // These methods all are entirely for collection level, not for database query. We have to make data as collection at first.
     public function collectionMethods(){
         // Collection class provides a fluent, convenient wrapper for working with arrays of data.
         // So that we can chain up other methods of collection instance.
@@ -718,6 +742,13 @@ class MainController {
         $collection  = collect([1, 2, 3]); // Return a Collection instance.
         // The results of Eloquent queries are always returned as Collection instances.
         Collection::make([1, 2, 3]); // Same as collect() helper function.
+        Collection::wrap('John Doe'); // ['John Doe']. wrap in a collection.
+        
+        $collection->toArray(); // Convert collection into plain php array.
+        Collection::unwrap(collect('John Doe')); // ['John Doe']
+
+        // Collections are macroable, we can add additional custom methods of our own. 
+        // We should declare a collection macro in a service provider's boot, see AppServiceProvider.
 
         // Checking Type:
         $collection->ensure(User::class);
@@ -734,36 +765,76 @@ class MainController {
         collect([])->hasMany(); // false, true if contains multiple items.
         collect([1, 2, 3])->hasMany();
         // hasMany(fn ($item) => $item['age'] === 2)
-
-        // Collections are macroable, we can add additional custom methods of our own. 
-        // We should declare a collection macro in a service provider's boot, see AppServiceProvider.
-
-        //* Available Methods:
+    
         // All of these methods may be chained to fluently manipulate the underlying array.
         // Almost every method returns a new Collection instance, allowing us to preserve the original copy of the collection when necessary.
         $collection->all(); // Returns the underlying array represented by the collection: [1, 2, 3]. Like filter()->all(), if only filter it will return collecton instance.
         $collection->only(['name', 'price']); // Return only those keys.
         $collection->except(['price', 'discount']); // Return except those keys.
-        $collection->forget('name'); // Remove item by key.
-        collect([1, 2, 3, 4, 5, 6, 7, 8, 9])->forPage(2, 3); // [4, 5, 6]. 2 is the page number, 3 items per page.
+       
+        // reverse(): Reverse preserving the original key.
+        // shuffle(): Randomly shuffle the items.
+        
         Collection::fromJson($json); // Create collection from json string.
-
+        collect(['name' => 'Desk', 'price' => 200])->toJson(); // '{"name":"Desk", "price":200}'
+        $collection->toPrettyJson(); // Convert into fromatted Json string using JSON_PRETTY_PRINT
+        
         $collection->get('name');
         $collection->get('age', 34); // Second argument is default value if not found.
         $collection->get('email', function () { return 'taylor@example.com';}); // Callback as the defult value.
         $collection->keys(); // Return all keys.
+
+        $collection->value('price'); // Take given value of the first items by specified key.
+        $collection->values(); // Return a new collection with key reset.
+
+        collect([0, 1, 2, 3, 4, 5])->take(3); // [0, 1, 2]
+        $collection->take(-2) // [4, 5]
+        collect([1, 2, 3, 4])->takeUntil(3); // [1, 2]
+        collect([1, 2, 3, 4])->takeUntil(function (int $item) {
+            return $item >= 3;
+        }); // [1, 2]. If not true or given value not found, all values return.
+        collect([1, 2, 3, 4])->takeWhile(function(int $item){
+            return $item < 3;
+        }); // [1, 2]
+
+        // pluck method retrieves all of the values for a given key: (same as select() or get() selected column)
+        $collection->pluck('name'); // ['Desk', 'Chair']
+        $collection->pluck('name', 'product_id'); // Can speficy how values will be keyed: ['prod-100' => 'Desk', 'prod-200' => 'Chair'].
+        // If duplicate keys exist, the last matching element will be inserted into the plucked collection.
+        $collection->pluck('speakers.first_day'); // Nested values with dot notation.
+
+        collect([1, 1, 2, 2, 3, 4, 2])->unique(); // Remove duplicates: [1, 2, 3, 4]
+        $collection->unique('brand')->values()->all(); // Dealing with nested arry, specify key.
+        $collection->unique(function (array $item) {
+             return $item['brand'].$item['type']; // which value should determine an item's uniqueness.
+        });
+        // For strict comparison: uniqueStrict().
+
+        $collection->search(4);
+        // search('4', strict: true)
+        // search(function (int $item, int $key){})
 
         $collection->after(3); // 4. Item after a item, if not return null.
         $collection->after(3, strict: true);
         $collection->after(function(int $item, int $key){return $item >5}); // Search items greater than 5 and then return the next item of them.
         // Same goes for before.
         
-        collect([1, 2, 3, 4, 5])->pop(); // Remove last item and return: [5]. and [1,2,3,4] will return if we perform all on the collection.
-        
         collect([1, 2, 3, 4, 5])->prepend(0); // [0, 1, 2, 3, 4, 5]. Can give key: prepend(0, 'zero'): 'zero' => 0
         $p = collect(['product_id' => 'prod-100', 'name' => 'Desk']);
         $p->pull('name'); // 'Desk'
         $p->all(); // ['product_id' => 'prod-100'].
+
+        collect([1, 2, 3, 4, 5])->shift(); // Removes and returns the first item from the collection: 1
+        // shift(3): Remove and Return first 3.
+        collect([1, 2, 3, 4, 5])->pop(); // Remove last item and return: [5]. and [1,2,3,4] will return if we perform all on the collection.
+
+        $collection->forget('name'); // Remove item by key.
+        collect([1, 2, 3, 4, 5, 6, 7, 8, 9])->forPage(2, 3); // [4, 5, 6]. 2 is the page number, 3 items per page.
+
+        collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])->skip(4)->all(); // [5, 6, 7, 8, 9, 10]
+        collect([1, 2, 3, 4])->skipUntil(3): // [3, 4] 
+        collect([1, 2, 3, 4])->skipUntil(function (int $item) {return $item >= 3;})->all(); // [3, 4]
+        // skipWhile().
         
         // push(): If we push then call all on that collection, items will be push at last.
         collect(['product_id' => 1, 'name' => 'Desk'])->put('price', 100); // 'product_id' => 1, 'name' => 'Desk', 'price' => 100] 
@@ -775,6 +846,7 @@ class MainController {
          collect([ [1, 2, 3],  [4, 5, 6],])->collapse(); // [1, 2, 3, 4, 5, 6]
          // collapseWithKeys(): ['first'  => [1, 2, 3], 'second' => [4, 5, 6]]
          collect(['products' => ['desk' => ['price' => 100]]])->dot(); // ['products.desk.price' => 100]
+         // $dottedCollection->undot();
 
          LazyCollection::make(function () { yield 1; yield 2; })->collect()->all();
          // The collect method is especially useful when you have an instance of Enumerable and need a non-lazy collection instance. 
@@ -783,7 +855,7 @@ class MainController {
          collect(['John Doe'])->concat(['Jane Doe'])->concat(['name' => 'Johnny Doe']); // ['John Doe', 'Jane Doe', 'Johnny Doe']
          collect(['name' => 'Taylor', 'framework' => 'Laravel'])->flip(); // ['Taylor' => 'name', 'Laravel' => 'framework']
          
-         collect(['name' => 'Desk', 'price' => 100])->contains('Desk'); 
+         collect(['name' => 'Desk', 'price' => 100])->contains('Desk');  // Alias: some().
          // Can pass callback: contains(function (int $value, int $key) {}
          // Can pass key value pair: contains('product', 'Bookcase')
          // Contains do loose comparison, can use: containsStict()
@@ -812,14 +884,21 @@ class MainController {
         
          $collection->every(function (int $value, int $key){ return $value > 2;}); // If all elements pass the test.
          // If collection is empty, every returns true.
+         
          $collection->first(function (int $value, int $key){ return $value > 2;}); // First item that passes the test.
          // Can call just first() to get the first element, if no element null returnted.
          // Same goes for firstOrFail(): Throws ModelNotFoundException if no element found.
          $collection->firstWhere('status', 'active'); // First item where key value match
          $collection->firstWhere('age', '>=', 18);
          $collection->firstWhere('age'); // If value is truthy.
-         // last(): Returns the last element in the collection that passes a given truth test.
          
+         collect([1, 2, 3, 4])->sole(function (int $value, int $key) { return $value === 2;}); // First element if just one element pass the truth test.
+         // Key value pair: $collection->sole('product', 'Chair')
+         // Without argument $collect->sole(): Get the first element in the collection if there is only one element.
+         // ItemNotFoundException if no items found to return.
+         
+         // last(): Returns the last element in the collection that passes a given truth test.
+
          $collection->filter(function (int $value, int $key) { return $value > 2;}); // Return only those items that pass the test.
          // If no callback is supplied, all entries of the collection that are equivalent to false will be removed
          collect([1, 2, 3, null, false, '', 0, []])->filter()->all(); // [1, 2, 3]
@@ -831,6 +910,21 @@ class MainController {
          });
          $underThree->all(); // [1, 2]
          $equalOrAboveThree->all(); // [3, 4, 5, 6]
+
+          // Reduces the collection to a single value:
+         collect([1, 2, 3])->reduce(function(?int $carry, int $item){
+            return $carry + $item;
+         }); // Output: 6.
+         // The value for $carry on the first iteration is null, but
+         // Can specify: reduce(function(){}, 4), Output will be 10.
+         // using key: reduce(function (int $carry, int $value, string $key) use ($ratio)...
+
+         // reduceSpread() allows you to carry multiple.
+         [$odds, $evens] = collect([1, 2, 3, 4, 5, 6])->reduceSpread(function ($oddList, $evenList, $number) {
+            if ($number % 2 === 0) {$evenList[] = $number;}
+            else{$oddList[] = $number;}
+         }, [], []); // $odds: [1, 3, 5], $evens: [2, 4, 6].
+         // Similar to partition, but partition give only two , we can spread multiple here.
 
          $collection->percentage(fn (int $value) => $value === 1); // Give percentage if pass a truth test. 33.33
          // By default rouded to two decimal places. Can provide- precision: 3
@@ -865,6 +959,14 @@ class MainController {
          collect(['product_id' => 1, 'price' => 100])->merge(['price' => 200, 'discount' => false]); // ['product_id' => 1, 'price' => 200, 'discount' => false]
          collect(['product_id' => 1, 'price' => 100])->mergeRecursive(['product_id' => 2,'price' => 200, 'discount' => false]); // ['product_id' => [1, 2], 'price' => [100, 200], 'discount' => false]
          // While a standard merge is "shallow" and simply replaces the old value with the new one, recursiveMerge drills down into the sub-arrays to combine them.
+
+         collect(['Chair', 'Desk'])->zip([100, 200]); // [['Chair', 100], ['Desk', 200]].
+
+         collect([1 => ['a'], 2 => ['b']])->union([3 => ['c'], 1 => ['d']]); // [1 => ['a'], 2 => ['b'], 3 => ['c']]
+         // union method adds the given array to the collection. If the given array contains keys that are already in the original collection, the original collection's values will be preferred.
+
+         collect(['Taylor', 'Abigail', 'James'])->replace([1 => 'Victoria', 3 => 'Finn']); // ['Taylor', 'Victoria', 'James', 'Finn']. same as merge, but replace with numeric keys also.
+         // replacerecursive(['ok', 2 => [1 => 'King']]): For multi step array.
          
          collect(['a', 'b', 'c'])->join(', ', ', and '); // 'a, b, and c'
          collect(['a'])->join(', ', ' and '); // 'a'
@@ -884,6 +986,21 @@ class MainController {
          // mapToGroups(): Map the collection into groups based on the given callback. 
          collect(['Alice', 'Bob', 'Charlie'])->mapWithKeys(function (string $name) { return [strtolower($name) => strlen($name)]; })->all(); // ['alice' => 5, 'bob' => 3, 'charlie' => 7]
 
+         // Transform does same thing as map, but transform modifies the collection itself where map return a new collection.
+         $collection->transform(function (int $item, int $key) {
+            return $item * 2;
+         });
+
+         // The tap method passes the collection to the given callback, allowing you to "tap" into the collection at a specific point and do something with the items while not affecting the collection itself.
+         collect([2, 4, 3, 1, 5])->sort()->tap(function(Collection $collection){
+            Log::debug('Values after sorting', $collection->values()->all());
+         }); // 1, 2, 3, 4, 5
+         // map is for changing collectionitself, tap is not for change.
+         User::find($id)->tap(function ($user) {
+            $user->update(['status' => 'active']);
+            Log::info("User {$user->id} is now active.");
+          });
+
          collect([1, 1, 2, 4])->median(); // 1.5. avg(), min(), max(), sum() etc.
 
          collect([1, 2, 3])->pipe(function (Collection $collection) {
@@ -900,12 +1017,60 @@ class MainController {
          // pipeThrough method passes the collection to the given array of closures and returns the result of the executed closures:
          collect([1, 2, 3])->pipeThrough([function(Collectiion $c){}, function(Collection $c){}]); // Logic should be sequential. Reordering can give different result.
 
-         // pluck method retrieves all of the values for a given key:
-         $collection->pluck('name'); // ['Desk', 'Chair']
-         $collection->pluck('name', 'product_id'); // Can speficy how values will be keyed: ['prod-100' => 'Desk', 'prod-200' => 'Chair'].
-         // If duplicate keys exist, the last matching element will be inserted into the plucked collection.
-         $collection->pluck('speakers.first_day'); // Nested values with dot notation.
+         //  $collection->random(), random(3)- Take three random elements, if elements not present that much, throw InvalidArgumentException.
+         collect()->range(3, 6); // [3, 4, 5, 6]
+         collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])->slice(4); // [5, 6, 7, 8, 9, 10]
+         // slice(4, 2): Slice from index 4, Take 2 items.
+         
+        $collection = collect([1, 2, 3, 4, 5]);
+        $chunk = $collect->splice(2)->all(); // [3, 4, 5]. 
+        $collection->all(); // [1, 2].
+        // Defining size: splice(2, 1).
+        // New items to replace the removed items in original collection: splice(2, 1, [10, 11]), Output: $collection->all():  [1, 2, 10, 11, 4, 5]
+        
+        collect([1, 2, 3, 4, 5])->split(3); // [[1, 2], [3, 4], [5]], Focuses on the number of groups.
+        collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])->splitIn(3); // [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10]], Focuses on filling the groups.
+
+         collect([1, 2, 3, 4, 5])->sliding(2); // [[1, 2], [2, 3], [3, 4], [4, 5]], slide like window.
+         // sliding(2, step: 2): [1, 2], [2, 3]
+
+        // Real life use case of sliding with eachSpread:
+        $transactions = collect([
+            (object) ['amount' => 100, 'total' => 0], // Monday
+            (object) ['amount' => 50,  'total' => 0], // Tuesday
+            (object) ['amount' => -30, 'total' => 0], // Wednesday
+            (object) ['amount' => 200, 'total' => 0], // Thursday
+        ]);
+        // You want to calculate a "Running Balance" (how much money is in the account after each transaction).
+        // Window 1: [Monday, Tuesday], Window 2: [Tuesday, Wednesday], Window 3: [Wednesday, Thursday].
+        $transactions->sliding(2)->eachSpread(function ($previous, $current) {
+            $current->total = $previous->total + $current->amount;
+        });
+        // [amount: 100, total: 100], [amount: 50, total: 150], [amount: -30, total: 120], [amount: 200, total: 320]
+
+        // Sorting:
+        collect([5, 3, 1, 2, 4])->sort()->values()->all(); // sort method do not preserve the keys, so we used values(). [1, 2, 3, 4, 5]
+        // Can pass callback to make own sorting algorithm.
+        $collection->sortBy('price')->values()->all();
+        // collection->sortBy('title', SORT_NATURAL)
+        // sortBy(function (array $product, int $key) {})->values()->all()
+        // Sort using multiple values: sortBy([['name', 'asc'], ['age', 'desc'],])
+        // sortKeys():  sorts the collection by the keys of the underlying associative array.
+        // $collection->sortKeysUsing('strnatcasecmp')
+        // In opposite orders: sortDesc(), sortByDesc(), sortKeysDesc().
+
+        Collection::times(10, function(int $num){
+            return $number * 9;
+        })->all(); // [9, 18, 27, 36, 45, 54, 63, 72, 81, 90]
+
+        $collection->unless(true, function (Collection $collection, bool $value) {
+            return $collection->push(4);
+        }); // Can pass second callback, if true then second callback will work.
+        // unlessEmpty(), unlessNotEmpty()
     }
+
+    // Real life examples:
+    // https://github.com/charindu77/readings/blob/main/Laravel%20Collections:%2015%20Open-Source%20Examples%20of%20%22Chained%22%20Methods.md
 
     public function lazyCollectionMethods(){
          // If you try to process a 500MB CSV or 100,000 Eloquent records, your PHP script will likely hit the memory limit and crash.
