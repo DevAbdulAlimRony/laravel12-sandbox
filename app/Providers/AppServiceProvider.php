@@ -11,6 +11,8 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Pluralizer;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\ParallelTesting;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -396,6 +398,30 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('local')) {
             Mail::alwaysTo('taylor@example.com');
         }
+
+        //* Custom Auth Guard:
+        Auth::extend('jwt', function (Application $app, string $name, array $config){
+            return new JwtGuard(Auth::createUserProvider($config['provider']));
+        });
+        // Now in auth config, guards' => [ 'api' => [ 'driver' => 'jwt',..
+
+        //* Closure Request Guard:
+        Auth::viaRequest('custom-token', function (Request $request) {
+            return User::where('token', (string) $request->token)->first();
+        });
+        // Route::middleware('auth:api')
+        // Route::middleware('auth:api')
+
+        //* Custom Authentication Provider:
+        Auth::provider('mongo', function (Application $app, array $config) {});
+
+        //* Parallel Testing Hooks:
+        ParallelTesting::setUpProcess(function (int $token) {});
+        ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
+            Artisan::call('db:seed');
+        });
+        // tearDownProcess(), setUpTestCase(), tearDownTestCase().
+        // Access token from anywhere: ParallelTesting::token() 
     }
 
     //* Facades: See app/Facades/Payment.php
@@ -408,12 +434,4 @@ class AppServiceProvider extends ServiceProvider
     // Some parts of applications may use facades while others depend on contracts.
     // To use the contract, just type hint the interface in constructor.
     // Example: Illuminate\Contracts\Cookie\Factory, Illuminate\Contracts\Debug\ExceptionHandler, Paginator etc. (See Documentation for full list)
-
-    //* Parallel Testing Hooks:
-    ParallelTesting::setUpProcess(function (int $token) {});
-    ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
-        Artisan::call('db:seed');
-    });
-    // tearDownProcess(), setUpTestCase(), tearDownTestCase().
-    // Access token from anywhere: ParallelTesting::token() 
 }

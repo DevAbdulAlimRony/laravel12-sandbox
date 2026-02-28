@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*'); // To share sail app using sail share
 
+        $middleware->redirectUsersTo('/panel'); // Redirect authenticated user.
+        $middleware->redirectUsersTo(fn (Request $request) => route('panel')); // Using a closure.
+        $middleware->redirectGuestsTo('/login'); // redirect uauthenticated user.
+        $middleware->redirectGuestsTo(fn (Request $request) => route('login')); // using closure.
+
         //* Registering global middleware:
         // The append method adds the middleware to the end of the list of global middleware. 
         // Can use prepend also if necessary to check first.
