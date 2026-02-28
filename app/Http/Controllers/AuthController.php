@@ -146,5 +146,32 @@ class AuthController {
         if (Hash::check('plain-text', $hashedPassword)) {}
         if (Hash::needsRehash($hashed)) {Hash::make('plain-text');} // If work factor changed after a hashing.
 
+        //* Email Verification:
+        // See all routes in web.php.
+        // Model should implements MustVerifyEmail interface.
+        // Once this interface has been added to your model, newly registered users will automatically be sent an email containing an email verification link.
+        // users table must contain email_verified_at column.
+        // Three routes: Display a should click verification link notice, when link clicked, resend link.
+        // The route that returns the email verification notice should be named verification.notice with ->middleware('auth').
+        // Because verified middleware included with Laravel will automatically redirect to this route name if a user has not verified their email address.
+        // Verification route should be named verification.verify with ->middleware(['auth', 'signed']).
+        // function (EmailVerificationRequest $request){$request->fulfill();}
+        // fulfill method of EmailVerificationRequest will call the markEmailAsVerified method and dispatch the Verified event.
+        // Sometimes a user may misplace or accidentally delete the email address verification email. Need resending the link.
+        // Protect your routes using >middleware(['auth', 'verified']), this will use EnsureEmailIsVerified middleware.
+        // If an unverified user attempts to access a route that has been assigned this middleware, they will automatically be redirected to the verification.notice named route. 
+        // See VerifyEmail:: for Verification email customization in AppServiceprovider's boot method.
+
+        //* Resetting Forgotten Passwords:
+        // By default password reset driver is database in auth config file. Can use cache driver also.
+        // users table should have a password reset token column.
+        // Model should use Notifiable and CanResetPassword trait.
+        // Model class should implements CanResetPassword interface.
+        // Should configure trust hosts in apache or nginx srver or in bootsrap/app.php- trustHosts middleware method
+        // See Routes in we.php.
+        // Delete password reset tokens which are expired: php artisan auth:clear-resets
+        // Automate this process: Schedule::command('auth:clear-resets')->everyFifteenMinutes();
+        // Reset link customization: See AppServiceProvider's boot()
+        // Customize reset email: implement sendPasswordResetNotification($token): void , method in model.
     }
 }

@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Notifications\Messages\MailMessage;
+use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -414,6 +418,17 @@ class AppServiceProvider extends ServiceProvider
 
         //* Custom Authentication Provider:
         Auth::provider('mongo', function (Application $app, array $config) {});
+
+        //* Customizing Email Verification Mail:
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url){
+            return (new MailMessage)->subject('Verify Email Address')->line('Click the button below to verify your email address.')
+                                    ->action('Verify Email Address', $url);
+        });
+
+        //* Password Reset Link Customization:
+        ResetPassword::createUrlUsing(function (User $user, string $token) {
+            return 'https://example.com/reset-password?token='.$token;
+        });
 
         //* Parallel Testing Hooks:
         ParallelTesting::setUpProcess(function (int $token) {});
