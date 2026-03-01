@@ -1,12 +1,15 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Http\Client\Batch;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\Pool as HttpClientPool;
+use Illuminate\Process\Pipe;
+use Illuminate\Process\Pool as ProcessPool;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\Pool;
-use Illuminate\Http\Client\Batch;
 use Illuminate\Support\Facades\Process;
 use Exception;
 
@@ -65,7 +68,7 @@ class HttpClientController{
     // Guzzle Options: Http::withOptions([])
 
     //* Concurrent Request (parallely, not sequntially)
-    Http::pool(fn (Pool $pool) => [
+    Http::pool(fn (HttpClientPool $pool) => [
         $pool->get('http://localhost/first'), // $responses[0]
         $pool->get('http://localhost/second'), // $responses[1]
 
@@ -128,7 +131,7 @@ class HttpClientController{
         // $process->running(), latestOutput(), latestErrorOutput(), $process->wait(), waitUntil(), ensureNotTimedOut()
 
         // Concurrent Process:
-        Process::pool(function (Pool $pool) {
+        Process::pool(function (ProcessPool $pool) {
             $pool->path(__DIR__)->command('bash import-1.sh');
              $pool->as('second')->command('bash import-2.sh'); // naming pool process.
         })->start(function (string $type, string $output, int $key) {});

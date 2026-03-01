@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Events\OrderShipped;
+use Illuminate\Support\Facades\Broadcast;
 
 class BroadcastController{
     // A standard web request (HTTP) is like a Postcard: You send a message, wait a few days, and get a response back.

@@ -1,4 +1,10 @@
 <?php
+
+namespace App\Views\Composers;
+
+use App\Models\User;
+use Illuminate\View\View;
+
 // View composers are callbacks or class methods that are called when a view is rendered.
 // It is useful when we have same data or route for different view to share.
 

@@ -1,59 +1,39 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Sandbox Learning Roadmap
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is an **open-source Laravel documentation** repository—anyone can learn from it, improve it, and contribute back.
 
-## About Laravel
+## Learning path (sequential order)
+| Step | What to learn | Files / Classes to study |
+| --- | --- | --- |
+| 1 | Installation options and editor tooling | `app/1. Install.txt` |
+| 2 | JavaScript / PHP package manifests and scripts | `app/2. json.txt` |
+| 3 | Support and public files that power requests | `app/3. other-files.txt` plus `public/.htaccess`, `public/robots.txt` (see the same file for coverage) |
+| 4 | Configuration patterns, helpers, and environment handling | `app/config.txt` |
+| 5 | Request lifecycle, directory definitions, and service providers | `app/4. Lifecycle and Directory.txt`, `bootstrap/app.php`, `routes/web.php` |
+| 6 | Artisan, Tinker, and console-first flows | `app/5. artisan and tinker.txt`, `artisan` script |
+| 7 | Controllers and utilities for HTTP, caching, broadcasting, etc. | `app/Http/Controllers/HttpClientController.php`, `app/Http/Controllers/CacheController.php`, `app/Http/Controllers/BroadcastController.php` (read them in that order to follow data flow) |
+| 8 | Frontend assets, views, and resources | `resources/views`, `vite.config.js`, `resources/js`, `resources/sass` |
+| 9 | Database, migrations, and seeders | `database/migrations`, `database/seeders` |
+| 10 | Tests, factories, and supporting scripts | `tests`, `phpunit.xml` |
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Each step lists the concept to master and the file or class (or folder) where the explanation lives; proceed in order to build a solid foundation before diving deeper.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Deep dives by topic (after you finish the path)
+- **Event broadcasting & listeners**: study `app/Http/Controllers/BroadcastController.php`, then inspect `routes/broadcasting.php`, `app/Broadcasting`, and `app/Listeners`.
+- **HTTP helpers & caching**: read `app/Http/Controllers/HttpClientController.php`, followed by `app/Http/Controllers/CacheController.php`, and then `app/Policies` / `app/Helpers` for supporting logic.
+- **Config and environment utilities**: revisit `app/config.txt`, then edit `config/*.php` to see how the `Config` facade and helpers drive behavior; use `php artisan config:cache` / `config:clear` to see the lifecycle.
+- **Source control hygiene**: use `app/3. other-files.txt` as a reference for `.gitignore`, `.gitattributes`, and why build artifacts stay out of version control.
+- **Frontend tooling**: leverage `resources/js`, `resources/sass`, and `vite.config.js` after reading step 8 to understand how Vite, Vue/React, and SCSS are pulled into Laravel.
+- **Testing & automation**: explore `tests/Feature` and `tests/Unit` along with `phpunit.xml` to see how Laravel structures assertions and environments.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## How to contribute
+1. Fork the repo, update documentation or code, and submit a PR.
+2. Keep explanations task-focused and reference the exact file paths (like the ones cited above).
+3. Improve or add diagrams, tables, or extra README sections as needed.
 
-## Learning Laravel
+## Local setup reminders
+- `composer install`, `cp .env.example .env`, `php artisan key:generate`.
+- Run `npm install && npm run dev` for HMR or `npm run build` for production assets.
+- For Sail-based installs, use `./vendor/bin/sail up`, add the `sail` alias, and access services on the ports outlined in `app/1. Install.txt`.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Made by Abdul Alim.

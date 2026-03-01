@@ -62,7 +62,7 @@ class SalesCoach implements Agent, Conversational, HasTools, HasStructuredOutput
 
             // Provider tools are special tools implemented natively by AI providers, offering capabilities like web searching, URL fetching, and file searching. 
             // The WebSearch provider tool allows agents to search the web for real-time information.
-            new WebSearch;
+            new WebSearch,
             // (new WebSearch)->max(5)->allow(['laravel.com', 'php.net']),
             // ->location(city: 'New York',region: 'NY',country: 'US');
 

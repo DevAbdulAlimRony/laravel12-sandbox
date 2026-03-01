@@ -32,7 +32,7 @@ class ValidationController {
             'publish_at' => 'nullable|date',
 
             // A credit card number is required if the payment_type has a value of cc
-            'credit_card_number' => 'required_if:payment_type,cc'
+            'credit_card_number' => 'required_if:payment_type,cc',
             // This cc is a value, we can customize it lang files in values array so that in error message it shows credit card rather than cc.
 
             // Conditionally adding rules:
@@ -74,10 +74,10 @@ class ValidationController {
             'roles' => [Rule::contains(['admin', 'editor']),], // doesntContain()
             'avatar' => 'dimensions:min_width=100,min_height=200',
             'avatar' => 'dimensions:ratio=3/2',
-            'foo.*.id' => 'distinct' // No duplicate id into foo array.
+            'foo.*.id' => 'distinct', // No duplicate id into foo array.
             // distinct:strict, distinct:ignore_case
             'email' => 'email:rfc,dns',
-            'email2' => [Rule::email()->rfcCompliant(strict: false)->validateMxRecord()->preventSpoofing()]
+            'email2' => [Rule::email()->rfcCompliant(strict: false)->validateMxRecord()->preventSpoofing()],
             // The dns and spoof validators require the PHP intl extension.
 
             // File::types(['csv'])->encoding('utf-8')
@@ -86,7 +86,7 @@ class ValidationController {
             // ->only([ServerStatus::Pending, ServerStatus::Active]), except()
             'status2' => [Rule::enum(ServerStatus::class)->when(Auth::user()->isAdmin(),
                                                         fn ($rule) => $rule->only(...),
-                                                        fn ($rule) => $rule->only(...) );],]);
+                                                        fn ($rule) => $rule->only(...) )]]),
 
         // Validate and store erropr messages within a named error bag:
         $request->validateWithBag('postErrors', ['title' => 'required']);
