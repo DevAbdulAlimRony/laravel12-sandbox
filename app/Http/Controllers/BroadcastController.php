@@ -45,7 +45,7 @@ class BroadcastController{
     broadcast(new OrderShipped($update))->via('pusher'); // customized broadcast connection while using multiple connections. or, 
     // $this->broadcastVia('pusher'); in Event's constructor. 
 
-    //* Annonymous Event: without creating a dedicated event class.
+    //* Anonymous Event: without creating a dedicated event class.
     Broadcast::on('orders.'.$order->id)->send(); // {"event": "AnonymousEvent", "data": "[]", "channel": "orders.1"}
     Broadcast::on('orders.'.$order->id)->as('OrderPlaced')->with($order)->send();
     Broadcast::private('orders.'.$order->id)->send();

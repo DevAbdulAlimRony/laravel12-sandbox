@@ -174,7 +174,7 @@
         <!-- Accessing slot attribute: <x-slot:heading class="font-bold"> -->
         <!-- Dynamic Component Rendering: <x-dynamic-component :component="$componentName" class="mt-4" /> -->
 
-        <!-- If we dont need class, just component blade file, that is annonymous componet. -->
+        <!-- If we dont need class, just component blade file, that is anonymous component. -->
         <!-- php artisan make:component forms.input --view -->
         <!-- Rather than passing attribute from class, now we can use @prop directive. -->
         <!-- Access Parent Data: @aware(['color' => 'gray']) -->

@@ -10,7 +10,7 @@ namespace App\Facades;
 // If we dig deeper for Route facade, we will see it has just  getFacadeAccessor static method which returns 'router' string.
 // If we inspect Facade parent class, we will see below it call php's __callstatic() magic method.
 // So, behind the scene, getFacadeAccessor resolved the provided 'router' string from service container.
-// So, actually all facade methods are coming from Router.php class. We think those methods are staic, but actually not.
+// So, actually all facade methods are coming from Router.php class. We think those methods are static, but actually not.
 
 // In this way, we can create our own facade.
 // 1. It must extends Facades class.

@@ -2,6 +2,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AddTraceContext{

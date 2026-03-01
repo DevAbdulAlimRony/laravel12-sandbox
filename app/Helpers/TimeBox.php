@@ -1,5 +1,5 @@
 <?php
-// Timebox class ensures that given calllback takes a fixed amount of time to execute, even if its actual execution completes sooner. 
+// Timebox class ensures that given callback takes a fixed amount of time to execute, even if its actual execution completes sooner. 
 // Useful for cryptographic operations and user authentication checks, where attackers might exploit variations in execution time to infer sensitive information.
 
 // If the execution exceeds the fixed duration, Timebox has no effect

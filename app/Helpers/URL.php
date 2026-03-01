@@ -77,7 +77,7 @@ if (! $request->hasValidSignatureWhileIgnoring(['page', 'order'])) {
 }
 // But, instead of checking again and again, we can use ->middleware('signed') in the route or ->middleware('signed:relative') if url doesnt contain domain.
 
-// When visits a signed url after expiration, it will recieve a generic 403 error. We can customize this InvalidSignatureException in bootstrap/app.php.
+// When visits a signed url after expiration, it will receive a generic 403 error. We can customize this InvalidSignatureException in bootstrap/app.php.
 
 <?php
 // Laravel's Uri class provides a convenient and fluent interface for creating and manipulating URIs via objects. 

@@ -25,6 +25,7 @@ use App\Listeners\SendPodcastNotification;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Models\Order;
+use App\Models\Post;
 use App\Observers\UserObserver;
 use App\Policies\OrderPolicy;
 use App\Policies\PostPolicy;
@@ -237,7 +238,7 @@ class AppServiceProvider extends ServiceProvider
             return User::where('name', $value)->firstOrFail();
         });
         // You use Route::bind when the logic to find a model is more complex than just looking at a single column.
-        // Exmp: When a user visits a route, you don't just want to find the user by ID; you want to make sure they are active and belong to the correct company.
+        // Example: When a user visits a route, you don't just want to find the user by ID; you want to make sure they are active and belong to the correct company.
         
         //* Global Constraints fro route parameter validation:
         Route::pattern('id', '[0-9]+');

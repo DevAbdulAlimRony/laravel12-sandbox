@@ -55,7 +55,7 @@ Schedule::command('emails:send')->withoutOverlapping(10); // how many minutes mu
 // When using chained when methods, the scheduled command will only execute if all when conditions return true.
 // Timezone scheduling is not recommended,  When daylight saving time changes occur, your scheduled task may run twice or even not run at all for some time zones.
 // 'schedule_timezone' => 'America/Chicago' in env, no need specify in timezone() method now.
-// onOneServer(): If we have multiple server, and we want atomic lock. Exmp, generate report daily. But same report can be generated in multiple servers.
+// onOneServer(): If we have multiple server, and we want atomic lock. Example, generate report daily. But same report can be generated in multiple servers.
 // Schedule::useCache('database');
 
 //* Dispatch same job with different parameters using name():

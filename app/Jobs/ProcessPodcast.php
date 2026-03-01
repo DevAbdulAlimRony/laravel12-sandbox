@@ -2,15 +2,20 @@
 
 namespace App\Jobs;
 
+use App\Jobs\TranscribePodcast;
 use App\Models\Podcast;
 use App\Services\AudioProcessor;
+use DateTime;
+use Illuminate\Bus\Batchable;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
+use Illuminate\Support\Collection;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class ProcessPodcast implements ShouldQueue, ShouldBeUnique
 {
@@ -36,7 +41,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         // If we inject multiple model, we can call #[WithoutRelations] above ProcessPodcast class to serialize all models without relationships.
     }
 
-    // Execut the Job
+    // Execute the Job
     // we are able to type-hint dependencies on the handle method of the job, automatic binding.
     public function handle(AudioProcessor $processor): void
     {
@@ -62,7 +67,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         }
         
 
-        // Can call another job belongs to the same job, useful when we need so many bacthes.
+        // Can call another job belongs to the same job, useful when we need so many batches.
         $this->batch()->add(Collection::times(1000, function () {
             return new ImportContacts;
         }));
@@ -98,7 +103,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
     //* Job Middleware:
     public function middleware(): array{
         // Rate Limiting:
-        // Set Rate Limitter in a ServiceProvider, let'sa say backupus.
+        // Set Rate Limiter in a ServiceProvider, let's say backups.
         // Each time the job exceeds the rate limit, this middleware will release the job back to the queue with an appropriate delay based on the rate limit duration
         return [new RateLimited('backups')->releaseAfter(60)];
         // Can use tries, retryUntil method, and maxExceptions properties, releaseAfter( elapse before the released job will be attempted again)
@@ -109,7 +114,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         // Preventing Overlaps:
         // Helpful when a queued job is modifying a resource that should only be modified by one job at a time.
         // Let's say want to prevent credit score update job overlaps for the same user ID.
-        return [new WithoutOverlapping($this->user->id)]; // Can use releaseAfterr()
+        return [new WithoutOverlapping($this->user->id)]; // Can use releaseAfter()
         // new WithoutOverlapping($this->order->id))->dontRelease(): Immediately delete any overlapping jobs so that they will not be retried.
         // If unexpectedly cant atomic lock feature failed: ->expireAfter(180)
         // By default, it will only prevent overlapping jobs of the same class. . But we can do for multiple class:
@@ -182,13 +187,13 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
     // Laravel supports Amazon SQS FIFO (First-In-First-Out) queues, allowing
     // Strict Ordering: Jobs are processed exactly in the order they were sent.
     // Exactly-Once Processing: It automatically removes duplicate jobs (de-duplication) within a 5-minute window.
-    // Imagine user deposite 100Taka and withdrw 50 taka. If we have multiple workers, withdraw might be start processing first and it will be problematic.
+    // Imagine user deposit 100Taka and withdraw 50 taka. If we have multiple workers, withdraw might be start processing first and it will be problematic.
      public function deduplicationId(): string
      {
         return "renewal-{$this->subscription->id}";
      }
      // When call(This is where SQS FIFO called): ->onGroup('invoices')->withDeduplicator(fn () => 'invoices-'.$invoice->id);
-     // For FIFO event listener, define messageGoup(), duplicationId() in listener.
+     // For FIFO event listener, define messageGroup(), duplicationId() in listener.
 
      //* Failover:
      // If one connection failed, another connection will be used, this ensures high availability in production.

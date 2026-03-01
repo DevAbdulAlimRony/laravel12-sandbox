@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BasicController;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
@@ -83,7 +82,7 @@ Route::get('/search/{search}', function (string $search) {
 | 3. php artisan route:list --path=api
 | 4. php artisan route:list --except-vendor
 | 5. php artisan route:list --only-vendor
-| 6. php artisan route:cache - when deploy to boost perfromance.
+| 6. php artisan route:cache - when deploy to boost performance.
 | 7. php artisan route:clear - to clear cache
 | 8. Each time a request is made laravel has to load and register all loads, to boost performance- php artisan route:cache. It will be stored in a single file in bootstrap/cache/routes..php
 */
@@ -171,7 +170,7 @@ Route::prefix('transactions')->group(function () {
         Route::post('/', 'store');
 
         // We should define /create at first, then /{transactionId} or validate the transactionId withNumber
-        // If we do not do it then create will be traeted as a transactionId, then that route will be called. 
+        // If we do not do it then create will be treated as a transactionId, then that route will be called. 
 
         // Single Action Controller:
         // When a controlle has just one action, or one method- thats called invokable or single action controller
@@ -182,7 +181,7 @@ Route::prefix('transactions')->group(function () {
         // In real application invokable class will always be post request
     });
 
-    // Route Name can be also more creative to differ conflick like transaction.show 
+    // Route Name can be also more creative to avoid conflict like transaction.show 
     // or we can create a group like Route::name('transactions.')
     // We can chain the grouping also like Route::prefix()->name()->controller()->group()
     // or, we can make another route file called transaction.php. and register it in bootstrap/app.php like this in withRouting:
@@ -202,7 +201,7 @@ Route::prefix('transactions')->group(function () {
     // },
     // Dont go crazy with routing, prefixing, or grouping. If you over-engineer, sometimes it will be hard to understand.
     // Do not create separate route file unless your web.php or api.php grows more.
-    // Do not after two or three levels gouping. Don't make harder for your team or yourself to understand it later.
+    // Do not go after two or three levels grouping. Don't make harder for your team or yourself to understand it later.
 });
 
 Route::middleware(['admin'])->group(function(){});
@@ -384,7 +383,7 @@ $action = Route::currentRouteAction(); // string
 //* Middleware:
 // Middleware provide a convenient mechanism for inspecting and filtering HTTP requests entering your application.
 // It sits between your route and controller.
-// Exmp: Auth middleware redirect to login or admin panel
+// Example: Auth middleware redirect to login or admin panel
 // Logging middleware log all incoming requests.
 // If we inspect withMiddleware in ApplicationBuilder.php inside the framework, we see it is adding global middlewares, setting middleware groups and aliases.
 // If we inspect the getMiddleware method in Middleware.php, there are some global middlewares:

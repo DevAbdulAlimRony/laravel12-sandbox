@@ -3,9 +3,12 @@
 namespace App\Listeners;
 
 use App\Events\OrderShipped;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Jobs\Middleware\RateLimited;
+use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 

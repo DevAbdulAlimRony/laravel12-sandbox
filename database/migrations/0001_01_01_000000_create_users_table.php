@@ -37,12 +37,12 @@ use Illuminate\Support\Facades\Schema;
 // If migration use different database connection rather than default connection:
 protected $connection = 'pgsql';
 
-// A migration file is just a PHP's annonymous class.
+// A migration file is just a PHP's anonymous class.
 // A migration can have one table or multiple tables.
 return new class extends Migration
 {
     //* Conditional Migration:
-    // Determine if this migration should run. If retrun false, then migration will be skipped.
+    // Determine if this migration should run. If return false, then migration will be skipped.
     public function shouldReturn(){
         return User::active(Flight::class);
     }
@@ -83,7 +83,7 @@ return new class extends Migration
             // Unlike a standard auto-incrementing integer (1, 2, 3...), a UUID looks like a long string of hexadecimal characters, such as 550e8400-e29b-41d4-a716-446655440000.
             // The main draw of a UUID is that it is statistically unique. You can generate one on any device without checking a central database, and the odds of generating the same one twice are virtually zero.
             // Use standard IDs for internal tables (like settings, categories, or roles) to keep performance high. Use UUIDs for user-facing resources (like orders, profiles, or shared_links).
-            // Exmp: https://www.youtube.com/watch?v=3wVTmlD86a . So, public link is not exposed by id anymore.
+            // Example: https://www.youtube.com/watch?v=3wVTmlD86a . So, public link is not exposed by id anymore.
             // Other use cases: same table in two databases to cluster.
             // Drawbacks: Big size in database, Insert operation is costly.
             $table->uuid('id')->primary();
@@ -174,7 +174,7 @@ return new class extends Migration
             $table->engine('InnoDB'); // specify table's storage engine
             $table->charset('utf8mb4');
             $table->collation('utf8mb4_unicode_ci');
-            $table->longText('data')->charset('binary'); // Exmp: Encrypted string or small image
+            $table->longText('data')->charset('binary'); // Example: Encrypted string or small image
             // A and a might be treated as the same thing; in a binary column, they are strictly different.
             $table->after('password', function (Blueprint $table) {//...columns});
 
@@ -331,7 +331,7 @@ return new class extends Migration
     // Roll back and re-migrate a limited number of migrations: php artisan migrate:refresh --step=5
     // Drop all tables then execute migrate: php artisan migrate:fresh
     // php artisan migrate:fresh --seed
-    // If different databse connection: php artisan migrate:fresh --database=admin
+    // If different database connection: php artisan migrate:fresh --database=admin
     // Refresh execute down() methods, fresh execute drop command- it drops all table made by migration or not.
 
     //* Events:

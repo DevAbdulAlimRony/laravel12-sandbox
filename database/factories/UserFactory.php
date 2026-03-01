@@ -12,7 +12,7 @@ class UserFactory extends Factory
     // php artisan make:factory PostFactory
     // Define trait in Model: use HasFactory
     // The HasFactory trait's factory method will use conventions to determine the proper factory for the model the trait is assigned to.
-    // If factory class not in database/factories directly, specify above model class: #[UseFactory(FlightFactory::class)], dont need HasFatory trait then.
+    // If factory class not in database/factories directly, specify above model class: #[UseFactory(FlightFactory::class)], dont need HasFactory trait then.
     // Or, Just implement newFactory() method in model, See Model. and define model here:
     protected $model = Flight::class;
 
@@ -74,7 +74,7 @@ class UserFactory extends Factory
     public function configure(): static{
         return $this->afterMaking(function(User $user){})->afterCreating(function(User $user){});
     }
-    // Exmp: assign role, or create related model's factory after creating.
+    // Example: assign role, or create related model's factory after creating.
     // If you are testing a piece of logic that just calculates a value based on user attributes (like $user->getFullName()), use make(). If you are testing a search filter that queries the database, you must use create().
 
     // Indicate that the model's email address should be unverified.
@@ -92,7 +92,7 @@ class UserFactory extends Factory
     // User::factory()->count(5)->suspended()->make();
     // Created model will already be soft deleted.: User::factory()->trashed()->create();
     // Can override state also: ->state(['status' => 'active'])
-    // Override Attributes: User::factory()->make(['name' => 'overriden name']);
+    // Override Attributes: User::factory()->make(['name' => 'overridden name']);
     // We can use create() method rather than make it uses save() method of eloquent.
 
     //* Sequence:
@@ -106,7 +106,7 @@ class UserFactory extends Factory
 
     //* Relationship:
     User::factory()->has(Post::factory()->count(3))->create();
-    // Automatic assumption that, 'posts' is a realtionship, Can define explicitely: has(Post::factory()->count(3), 'posts')
+    // Automatic assumption that, 'posts' is a relationship, Can define explicitly: has(Post::factory()->count(3), 'posts')
     // Can do state manipulation on relations also.
     User::factory()->hasPosts(3)->create(); // Magic factory relationship.
     // Override: ->hasPosts(3, ['published' => false])

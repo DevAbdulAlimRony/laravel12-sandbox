@@ -76,7 +76,7 @@ It prevents committing secrets, dependencies, logs, and build files.
 5. Avoids leaking unfinished or internal pages to Google.
 6. Protects SEO from indexing wrong environments.
 7. For a public production website, change to: User-agent: *, Allow: / or remove the file entirely.
-8. Exp: public folders, but seo cant index the admin pannel
+8. Exp: public folders, but seo cant index the admin panel
    User-agent: *
    Allow: /
    Disallow: /admin

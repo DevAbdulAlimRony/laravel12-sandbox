@@ -18,10 +18,10 @@ use Illuminate\Support\Facades\Artisan;
 // See command details: php artisan help migrate
 // For Sail: ./vendor/bin/sail artisan list
 // Make custom command: php artisan make:command SendEmails. See App/Console/Commands.
-// By default, laravel automatically scan console/commands directy, but if another directory then add in bootstrap/app.php
+// By default, laravel automatically scan console/commands directory, but if another directory then add in bootstrap/app.php
 // See callback command in console.php
 
-class SendEmails extends Command implements Isolatable, PromtsForMissingInput
+class SendEmails extends Command implements Isolatable, PromptsForMissingInput
 {
     // Name and Signature of the command: php artisan mail:send syful.isl
     protected $signature = 'mail:send {user}';
@@ -95,7 +95,7 @@ class SendEmails extends Command implements Isolatable, PromtsForMissingInput
     }
 
     //* Prompting for Missing Input:
-    // If command cotains required argument let's say userId, if not provided, user will get an error message.
+    // If command contains required argument let's say userId, if not provided, user will get an error message.
     // But if missing, we can ask for the input
     // Implements the PromptsForMissingInput interface.
     // Laravel will automatically ask for the userId  by intelligently phrasing the question using either the argument name or description, but we can customize the question:
@@ -104,7 +104,7 @@ class SendEmails extends Command implements Isolatable, PromtsForMissingInput
             'user' => 'Which user ID should receive the mail?',
             // Placeholder Text: 'user' => ['Which user ID should receive the mail?', 'E.g. 123'],
             // Can use closure: 'user' => fn() => search(label: , placeholder: , options: );
-            // If we want user to select or enter options, we can include promts in handle method.
+            // If we want user to select or enter options, we can include prompts in handle method.
         ];
     }
 

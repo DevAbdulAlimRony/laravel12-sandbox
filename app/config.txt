@@ -26,7 +26,7 @@
 17. Accessing env variables using env() outside of the congig file is prohibited. First access in config file, then access that config file outside anywhere.
 18. You can have different env file like .env, .env.local etc. Now, if we set APP_ENV=local then our app will load the .env.local.
 19. php artisan tinker --env=local
-20. Some config files are not vaialable because we dont need to change them. But if we wanna change we can publish them: php artisan config:publish then select the file to publish.
+20. Some config files are not available because we dont need to change them. But if we wanna change we can publish them: php artisan config:publish then select the file to publish.
 21. If we wanna publish third party library's config file: php artisan vendor::publish --provider="SeviceProviderOfThatConfigFile"
 22. Never commit your env file in git because it holds confidential values.
 23. You can add any third party key like bkash key in services.php.

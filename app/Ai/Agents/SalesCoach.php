@@ -2,7 +2,10 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Middleware\LogPrompts;
+use App\Ai\Tools\RandomNumberGenerator;
 use App\Ai\Tools\RetrievePreviousTranscripts;
+use App\Models\Document;
 use App\Models\History;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -14,7 +17,6 @@ use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 use Stringable;
 use Laravel\Ai\Concerns\RemembersConversations;
-use App\Models\Document;
 use Laravel\Ai\Tools\SimilaritySearch;
 use Laravel\Ai\Providers\Tools\WebSearch;
 

@@ -28,7 +28,7 @@ class AiController {
         // Can iterate, broadcast on the streaming promt.
         // Queue:  ->queue($request->input('transcript'))->then()->catch()
 
-        //* Annonymous Agent:
+        //* Anonymous Agent:
         // Sometimes you may want to quickly interact with a model without creating a dedicated agent class.
         agent(instructions: '', messages: [], tools: [])->promt(); // Can take Schema to produce structured output also.
 

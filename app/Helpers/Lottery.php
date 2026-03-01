@@ -1,5 +1,5 @@
 <?php
-// To execute a calbacks based on a set of given odds.
+// To execute callbacks based on a set of given odds.
 // Useful when we need to execute code for a percentage of incoming request.
 
 use App\Models\User;

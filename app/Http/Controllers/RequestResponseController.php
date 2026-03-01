@@ -209,7 +209,7 @@ class RequestResponse {
         //* Streaming Response:
         // A Streamed Response is used when you need to send data to the client bit-by-bit rather than waiting for the entire payload to be ready.
         // We can reduce memory usage and improve performance using streamed responses.
-        // Exmp: Large CSV/Excel Exports(100,000 rows), AI Text Generation (ChatGPT style), Real-time Log Monitoring, Large media download like video. 
+        // Example: Large CSV/Excel Exports(100,000 rows), AI Text Generation (ChatGPT style), Real-time Log Monitoring, Large media download like video. 
         // response()->stream(function(){ .. Here we can use ob_flush() for output buffering, sleep(), flush() })
         // Can use OpenAI::client()->chat()->createStreamed(...);
         // Can use in vue: npm install @laravel/stream-vue

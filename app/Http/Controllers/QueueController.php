@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Bus;
 
 class QueueController {
     // A Queue job is a task that is offloaded to be processed later so the user doesn't have to wait for it to finish.
-    // Exmp: sending an email, processing a video, generating a report, database cleanup, automated billing etc.
+    // Example: sending an email, processing a video, generating a report, database cleanup, automated billing etc.
     // Laravel queues provide a unified queueing API across a variety of different queue backends, such as Amazon SQS, Redis, or even a relational database.
     // config/queue.php
     // Queue drivers: sync, database, beanstalkd, sqs, redis, null
@@ -123,7 +123,7 @@ class QueueController {
     // php artisan queue:work redis --tries=3 --backoff=3
     // The --timeout value should always be at least several seconds shorter than your retry_after configuration value.
     //  If your --timeout option is longer than your retry_after configuration value, your jobs may be processed twice.
-    // Pause (Exmp in system maintenance): php artisan queue:pause database:
+    // Pause (Example in system maintenance): php artisan queue:pause database:
     // Resume: php artisan queue:continue database:default
     // May disable restart or pause polling individually by setting the static $restartable or $pausable properties on the Illuminate\Queue\Worker class.
     // When interruption polling is disabled, workers will not respond to queue:restart or queue:pause commands.

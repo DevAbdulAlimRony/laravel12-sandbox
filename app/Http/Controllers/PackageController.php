@@ -27,7 +27,7 @@ class PackageController {
            // A/B testing is a marketing and UX technique, not a traditional "bug-finding" test. You show two versions of a page to different users to see which one performs better (e.g., more sign-ups or clicks).
     // 12. Pint: Laravel Pint is an opinionated PHP code style fixer for minimalists.
     // 13. Precognition: provide "live" validation for your frontend JavaScript application without having to duplicate your application's backend validation rules.
-    // 14. Promts: Laravel Prompts is a PHP package for adding beautiful and user-friendly forms to your command-line applications, with browser-like features including placeholder text and validation.
+    // 14. Prompts: Laravel Prompts is a PHP package for adding beautiful and user-friendly forms to your command-line applications, with browser-like features including placeholder text and validation.
            // Laravel Prompts is perfect for accepting user input in your Artisan console commands, but it may also be used in any command-line PHP project.
     // 15. Pulse: Laravel Pulse delivers at-a-glance insights into your application's performance and usage.
            // track down bottlenecks like slow jobs and endpoints, find your most active users, and more.

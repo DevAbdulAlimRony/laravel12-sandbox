@@ -82,7 +82,7 @@ $last = last($array);
 $fetch = Arr::get($array, 'products.desk.price');
 $discount = Arr::get($array, 'products.desk.discount', 0); // If not found, return 0.
 
-// Retrives a value from nested array or object using dot notation:
+// Retrieves a value from nested array or object using dot notation:
 $discount2 = data_get($array, 'products.desk.discount');
 // Can give default value.
 // Also accepts wildcards using asterisks: data_get($data, '*.name'), all names
@@ -150,7 +150,7 @@ $set = Arr::set($array, 'products.desk.price', 200);
 $set = data_set($array, 'products.desk.price');
 // Can use default value, asterisk wildcard.
 // By default, any existing values are overwritten.
-// If we dont want to ovewrite existing: data_set($data, 'products.desk.price', 200, overwrite: false);
+// If we dont want to overwrite existing: data_set($data, 'products.desk.price', 200, overwrite: false);
 
 // Push an item using dot notation if key does not exist
 $emptyArray = [];
@@ -254,7 +254,7 @@ $hasOutOfStock = Arr::some($array['products'], function ($value) {
     return $value['stock'] <= 0;
 });
 
-// Retrives a single value based on test, if multiple value return MultipleItemsFoundException:
+// Retrieves a single value based on test, if multiple value return MultipleItemsFoundException:
 $returnOnePositivePrice = Arr::sole($array['products'], fn($product) => $product['price'] > 0);
 
 // If we want deconstruct the test passes elements and failed elements into separate arrys deconstructing:

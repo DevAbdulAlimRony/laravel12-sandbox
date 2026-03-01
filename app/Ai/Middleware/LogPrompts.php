@@ -3,6 +3,7 @@
 namespace App\Ai\Middleware;
 
 use Closure;
+use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Prompts\AgentPrompt;
 
 class LogPrompts

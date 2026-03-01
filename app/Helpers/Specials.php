@@ -24,7 +24,7 @@ random(); // 123 (cached result)
 // If from a class, we make another object of that class, will get cached result again.
 
 // Return null if object is null rather than error.
-optional($user->address)->street; // If $user object not found, then retrun null rather than error.
+optional($user->address)->street; // If $user object not found, then return null rather than error.
 return optional(User::find($id), function (User $user) {
     return $user->name;
 }); // Execute the closure if User::find($id) is not null.

@@ -172,7 +172,7 @@ class Flight extends Model implements HasLocalePreference, Attachable {
     // Cash Parameters: 'secret' => AsHash::class.':sha256',
     // Can compare casted values using ComparesCastableAttributes interface.
     // For value objects, we can make it castable using Castable inteface
-    // class Address implements Castable, also can use annonymous cast.
+    // class Address implements Castable, also can use anonymous cast.
 
     //* Model Pruning:
     // Periodically delete models that are no longer needed.
@@ -207,7 +207,7 @@ class Flight extends Model implements HasLocalePreference, Attachable {
     }
     //* Remove global Scope:
     Flight::withoutGlobalScope(AncientScope::class)->get(); // for class.
-    User::withoutGlobalScope('ancient')->get(); // for annonymous.
+    User::withoutGlobalScope('ancient')->get(); // for anonymous.
     User::withoutGlobalScopes()->get(); // Remove all
     User::withoutGlobalScopes([FirstScope::class, SecondScope::class])->get();
     User::withoutGlobalScopesExcept([SecondScope::class])->get();
@@ -254,7 +254,7 @@ class Flight extends Model implements HasLocalePreference, Attachable {
 
          // Eloquent determines the foreign and key of the relationship based on the parent model name.
          // As our model is flight now, it will be flight_id 
-         // But can be overriden:
+         // But can be overridden:
         //  $this->hasOne(Phone::class, 'foreign_key');
         // $this->hasOne(Phone::class, 'foreign_key', 'local_key');
     }

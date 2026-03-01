@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Database\Eloquent\Collection;
+
 use App\Models\Flight;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\File;
 
 class MainController {
     public function index(){
@@ -27,7 +29,7 @@ class MainController {
         // If the ModelNotFoundException is not caught, a 404 HTTP response is automatically sent back to the client.
         Flight::firstOrCreate(['name' => 'London to Paris']); // Retrieve flight by name or create it if it doesn't exist.
         Flight::firstOrNew(['name' => 'London to Paris']); // Retrieve flight by name or make a new model instance, it if it doesn't exist.
-        // for new, to save database, we have to use save(). create automatically save into databse.
+        // for new, to save database, we have to use save(). create automatically save into database.
 
         //* Retrieving Aggregates:
         Flight::where('active', 1)->count();
@@ -218,7 +220,7 @@ class MainController {
          foreach ($comments as $comment) {}
          User::with('comments')->get(); // Eager Loaded
 
-         //* Chaperon: if defned in relationship, then dont need here.
+         //* Chaperone: if defined in relationship, then dont need here.
          foreach ($post->comments as $comment) {
             // WITHOUT chaperone(): This line triggers a DB query for EVERY comment.
             // WITH chaperone(): This line uses the Post already in memory.
@@ -365,7 +367,7 @@ class MainController {
             'created_at' => now(), // Manually required
             'updated_at' => now(), // Manually required
         ]); // If duplicate entry, will throw error. If dont want error, use: insertOrIgnore()
-        //* Mass Bulk Insert: Can pass multiple rows and it will perform using single query, thats the real use case. Exmp: Importing from excel.
+        //* Mass Bulk Insert: Can pass multiple rows and it will perform using single query, thats the real use case. Example: Importing from excel.
         DB::table('users')->insert([
             ['email' => 'picard@example.com', 'votes' => 0],
             ['email' => 'janeway@example.com', 'votes' => 0],
@@ -633,7 +635,7 @@ class MainController {
         // lockForUpdate(): A "for update" lock prevents the selected records from being modified or from being selected with another shared lock
         // Example: There is only one physical seat, but thousands of people are clicking "Buy" at the exact same moment.
         // While the system is checking your account and calculating the price, another process (like an admin) might try to "deactivate" that seat for maintenance.
-        // sharedLock apply: Both can read, but admin cant delete or update ntil your price calculation is finished.
+        // sharedLock apply: Both can read, but admin cant delete or update until your price calculation is finished.
         // Both user doing payment for the ticked. lockForUpdate apply():
         // When Alice’s request hits the server, the database "grabs" Seat 42A and puts it in a vault. When Bob’s request arrives a millisecond later, the database tells him: "Wait. This row is being modified."
         DB::transaction(function () use ($seatId, $userId) {
@@ -898,7 +900,7 @@ class MainController {
          $users->each->markAsVip(); // Rather than using closure- each(function ($vipUser) { $vipUser->markAsVip(); });
          $users->sum->votes;
          // Supported Methods: average, avg, contains, each, every, filter, first, flatMap, groupBy, keyBy, map, max, min, partition, reject, skipUntil, skipWhile, some, sortBy, sortByDesc, sum, takeUntil, takeWhile, and unique.
-         // Exmp: $users->max->age, $users->contains->is_admin, $employees->every->is_on_vacation, $posts->filter->is_published, $tasks->reject->is_completed, $orders->unique->customer_id
+         // Example: $users->max->age, $users->contains->is_admin, $employees->every->is_on_vacation, $posts->filter->is_published, $tasks->reject->is_completed, $orders->unique->customer_id
          // $books->sortBy->release_date, $tickets->sortByDesc->priority_level, $students->groupBy->graduating_year, $logs->skipUntil->is_error, $uploads->takeWhile->is_small_file etc.
 
          collect([['account_id' => 1, 'product' => 'Desk'], ['account_id' => 2, 'product' => 'Chair']])->implode('product', ', '); // 'Desk, Chair'
@@ -959,12 +961,12 @@ class MainController {
          collect([1, 2, 3])->pipe(function (Collection $collection) {
             return $collection->sum();
          }); // 6. Pipe exists for when you need to perform custom logic or external processing while staying inside the "fluent" chain.
-         // Real Life Exmp: collect([10, 20, 30])->sum()->pipe(fn($sum) => $myAccountingService->calculateTax($sum))
+         // Real Life Example: collect([10, 20, 30])->sum()->pipe(fn($sum) => $myAccountingService->calculateTax($sum))
          // Pipeline pattern: collect($userData)->pipe(new GenerateUserStats)->pipe(new FormatForExcel)->pipe(new ApplyCompanyBranding).
          
          collect([1, 2, 3])->pipeInto(ResourceCollection::class); // Now [1,2,3] will be passed into ResourceCollection's connstructor.
          // It is same as: new ResourceCollection(collect([1, 2, 3])). So why need it?
-         // Exmp: $report = $orders->filter(fn($o) => $o->active)->values()->pipeInto(MonthlyFinancialReport::class); $report->calculateTax();. corresponding to new MonthlyFinancialReport($orders->filter(fn($o) => $o->active)->values())- Better readability using pipeInto.
+         // Example: $report = $orders->filter(fn($o) => $o->active)->values()->pipeInto(MonthlyFinancialReport::class); $report->calculateTax();. corresponding to new MonthlyFinancialReport($orders->filter(fn($o) => $o->active)->values())- Better readability using pipeInto.
          // While pipe takes a closure (a function), pipeInto takes a Class Name.
         
          // pipeThrough method passes the collection to the given array of closures and returns the result of the executed closures:
@@ -1100,7 +1102,7 @@ class MainController {
         // remember():
         $users = User::cursor()->remember(); // No query has been executed yet...
         $users->take(5)->all(); // Query executed, The first 5 users are hydrated from the database...
-        $users->take(20)->all(); // First 5 users come from the collection's cache, rests are hydrated from databse.
+        $users->take(20)->all(); // First 5 users come from the collection's cache, rests are hydrated from database.
 
         // withHearBeat: Useful for long-running operations that require periodic maintenance tasks, such as extending locks or sending progress updates
         // A Heartbeat is a signal sent at regular intervals to indicate that a program is still performing its task and hasn't crashed or frozen.

@@ -1,7 +1,7 @@
 <?php
 // Laravel's queued jobs allow you to queue tasks for background processing
 // But,
-// Sometimes simple tasks can arrive and we dont want logn running queue.
+// Sometimes simple tasks can arrive and we dont want long running queue.
 
 // Example:
 // Writting log messgae in the background. Let's say we are writting log message after data insert, this will take a time. If we defer it, its written in background, so extra performance.

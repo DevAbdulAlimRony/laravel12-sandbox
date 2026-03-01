@@ -67,7 +67,7 @@ class HttpClientController{
     // withRequestMiddleware(), withResponseMiddleware(), globalRequestMiddleware(), globalResponseMiddleware()
     // Guzzle Options: Http::withOptions([])
 
-    //* Concurrent Request (parallely, not sequntially)
+    //* Concurrent Request (parallely, not sequentially)
     Http::pool(fn (HttpClientPool $pool) => [
         $pool->get('http://localhost/first'), // $responses[0]
         $pool->get('http://localhost/second'), // $responses[1]

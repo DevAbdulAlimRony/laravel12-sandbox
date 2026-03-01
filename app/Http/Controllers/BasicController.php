@@ -40,7 +40,7 @@ class BasicController implements HasMiddleware
         //  __construct(private readonly ContainerInterface $container){}.. and access: $this->container->make(PaymentProcessor::class)
         // If you want to digging deeper how container works, Go to the Application.php which extends from Container, and observe the Container.php resolve() method.
         // App::call([new PodcastStats, 'generate']);
-        // Check if a class binded explicitely: if($this->app->bound(Transistor::class))
+        // Check if a class binded explicitly: if($this->app->bound(Transistor::class))
 
         // Generating URLs to Named Routes:
         route('transactions'); // We passed the route name, it will generate full url

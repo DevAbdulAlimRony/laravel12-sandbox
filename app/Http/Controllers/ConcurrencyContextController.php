@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
+use Illuminate\Log\Context\Repository;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Context;
-use Illuminate\Log\Context\Repository;
 
 class ConcurrencyContextController{
 
@@ -50,7 +51,7 @@ class ConcurrencyContextController{
         // Capture, retrieve, and share information throughout requests, jobs, and commands executing within your application.
         // It acts like a "shared bucket" for information that stays with a specific request from the moment it starts until it finishes.
         // It solves the problem of "How do I pass data deep into my app without passing it through every single function as a variable?"
-        // Exmp: Using request id or user id, using static variables.
+        // Example: Using request id or user id, using static variables.
         // Laravel Context provides a clean, thread-safe way to store data that is automatically available everywhere: in your controllers, models, observers, and even logs.
 
         // Example: Imagine you run an e-commerce site. A user named Sarah tries to checkout, but it fails. She calls support. To find out what happened, you need to see every log entry related to her specific click.
@@ -93,13 +94,13 @@ class ConcurrencyContextController{
 
         //* Scoped Context:
         // Modify context when a callback execute, back to the old context after execution finish.
-        Context::scope(function(){})
+        Context::scope(function(){});
 
         //* Stack: lists of data stored in the order they were added.
         Context::push('breadcrumbs', 'first_value');
         Context::push('breadcrumbs', 'second_value', 'third_value'); // If we get the context, all will be in a single array.
         // Stacks can be useful to capture historical information about a request, such as events that are happening throughout your application.
-        Context::stackContains('breadcrumbs', 'first_value') // Check if valuein stack. Can take second argument like to take only startsWith a character maybe.
+        Context::stackContains('breadcrumbs', 'first_value'); // Check if value in stack. Can take second argument like to take only startsWith a character maybe.
 
         //* Retrieving Context:
         Context::all();

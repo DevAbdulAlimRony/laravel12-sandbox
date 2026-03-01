@@ -3,9 +3,11 @@
 namespace App\Rules;
 
 use Closure;
+use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Validation\Validator;
 
-class Uppercase implements ValidationRule,  DataAwareRule
+class Uppercase implements ValidationRule, DataAwareRule
 {
     protected $data = [];
     protected $validator;
