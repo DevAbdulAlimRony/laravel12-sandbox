@@ -28,6 +28,7 @@ namespace App\Models;
 // More options: --factory or -f, --seed or -s, --controller or -c, --controller --resource --requests or -crR, --policy, -mfsc, --pivot or -p
 // --all or -a: a model, migration, factory, seeder, policy, controller, and form requests
 
+#[UsePolicy(OrderPolicy::class)]
 class Flight extends Model implements HasLocalePreference, Attachable {
     // If we have different database connection rather than default:
     protected $connection = 'pgsql';

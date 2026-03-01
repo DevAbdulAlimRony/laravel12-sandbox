@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Gate;
 
 class AuthController {
     // Guards- Session and Cookies, Providers- Retrive Auth data using eloquent and query builder.
@@ -173,5 +174,58 @@ class AuthController {
         // Automate this process: Schedule::command('auth:clear-resets')->everyFifteenMinutes();
         // Reset link customization: See AppServiceProvider's boot()
         // Customize reset email: implement sendPasswordResetNotification($token): void , method in model.
+    }
+
+    public function authorization(){
+        // Laravel provides two primary ways of authorizing actions: gates and policies.
+        // Gates provide a simple, closure-based approach to authorization while policies, like controllers, group logic around a particular model or resource. 
+        // Gates are most applicable to actions that are not related to any model or resource, such as viewing an administrator dashboard.
+        // Policies should be used when you wish to authorize an action for a particular model or resource.
+
+        // Typically, gates are defined within the boot method of the App\Providers\AppServiceProvider class using the Gate facade. 
+        // See the service provider. Then use it:
+        if(! Gate::allows('update-post', $post)){
+            abort(403);
+            // Dont need to pass auth user, laravel will automatically find it.
+        }
+
+        // Check if user other than currently authenticated user are authorized:
+        if(Gate::forUser($user)->allows('update-post', $post)){}
+        if(Gate::forUser($user)->denies('update-post', $post)){}
+
+        // Multiple authorization at a time:
+        if (Gate::any(['update-post', 'delete-post'], $post)) {}
+        if (Gate::none(['update-post', 'delete-post'], $post)) {}
+
+        Gate::authorize('update-post', $post); // Throw AuthorizationException if not allowed.
+        if (Gate::check('create-post', [$category, $pinned])) {} // Additional context pinned.
+        
+        $response = Gate::inspect('edit-settings');
+        if($response->allowed()){}
+        else{echo $response->messgae()}
+
+        // Inline Authorization (Without defining gate in ServiceProvider, directly here quickly):
+        Gate::allowIf(fn (User $user) => $user->isAdministrator());
+        Gate::denyIf(fn (User $user) => $user->banned());
+        // If no user currently authenticated, automatically throw an AuthorizationException.
+
+        //* Policies:
+        // php artisan make:policy PostPolicy (app/Policies - will create empty class)
+        // php artisan make:policy PostPolicy --model=Post (will create class with viewing, creating, updating, and deleting the resource)
+        // The policy name must match the model name and have a Policy suffix.
+        // If you would like to define your own policy discovery logic, you may register a custom policy discovery callback using the Gate::guessPolicyNamesUsing.
+        // If we dont want automatic discovery, we can manually register policy in AppServiceProvider, or we can define in model as UsePolicy attribute. See flight model.
+        if ($request->user()->cannot('update', $post)) {
+            abort(403);
+        }
+        // Can use Gate facade also: Gate::authorize('update', $post)
+        // create method do not need model, can call just class: $request->user()->cannot('create', Post::class),  Gate::authorize('create', Post::class).
+        // If a policy is registered for the given model, the can method will automatically call the appropriate policy and return the boolean result.
+        //  If no policy is registered for the model, the can method will attempt to call the closure-based Gate matching the given action name.
+        // Or, we can use middleware in route: ->middleware('can:update,post'). or directly: ->can('update', 'post').
+        // Actions that do not require model: ->middleware('can:create,App\Models\Post'), ->can('create', Post::class)
+        // In blade templates, we can use directive @can @elsecan @cannot @canany @elsecanany. or manually @if @unless.
+
+        // Using Inertia, we can provide authorization data to the frontend using inertia's HandleInertiaRequests middleware's share method.
     }
 }

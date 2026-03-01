@@ -17,6 +17,8 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\Access\Response;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -436,7 +438,35 @@ class AppServiceProvider extends ServiceProvider
             Artisan::call('db:seed');
         });
         // tearDownProcess(), setUpTestCase(), tearDownTestCase().
-        // Access token from anywhere: ParallelTesting::token() 
+        // Access token from anywhere: ParallelTesting::token()
+
+        //* Authorization Gates:
+        Gate::define('update-post', function(User $user, Post $post){
+            return $user->id === $post->id;
+        });
+        Gate::define('update-post', [PostPolicy::class, 'update']); // Class callback.
+        Gate::define('create-post', function (User $user, Category $category, bool $pinned) {}); // passing extra data $pinned.
+        Gate::define('edit-settings', function(User $user){
+            return $user->isAdmin ? Response::allow() : Response::deny('You must be an administrator');
+            // More detailed response rather than just true false.
+            // Use gate::inspect in controller to access this detailed response.
+
+            // When an action is denied via a Gate, a 403 HTTP response is returned by default. Customize:
+            // Response::denyWithStatus(404), Response::denyAsNotFound()
+        });
+        Gate::before(function(User $user, string $ability){
+            if($user->isAdministrator()){
+                return true;
+                // Grant all abilities to a specific user before all other authorization check.
+            }
+        });
+        // After all other authorization chekck: Gate::after()
+
+        //* Custom Policy discovery rule:
+        Gate::guessPolicyNamesUsing(function (string $modelClass) {});
+
+        //* Manual registration of policy:
+        Gate::policy(Order::class, OrderPolicy::class);
     }
 
     //* Facades: See app/Facades/Payment.php
