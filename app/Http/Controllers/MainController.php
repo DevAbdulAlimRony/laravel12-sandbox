@@ -679,53 +679,6 @@ class MainController {
         // Tap: Pass the query to this class, let it do something, but then give me back the query so I can keep going.
         // Pipe: Pass the query to this class, and whatever that class returns is the new value of this chain.
         // If we use tap for Paginate, and if call get() now, will get all the flights from the database, not a paginated list.
-
-        //* MongoDB:
-        // MongoDB is one of the most popular NoSQL document-oriented database, used for its high write load (useful for analytics or IoT) and high availability.
-        // Can easily do horizontal scaling.
-        // MongoDB database is a document described in BSON, a binary representation of the data.
-        // Supports documents, arrys, embedded documents and binary data types.
-        // To use, install at first: composer require mongodb/laravel-mongodb
-        // Install driver if already not present: pecl install mongodb
-        // Set MONGODB_URI and MONGODB_DATABASE in env file.
-        // For hosting MongoDB in the cloud, consider using MongoDB Atlas.
-        // Configure in database configuration file.
-        // MongoDB Documentation: https://www.mongodb.com/docs/drivers/php/laravel-mongodb/current/quick-start/
-
-        //* Redis: Redis is an open source, advanced key-value store.
-        // To use, install PhpRedis extension or predis/predis package or just use sail.
-        // Configure in database configuration file.
-        // If we use cluster, we have to configure cluster options.
-        // Redis clustering is a great default option, as it gracefully handles failover.
-        // All configurations as per documentation when need.
-        // To interact with Redis, we use Redis Facade:
-        Redis::set('name', 'Taylor');
-        Redis::get('user:profile:'.$id);
-        Redis::lrange('names', 5, 10);
-        Redis::command('lrange', ['name', 5, 10]); // Command to the server.
-        Redis::connection('connection-name'); // If we have multiple connection.
-        Redis::transaction(function (Redis $redis){$redis->incr('user_visits', 1);});
-        // If we need atomic operation and also want to interact with and inspect Redis key values, rather than using transaction,
-        // We can use lua scripts using eval method since Redis is written in Lua programming language.
-        Redis::eval(<<<'LUA'
-                local counter = redis.call("incr", KEYS[1])
-                if counter > 5 then
-                    redis.call("incr", KEYS[2])
-                end
-                return counter
-            LUA, 2, 'first-counter', 'second counter'
-        );
-        Redis::pipeline(function(Redis $r){
-            for ($i = 0; $i < 1000; $i++) {
-                $pipe->set("key:$i", $i);
-            } // Execute dozens of Redis commands.
-        });
-        
-        //* Redis PUB SUB:
-        // We can publish messages to the channel fom another application, even from another programming language to communicae between application and processes.
-        // Step 1: Set up a channel listener using subscriber method in App\Console\Commands
-        // Step 2: Can publish message from controller using Redis::publish()
-        // Catch all messages on all channels: Redis::pubscribe(['*'], function(){})
     }
 
     // User::all(): Runs SELECT * and returns a Collection.
@@ -1067,6 +1020,11 @@ class MainController {
             return $collection->push(4);
         }); // Can pass second callback, if true then second callback will work.
         // unlessEmpty(), unlessNotEmpty()
+
+        // Conditions:
+        // when(), whenEmpty(), whenNotEmpty().
+        // where(), whereStrict(), whereBetween(), whereNotbetween(), whereIn(), whereNotIn(), whereInStrict(), whereNotInStrict().
+        // whereInstanceOf(), whereNull(), whereNotNull(), 
     }
 
     // Real life examples:
@@ -1160,6 +1118,54 @@ class MainController {
         // Use cursor() if you have a massive table, you aren't doing other DB queries inside the loop, and you want the absolute minimum memory footprint.
         // Use lazy() if you want the best of both worlds: memory safety via chunking, but the ability to use Higher Order Messages and chain methods like ->filter() and ->map().
         // LazyCollection::make() is the "manual" version used for everything else. You use it when your data source is not a Laravel model.    
+    }
+
+    public function eloquentCollection(){
+        // Laravel’s Base Collection is for general data (like arrays of numbers or strings), while the Eloquent Collection is a specialized version specifically engineered to handle Database Models.
+        // While the Eloquent Collection inherits everything from the Base Collection, it adds methods that understand the "DNA" of a database record.
+        // If you are just manipulating an array of API data, you don't want to dig through methods like load() or makeVisible() that only apply to database models.
+        // The Base Collection is part of the Illuminate\Support package (a general utility), while Eloquent Collections are part of Illuminate\Database.
+        // Some methods (like unique) actually behave differently in Eloquent.
+        // While most Eloquent collection methods return a new instance of an Eloquent collection,
+        // the collapse, flatten, flip, keys, pluck, and zip methods return a base collection instance.
+        $user = User::all();
+
+        $users->find(1); // Returns the model that has a primary key matching the given key.
+        $users->findOrFail(1); // If not found, ModelNotFound exception.
+        $users->contains(1); // 1 is the primary key, if contains that model.
+        $users->contains(User::find(1));
+        $users->append('team'); // append team in every model in collection.
+        $users->append(['team', 'is_admin']);
+        $users->setAppends(['is_admin']); //  temporarily overrides all of the appended attributes on each model in the collection.
+        $users->withoutAppends(); // Temporarily removes all of the appended attributes on each model in the collection.
+        $users->except([1, 2, 3]); // all of the models that do not have the given primary keys.
+        $users->only([1, 2, 3]);
+        $users->diff(User::whereIn('id', [1, 2, 3])->get()); // all that are not present in given collection.
+        $users->intersect(User::whereIn('id', [1, 2, 3])->get()); // returns all of the models that are also present in the given collection.
+        $users->fresh('comments'); // retrieves a fresh instance of each model in the collection eager loaded only the specified relation.
+        $users->load(['comments', 'posts']); // Eager load given relations.
+        $users->load('comments.author');
+        $users->load(['comments', 'posts' => fn ($query) => $query->where('active', 1)]);
+        $users->loadMissing(['comments', 'posts']); // Eager load if already not loaded.
+        $users->modelKeys(); // Primary keys of all models.
+        $users->makeVisible(['address', 'phone_number']); // Make attributes visible which is hidden in model.
+        $users->makeHidden(['address', 'phone_number']);
+        $users->mergeVisible(['middle_name']); // makes additional attributes visible while retaining existing visible attributes.
+        $users->mergeHidden(['last_login_at']);
+        $users->setVisible(['id', 'name']); // temporarily overrides all of the appended attributes on each model in the collection.
+        $users->setHidden(['email', 'password', 'remember_token']);
+        // MakeVisible overrides the current visibility, mereVisible just merge with current.
+        $partition = $users->partition(fn ($user) => $user->age > 18); // $partition, $partition[0], $partition[1].
+        $users->toQuery()->update(['status' => 'Administrator',]); // Returns an eloquent query builder instance containing a whereIn() constraint on the collection's primary keys.
+        $users->unique(); // Return all unique models of the collection.
+
+        // If we want custom Collection object for a model, specify above model: #[CollectedBy(UserCollection::class)]. or,
+        // Implement newCollection() method in the model.
+        // If you would like to use a custom collection for every model in your application, you should define the newCollection method on a base model class.
+        // In a real-life application, you use them to move "collection-level logic" (logic that involves multiple rows) out of your User model and into a dedicated class.
+        // Imagine you have a collection of Invoice models. You want to calculate the total tax, the total amount due, and the average discount across all those invoices.
+        // Without Custom Collections: You’d put this logic in your Controller or a Service class, making it hard to reuse.
+        // With Custom Collections: You add a totalDue() method directly to your InvoiceCollection.
     }
 
     public function fileSystem(Request $request){
@@ -1277,5 +1283,54 @@ class MainController {
 
         //* Packages:
         // intervention/image, spatie media library.
+    }
+
+    public function mongoRedis(){
+        //* MongoDB:
+        // MongoDB is one of the most popular NoSQL document-oriented database, used for its high write load (useful for analytics or IoT) and high availability.
+        // Can easily do horizontal scaling.
+        // MongoDB database is a document described in BSON, a binary representation of the data.
+        // Supports documents, arrys, embedded documents and binary data types.
+        // To use, install at first: composer require mongodb/laravel-mongodb
+        // Install driver if already not present: pecl install mongodb
+        // Set MONGODB_URI and MONGODB_DATABASE in env file.
+        // For hosting MongoDB in the cloud, consider using MongoDB Atlas.
+        // Configure in database configuration file.
+        // MongoDB Documentation: https://www.mongodb.com/docs/drivers/php/laravel-mongodb/current/quick-start/
+
+        //* Redis: Redis is an open source, advanced key-value store.
+        // To use, install PhpRedis extension or predis/predis package or just use sail.
+        // Configure in database configuration file.
+        // If we use cluster, we have to configure cluster options.
+        // Redis clustering is a great default option, as it gracefully handles failover.
+        // All configurations as per documentation when need.
+        // To interact with Redis, we use Redis Facade:
+        Redis::set('name', 'Taylor');
+        Redis::get('user:profile:'.$id);
+        Redis::lrange('names', 5, 10);
+        Redis::command('lrange', ['name', 5, 10]); // Command to the server.
+        Redis::connection('connection-name'); // If we have multiple connection.
+        Redis::transaction(function (Redis $redis){$redis->incr('user_visits', 1);});
+        // If we need atomic operation and also want to interact with and inspect Redis key values, rather than using transaction,
+        // We can use lua scripts using eval method since Redis is written in Lua programming language.
+        Redis::eval(<<<'LUA'
+                local counter = redis.call("incr", KEYS[1])
+                if counter > 5 then
+                    redis.call("incr", KEYS[2])
+                end
+                return counter
+            LUA, 2, 'first-counter', 'second counter'
+        );
+        Redis::pipeline(function(Redis $r){
+            for ($i = 0; $i < 1000; $i++) {
+                $pipe->set("key:$i", $i);
+            } // Execute dozens of Redis commands.
+        });
+        
+        //* Redis PUB SUB:
+        // We can publish messages to the channel fom another application, even from another programming language to communicae between application and processes.
+        // Step 1: Set up a channel listener using subscriber method in App\Console\Commands
+        // Step 2: Can publish message from controller using Redis::publish()
+        // Catch all messages on all channels: Redis::pubscribe(['*'], function(){})
     }
 }
