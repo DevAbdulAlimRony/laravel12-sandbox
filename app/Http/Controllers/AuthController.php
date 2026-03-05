@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthController {
     // Guards- Session and Cookies, Providers- Retrive Auth data using eloquent and query builder.
@@ -93,6 +96,11 @@ class AuthController {
         // Define a middleware AuthenticateOnceWithBasicAuth. Auth::onceBasic()
         // Use that middleware in route.
 
+        //* Registering:
+        // Validate inputs, make password hash then,
+        Auth::login($validatedUser);
+        $request->session()->regenerate();
+
         //* Logging Out:
         Auth::logout();
         $request->session()->invalidate();
@@ -162,8 +170,13 @@ class AuthController {
         // Protect your routes using >middleware(['auth', 'verified']), this will use EnsureEmailIsVerified middleware.
         // If an unverified user attempts to access a route that has been assigned this middleware, they will automatically be redirected to the verification.notice named route. 
         // See VerifyEmail:: for Verification email customization in AppServiceprovider's boot method.
+        //  From email verification link, if we change xpiration value and go to the link it will take us to 403  Invalid signature page of laravel.
+        // Use throttle middleware for email veryfy and resend route.
+        // showPasswordResetForm(#[SensitiveParameter] string $token)
+
 
         //* Resetting Forgotten Passwords:
+        // Password reset logic of laravel is in PasswordBroker.php
         // By default password reset driver is database in auth config file. Can use cache driver also.
         // users table should have a password reset token column.
         // Model should use Notifiable and CanResetPassword trait.
@@ -174,6 +187,38 @@ class AuthController {
         // Automate this process: Schedule::command('auth:clear-resets')->everyFifteenMinutes();
         // Reset link customization: See AppServiceProvider's boot()
         // Customize reset email: implement sendPasswordResetNotification($token): void , method in model.
+        // For password reset routes, laravel by default provide 60 seconds throttle, but to make more secure, we should use email based and ip based RateLimiter for password link request and new password submission in boot method.
+        // For example, maybe 3 requests per hour by the email and 10 request per hour by the ip.
+        // In production , we can use infrastructure level rate limiting for more security like cloudfare's rate limiting rules that can block suspiscious traffic or nginx  rate limiting on web server level.
+
+
+        //* Session Fixation attack:
+        // A Session Fixation attack is a type of web security exploit where an attacker tricks a victim into using a specific, known session ID.
+        // Unlike session hijacking—where an attacker steals an active session key after a user logs in—fixation happens when the attacker "hands" a valid session identifier to the user before they even authenticate.
+        // To prevent it: make SESSION_SECURE_COOKIE as true in env file.
+
+        //* Rate Limitting:
+        // In login, we should use RateLimiter::tooManyAttempts with a throttle key.
+        // For throttle key, we can use the combination of user's provided email and user's ip.
+        // If login succeed, clear the rate limitter with the key.
+        // If login failed, hit the the rate limitter again.
+        // But user can use different email, so we should use multiple rate limitter.
+        //  For example, a user tried with an email 5 times, and too many attempts came. But the user from same ip try again with an new email, laravel will allow that. 
+        // Solution: Rather than combination of email and ip tr=hrottle key, one RateLimiter for email, and another rate limitter for ip. maybe max 100 times for ip, max 5 for email.
+        // Rather than directly in controller, call RateLimiter::for in boot method and use as middleware to the route like throttle:login- now we dont need to clear the throttle key in controller.
+        // If attempt in max, it will go to the 429 error page. But we can use ->response with RateLimiter to flash the ValidationException.
+        // Validation exception will not flush password, current password and password_confirmation, which is good.
+        // But it wont take 429 status code which is not standard coding.
+        // So we can use back()->withErrors()->withInput($request->except($password)), also we can check if $request->expectsJson() for ajax request if the just return response()->json() with 429 status code.
+
+        //* Timer Attack:
+        // Laravel's Login::attempt() automatically prevents timer attack using timebox. 
+        // It always take 2000ms if login failed. If suuceed, immediately login so that attacker cant measure response time and cant make list of valid email.
+
+        //* Password Reset Poisioning:
+        // To prevent we can configure inserver if not shared hosting.
+        // In app level, we can use trustHosts middleware in bootsrap/app.php: at: ['yourdomain.com', 'www.yourdomain.com', 'staging,yourdomain.com'].
+        // Sub domain automatically included. subdomain argument can be false by passing.
     }
 
     public function session(Request $request){
@@ -300,5 +345,78 @@ class AuthController {
         // In blade templates, we can use directive @can @elsecan @cannot @canany @elsecanany. or manually @if @unless.
 
         // Using Inertia, we can provide authorization data to the frontend using inertia's HandleInertiaRequests middleware's share method.
+    }
+
+    //* Real life custom login without any starter kit:
+    public function login(LoginRequest $request)
+    {
+        $data = $request->validated();
+
+        // --------------------------------------------
+        // Old approach (commented out): no rate limiting
+        // --------------------------------------------
+        // if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']], true)) {
+        //     throw ValidationException::withMessages([
+        //         'email' => 'The provided credentials do not match our records.',
+        //     ]);
+        // }
+        // $request->session()->regenerate();
+        // return redirect()->route('dashboard');
+
+        // --------------------------------------------
+        // New approach: rate limiting (email+ip) + global ip
+        // --------------------------------------------
+        $emailKey = Str::lower($data['email']);
+        $ip = $request->ip();
+
+        $throttleKey = "login:email_ip:{$emailKey}|{$ip}";
+        $ipKey       = "login:ip:{$ip}";
+
+        $maxAttemptsPerEmailIp = 5;
+        $maxAttemptsPerIp      = 20;
+        $decaySeconds          = 60;
+
+        // If too many attempts (email+ip)
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttemptsPerEmailIp)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
+        // If too many attempts (global ip)
+        if (RateLimiter::tooManyAttempts($ipKey, $maxAttemptsPerIp)) {
+            $seconds = RateLimiter::availableIn($ipKey);
+
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts from this IP. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
+        $remember = (bool) $request->boolean('remember');
+
+        if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']], $remember)) {
+            // record failed attempts
+            RateLimiter::hit($throttleKey, $decaySeconds);
+            RateLimiter::hit($ipKey, $decaySeconds);
+
+            // he preferred consistent handling (throw validation exception)
+            throw ValidationException::withMessages([
+                'email' => 'The provided credentials do not match our records.',
+            ]);
+        }
+
+        // success => clear rate limit buckets
+        RateLimiter::clear($throttleKey);
+        RateLimiter::clear($ipKey);
+
+        $request->session()->regenerate();
+
+        return redirect()->route('dashboard');
+
+        // Refactoring: Use RateLimiter in boot method, then dont need to clean or generate again and again.
+        // Rather than using ValidationException, use custom message as we do in RateLimiter opf boot() method.
+        // See AppServiceProvider.
     }
 }

@@ -56,6 +56,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -504,6 +505,42 @@ class AppServiceProvider extends ServiceProvider
 
         //* Manual registration of policy:
         Gate::policy(Order::class, OrderPolicy::class);
+
+        //* Strong Password Rules as a Centralized Way (dont need to write same rule again):
+        Password::defaults(funcion(){
+            $rule = Password::min(8)->mixedCase()->letters()->numbers()->symbols()->uncompromised();
+            if (app()->environment('local')) { 
+                 return Password::min(8);
+            }
+            return $rule;
+        }); // Now in Validation just use: 'password' => 'required|Password::defaults()'.
+
+        //* Login RateLimitter:
+        RateLimiter::for('login', function (Request $request) {
+            return [
+                // General IP limit for security
+                Limit::perMinute(100)->by($request->ip()), // Make resposne as email.
+
+                // Specific Email limit with custom feedback logic
+                Limit::perMinute(5)->by($request->input('email'))->response(function (Request $request, array $headers) {
+                
+                    // Check if the request wants JSON (e.g., Axios, Fetch, or API)
+                    if ($request->expectsJson()) {
+                     return response()->json([
+                            'message' => 'Too many login attempts. Please try again in ' . $headers['Retry-After'] . ' seconds.',
+                        ], 429);
+                    }
+
+                    // For standard web forms: Redirect back with errors and old input
+                    return redirect()->back()
+                           ->withInput($request->except('password')) // Keep email, remove password for security
+                            ->withErrors([
+                                'email' => 'Too many login attempts. Please try again later.',
+                            ]);
+            }),
+        ];
+    });
+
     }
 
     //* Facades: See app/Facades/Payment.php

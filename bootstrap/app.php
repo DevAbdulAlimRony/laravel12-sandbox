@@ -100,6 +100,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // $middleware->trustHosts(at: fn () => config('app.trusted_hosts'));
         // By default, requests coming from subdomains of the application's URL are also automatically trusted. 
         // We can disable this by subdomains: false.
+
+        //* Validating csrf token for a route (Not recommended):
+         $middleware->validateCsrfTokens('/dashboard');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //* HTTP Exceptions:

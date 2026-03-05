@@ -17,6 +17,7 @@ class ValidationController {
 
             // Rather than single delimited string, rules can be specified in array
             'title2' => ['required', 'unique:posts', 'max:255'],
+            // unique validation should be in custom logic rather than validation rule, because its exposing the table name in database level.
 
             // Stop at first validation failure by bail:
             'title3' => 'bail|required||unique:posts|max:255',
@@ -27,6 +28,20 @@ class ValidationController {
             'author.name' => 'required',
             'v1\.0' => 'required', // if contains a literal period. "v1.0": "Version Release Notes",
             // The backslash tells Laravel: "This dot is part of the key name, not a nested array"
+
+            // Required Validations:
+            'role_id' => Rule::requiredIf($request->user()->is_admin), // Required based on another column condition.
+            'role_id' => Rule::requiredIf(fn () => $request->user()->is_admin), // Can use callback.
+            'signature_date' => 'required_if_accepted:terms', //  if the anotherfield field is equal to "yes", "on", 1, "1", true, or "true".
+            'reason' => 'required_if_declined:newsletter', // "no", "off", 0, "0", false, or "false".
+            'payment_details' => 'required_unless:account_type,free',
+            'extension' => 'required_with:phone_number,country_code', // If any of the other specified fields are present and not empty.
+            'middle_name' => 'required_with_all:first_name,last_name', // If you provide both "first_name" AND "last_name", then "middle_name" becomes required.
+            'username' => 'required_without:email', // You must provide a "username" if the "email" is missing
+            'emergency_contact' => 'required_without_all:home_phone,work_phone,mobile_phone',
+            'address' => 'required|array|required_array_keys:city,zip', // The "address" field must be an array and must contain "city" and "zip".
+
+            'password_confirmation' => 'same:password', // The "password_confirmation" must be the same as the "password".
 
             // For optional field, we should specify nullable so that validator not consider null values as invalid using ConvertEmptyStringsToNull middleware.
             'publish_at' => 'nullable|date',
@@ -80,7 +95,32 @@ class ValidationController {
             'email2' => [Rule::email()->rfcCompliant(strict: false)->validateMxRecord()->preventSpoofing()],
             // The dns and spoof validators require the PHP intl extension.
 
+            'uuid' => 'uuid:4',
+            'url' => 'url:http,https',
+            'game' => 'url:minecraft,steam',
+
+            // Uniqueness:
+            'email' => 'unique:App\Models\User,email_address',
+            'email' => 'unique:users,email_address',
+            'email' => 'unique:custom_database_connection.users,email_address',
+            'email' => [Rule::unique('users')->ignore($user->id)],
+            // Rule::unique('users')->ignore($user)
+            // Rule::unique('users')->ignore($user->id, 'user_id')
+            // Rule::unique('users', 'email_address')->ignore($user->id)
+            'email' => Rule::unique('users')->where(fn (Builder $query) => $query->where('account_id', 1)),
+            // Rule::unique('users')->withoutTrashed();
+            // Rule::unique('users')->withoutTrashed('was_deleted_at');
+
+            // For password validation whe registering, we can do Password::defaults in boot, check if app is in local, then just simple validation, if not then strong password rules.
+
             // File::types(['csv'])->encoding('utf-8')
+            'timezone' => 'required|timezone:all',
+            'timezone' => 'required|timezone:Africa',
+            'timezone' => 'required|timezone:per_country,US',
+            
+            'title' => 'size:12', // string is exactly 12 characters long.
+            'tags' => 'array|size:5', // Array has 5 elements
+            'seats' => 'integer|size:10', // provided integer equals 10
 
             'status' => [Rule::enum(ServerStatus::class)],
             // ->only([ServerStatus::Pending, ServerStatus::Active]), except()
@@ -88,8 +128,16 @@ class ValidationController {
                                                         fn ($rule) => $rule->only(...),
                                                         fn ($rule) => $rule->only(...) )]]),
 
-        // Validate and store erropr messages within a named error bag:
+        // Validate and store error messages within a named error bag:
         $request->validateWithBag('postErrors', ['title' => 'required']);
+
+        // We can use $request->validate() 
+        // or Validator::make() on which we can apply other methods including ->validate(). It throws validationException if validation failed.
+        // or, can use validate() helper.
+        // or, can inject ValidationFactory class.
+
+        // All validations finally return the validation data in an array like ['name' => 'Abdul', ''].
+        // If we dont pass any column to validate, it will not be returned in validation data, but in $request->all() validated and invalidated data will be present.
     }
 
     //* Using Form Request

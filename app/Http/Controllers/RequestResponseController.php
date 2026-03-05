@@ -154,6 +154,12 @@ class RequestResponse {
         $request->photo->store('images', 's3');
         $request->photo->storeAs('images', 'filename.jpg');
         $request->photo->storeAs('images', 'filename.jpg', 's3');
+
+        //* Get and Input:
+        // $request->get(): This is a method inherited from the Symfony Request class, which Laravel builds upon. It is a lower-level method.
+        // input() or $request->input(): This is a Laravel-specific method. It is designed to be a more consistent, "all-in-one" utility for handling data from various sources (query strings, form bodies, and JSON payloads).
+        // get ususally returns null for raw Json bodies, input automatically perses Json content.
+        // $request->input('name.first_name'), $request->get('name')['first_name']
     }
     
     public function response(){

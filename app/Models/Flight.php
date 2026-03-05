@@ -28,6 +28,14 @@ namespace App\Models;
 // More options: --factory or -f, --seed or -s, --controller or -c, --controller --resource --requests or -crR, --policy, -mfsc, --pivot or -p
 // --all or -a: a model, migration, factory, seeder, policy, controller, and form requests
 
+// Can specify columns above model using property then ide will help to autocomplete:
+/**
+  * @property int $id
+  * @property string $name
+  * @property array<Task> $tasks
+*/
+// Or, Can install barryvdh/laravel-ide-helper, and using command can make property automatically.
+
 #[UsePolicy(OrderPolicy::class)]
 class Flight extends Model implements HasLocalePreference, Attachable {
     // If we have different database connection rather than default:
@@ -43,6 +51,9 @@ class Flight extends Model implements HasLocalePreference, Attachable {
     // Composite primary keys are not supported by eloquent model.    
 
     //* Mass Assignment:
+    // Mass assignment essentially prevents security vulnerabilities by controlling which model attributes can be set through methods like create or fill.
+    // Disable mass assignment for all model: in boot- Model::unguard()- not recommended.
+    // Using fillable is recommended- standard and good for junior developers.
     protected $guarded = []; // all are mass assignable
     protected $fillable = ['name']; // Only name is mass assignable
     protected $fillable = ['options->enabled'];  // Json column options's enabled key is mass assignable.
@@ -173,6 +184,11 @@ class Flight extends Model implements HasLocalePreference, Attachable {
     // Can compare casted values using ComparesCastableAttributes interface.
     // For value objects, we can make it castable using Castable inteface
     // class Address implements Castable, also can use anonymous cast.
+    protected $casts = [ 'is_recurring' => 'boolean', 'task_date' => 'datetime', 'completed_at' => 'datetime', ];
+    // datetime will make carbon instance.
+    // Even though database already has types, Laravel does NOT automatically convert them when retrieving data.
+    // Though is_recurring is boolean in databse, but laravel can think the 1 as string or integer, so we casted.
+    // With datetime casting, we not can do carbon operations perfectly on that column. Timestamps will automatically be casted.
 
     //* Model Pruning:
     // Periodically delete models that are no longer needed.

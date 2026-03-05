@@ -201,6 +201,7 @@ return new class extends Migration
             // Then we can convert it in any time zone based on user's location when created or updated or deleted.
 
             //* Creating Indexes:
+            // In mysql, foreign key automatically indexed, but can index explicitly.
             $table->string('email')->unique(); // or,
             $table->unique('email');
             $table->index(['account_id', 'created_at']);
@@ -293,6 +294,7 @@ return new class extends Migration
         });
     }
 
+    // down is not mendatory. In production level, should not run rollback, it will make data lose.
     public function down(): void
     {
         Schema::dropIfExists('users');
@@ -339,4 +341,7 @@ return new class extends Migration
     // Illuminate\Database\Events\MigrationsStarted, MigrationsEnded, NoPendingMigrations, SchemaDumped, SchemaLoaded.
 
     //* Seeders in the DatabaSeeder.php.
+
+    // If we convert migrations into schema and run migrate then it will migrate from that single schema file.
+    // If we make schema, migrations will be deleted and schema will be placed.
 };
