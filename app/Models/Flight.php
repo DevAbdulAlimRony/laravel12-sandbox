@@ -101,6 +101,9 @@ class Flight extends Model implements HasLocalePreference, Attachable {
     // Newly instantiated model wont have any attribute, but we can set some:
     protected $attributes = ['status' = 1,];
 
+    //* Making Slug:
+    // Spatie Slugable package: https://github.com/spatie/laravel-sluggable.
+
     //* Model Aceess and Modify: See BuilderCollectionController.
 
     //* Serialization:

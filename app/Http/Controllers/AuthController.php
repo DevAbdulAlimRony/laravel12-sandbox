@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
+use Laravel\Socialite\Socialite;
 
 class AuthController {
     // Guards- Session and Cookies, Providers- Retrive Auth data using eloquent and query builder.
@@ -424,7 +425,6 @@ class AuthController {
         // See AppServiceProvider.
     }
 
-    //* All about fortify package:
     public function fortify(){
         // Fortify is a headless authentication library.
         // In software engineering, "headless" refers to a system that operates without a graphical user interface (GUI) or a front-end presentation layer.
@@ -453,7 +453,82 @@ class AuthController {
         });
         // We can customize guard in config file.
         // If you are attempting to use Laravel Fortify to authenticate an SPA, you should use Laravel's default web guard in combination with Laravel Sanctum.
-
         
+        // Fortify authenticates login requests through a pipeline of invokable classes.
+        // If we want our own pipeline, add in boot():
+        Fortify::authenticateThrough(function(Request $request){});
+        // By default throttled to a username and ip address combination.
+        // We can customize it in config files'- fortify.limiters.login configuration option.
+        // Utilizing a mixture of throttling, two-factor authentication, and an external web application firewall (WAF) will provide the most robust defense for your legitimate application users.
+
+        // After login, automatically redirect to the /home, we can customize it Service provider's regiser method:
+        $this->app->instance(LogoutResponse::class, new class implements LogoutResponse {}); // LoginResponse also.
+
+        // If two factor authentication enabled,
+        // The user is required to input a six digit numeric token during the authentication process.
+        // This token is generated using a time-based one-time password (TOTP) that can be retrieved from any TOTP compatible mobile authentication application such as Google Authenticator.
+        // In User model: use Notifiable, TwoFactorAuthenticatable;
+        // Next, build a screen where user can enable and disable their two factor auth and for recovery code.
+        // Enable endpoint: /user/two-factor-authentication.
+        // If the request is successful, the user will be redirected back to the previous URL and the status session variable will be set to two-factor-authentication-enabled.
+        // After choosing to enable two-factor authentication, the user must still "confirm" their two-factor authentication configuration by providing a valid two-factor authentication code. 
+        // $request->user()->twoFactorQrCodeSvg();
+        // /user/confirmed-two-factor-authentication endpoint.
+        // $request->user()->recoveryCodes(), for xhr: /user/two-factor-recovery-codes endpoint to show recovery codes if mobile access gone.
+        // To begin implementing two-factor authentication functionality, in boot():
+        Fortify::twoFactorChallengeView(function () {});
+        // Fortify will take care of defining the /two-factor-challenge route that returns this view.
+        // The /two-factor-challenge action expects a code field that contains a valid TOTP token or a recovery_code field that contains one of the user's recovery codes.
+        // To disable two-factor authentication, your application should make a DELETE request to the /user/two-factor-authentication endpoint.
+
+        // Registration:
+        //  /register endpoint
+        // The /register endpoint expects a string name, string email address / username, password, and password_confirmation fields. 
+         Fortify::registerView(function () {
+            // return blade of the registration template.
+         });
+         // If registration successful, will take to the /home route, for xhr, 201 status code.
+         // The user validation and creation process may be customized by modifying the App\Actions\Fortify\CreateNewUser action.
+
+         // Password Reset:
+         // Fortify::requestPasswordResetLinkView(function () {}); // endpoint: /forgot-password.
+         // Fortify::resetPasswordView(function (Request $request) {})
+        
+         // Email Verification:
+         // ensure the emailVerification feature is enabled in your fortify configuration file's features array. 
+         // In user model, implements MustVerifyEmail.
+         Fortify::verifyEmailView(function () {});
+
+         // Password Confirmation:
+         // While building your application, you may occasionally have actions that should require the user to confirm their password before the action is performed. 
+         Fortify::confirmPasswordView(function () {});
+    }
+
+    public function socialite(){
+        // Socialite currently supports authentication via Facebook, X, LinkedIn, Google, GitHub, GitLab, Bitbucket, and Slack.
+        // Install: composer require laravel/socialite.
+        // Put OAuth providers' credentials in services.php config file: 'github' => [].
+
+        // Need two Routes:
+        // Redirecting the user to the OAuth provider, and another for receiving the callback from the provider after authentication.
+        Route::get('/auth/redirect', function () {
+            return Socialite::driver('github')->redirect();
+        });
+        Route::get('/auth/callback', function () {
+            $user = Socialite::driver('github')->user();
+            $user = Socialite::driver('github')->userFromToken($token);
+            Socialite::driver('google')->stateless()->user(); // useful when adding social authentication to a stateless API that does not utilize cookie based sessions
+            // ->scopes(['read:user', 'public_repo'])->redirect(): Merged with existing scopes.
+            // Override all scopes: ->setScopes(['read:user', 'public_repo'])
+            // Socialite::driver('slack')->asBotUser()->setScopes(['chat:write', 'chat:write.public', 'chat:write.customize'])->redirect();
+            // Bot tokens are primarily useful if your application will be sending notifications to external Slack workspaces that are owned by your application's users.
+            // When generating a bot token, the user method will still return a Laravel\Socialite\Two\User instance; however, only the token property will be hydrated. 
+            // Optional parameters if support: ->with(['hd' => 'example.com']).
+            // When using the with method, be careful not to pass any reserved keywords such as state or response_type.
+        });
+
+        // Once the user has been retrieved from the OAuth provider, you may determine if the user exists in your application's database and authenticate the user.
+
+        // Testing: https://laravel.com/docs/12.x/socialite#testing
     }
 }
