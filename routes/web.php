@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BasicController;
 use Illuminate\Support\Facades\Bus;
 
-
 // web.php defines http  routes
 // We can split this route file into multiple route file like admin.php, user.php
 // You will find the implementation of Route facade in Router.php file, Route.php is the definition just.
@@ -213,7 +212,7 @@ Route::name('admin.')->group(function(){}); //domain(), resource(), apiResource(
 // If controllers in the separate folder, that can be called as namespace.
 
 //* Soft Delete
-Route::get('/', function (){})->withTrashed();
+Route::get('/show', function (){})->withTrashed(); // so that, we cant get 404 error when access soft deleted model.
 
 //* Using group()
 //* Resource route: Users can create, read, update, or delete resources.

@@ -18,6 +18,9 @@ class MainController {
         //* Each Eloquent model serves as a query builder.
         // So we can add or chain additional constraints to queries and invoke the get method.
 
+        //* Getting only authenticated user's data:
+        // $request->user()->categories()->paginate()
+
         //* Single Model:
         Flight::find(1); // Retrieve by its primary key.
         Flight::where('active', 1)->first(); // Return first model matching the query constraints
@@ -351,12 +354,15 @@ class MainController {
         // While it is very convenient, it is also a potential security vulnerability, which is why Laravel forces you to be explicit about which fields can be filled this way.
         // At first, specify either a fillable or guarded property on model class.
         // Mass assignable is standard way for inserting data in laravel.
-        $flight = Flight::create(['name' => 'London to Paris']); // or just call $request->all()
+        $flight = Flight::create(['name' => 'London to Paris']); // or just call $request->all().
         // If already have model instance, can use fill:
         $flight->fill(['name' => 'London to Paris']);
         // For json columns,  each column's mass assignable key must be specified in fillable.
         // If attribute is not included in $fillable, it will be silently discarded which is good for production.
         // If we wanna show error in local- invoke exception in AppServiceProvider's boot method.
+
+        // Using relationship: $request->user()->flight()->create($flightData)
+        // return to_route('flight.index')->with('success', 'succesfully created');
         
         //* Using Insert:
         // Unlike create(), it bypasses the Eloquent Model layer and talks directly to the database.

@@ -41,10 +41,31 @@ class ValidationController {
             'emergency_contact' => 'required_without_all:home_phone,work_phone,mobile_phone',
             'address' => 'required|array|required_array_keys:city,zip', // The "address" field must be an array and must contain "city" and "zip".
 
+            // Prohibited Validation:
+            'role'  => 'prohibited', // The user is NOT allowed to send a 'role' field.
+            // The field under validation must be missing or empty.  Empty means null, empty string, empty array, uploaded file with empty path.
+            'role_id' => Rule::prohibitedIf($request->user()->is_admin), // Can use callback.
+            // prohibited_if_accepted, prohobited_if_declined, prohibited_unless.
+            // prohibits:anotherfiled..:  If the field under validation is not missing or empty, all fields in anotherfield must be missing or empty.
+            'coupon_code'    => 'nullable|string|prohibits:loyalty_points', // If 'coupon_code' is provided, 'loyalty_points' must be empty.
+
+            // Present Validation:
+            'bio'  => 'present',  // Key must be in the JSON/Form data, even if it is null or empty.
+            // present_if, present_unless, present_with, present_with_all.
+
+            // Missing Validation:
+            'status' => 'missing', // If 'status' is in the JSON, validation fails.
+            // missing_if, missing_unless, missing_with, missing_with_all.
+
+            'age' => 'required|numeric|min:18', // min_digits
+            'quantity' => 'required|numeric|multiple_of:6', // multiple of a specific number.
+
             'password_confirmation' => 'same:password', // The "password_confirmation" must be the same as the "password".
 
             // For optional field, we should specify nullable so that validator not consider null values as invalid using ConvertEmptyStringsToNull middleware.
             'publish_at' => 'nullable|date',
+
+            'amount' => 'numeric:strict', // For strictness, Numeric strings will be considered invalid, only integer and float type.
 
             // A credit card number is required if the payment_type has a value of cc
             'credit_card_number' => 'required_if:payment_type,cc',
@@ -122,6 +143,12 @@ class ValidationController {
             'tags' => 'array|size:5', // Array has 5 elements
             'seats' => 'integer|size:10', // provided integer equals 10
 
+            // Regex Pattern:
+            'subscription_code' => ['regex:/^(PRE|PRO)\d{4}$/i',], // not_rege
+
+            'toppings' => [Rule::notIn(['sprinkles', 'cherries'])],
+
+            // Enum validation:
             'status' => [Rule::enum(ServerStatus::class)],
             // ->only([ServerStatus::Pending, ServerStatus::Active]), except()
             'status2' => [Rule::enum(ServerStatus::class)->when(Auth::user()->isAdmin(),
@@ -172,7 +199,6 @@ class ValidationController {
          // Can use custom message, attributes there also.
          // php artisan lang:publish, now we are free to change any message. also can copy for anothe language directory.
          // In blade we can use: @error @enderror to check if error present. {{ $message }
-
     }
 
     //* Using Validator Facade:

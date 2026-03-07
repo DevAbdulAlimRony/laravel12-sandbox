@@ -82,6 +82,15 @@ class Flight extends Model implements HasLocalePreference, Attachable {
     // To use Ulids:
     use HasUlids;
 
+    // Standard is using id and uuid/ulid both if route is a public link or use slug and id.
+    // Because accessign route like this category/1 is not secured, any attacker can know our category lists and use that link to do something.
+    // Us uuid for the route, and use id for relation, joining, query etc because its fast.
+    // At first, define both in migrations files. Then here, use trait and call methods:  uniqueIds() and getRouteKeyName() which will return uuid for route model binding.
+    public function getRouteKeyName(): string {
+        return 'uuid';
+    }
+    // Combination of them, we can make a trait if need use in many models.
+
     // By default, Eloquent expects created_at and updated_at columns to exist on model's corresponding database table.
     // But we can stop that:
     protected $timestamps = false;

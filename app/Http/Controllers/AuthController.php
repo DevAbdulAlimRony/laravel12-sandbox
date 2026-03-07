@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Fortify\Fortify;
 
 class AuthController {
     // Guards- Session and Cookies, Providers- Retrive Auth data using eloquent and query builder.
@@ -300,6 +301,9 @@ class AuthController {
         // Gates are most applicable to actions that are not related to any model or resource, such as viewing an administrator dashboard.
         // Policies should be used when you wish to authorize an action for a particular model or resource.
 
+        // Use Gate when general thing like can this user create a category? Here we are talking about all model in general.
+        // Use policy when for specific model, Can this user edit a specific model or a model? Here we are talking about all model one by one specifically.
+
         // Typically, gates are defined within the boot method of the App\Providers\AppServiceProvider class using the Gate facade. 
         // See the service provider. Then use it:
         if(! Gate::allows('update-post', $post)){
@@ -418,5 +422,38 @@ class AuthController {
         // Refactoring: Use RateLimiter in boot method, then dont need to clean or generate again and again.
         // Rather than using ValidationException, use custom message as we do in RateLimiter opf boot() method.
         // See AppServiceProvider.
+    }
+
+    //* All about fortify package:
+    public function fortify(){
+        // Fortify is a headless authentication library.
+        // In software engineering, "headless" refers to a system that operates without a graphical user interface (GUI) or a front-end presentation layer.
+        // Fortify registers the routes and controllers needed to implement all of Laravel's authentication features.
+        // Laravel's application starter kits use Fortify internally to provide authentication scaffolding for your application that includes a user interface built with Tailwind CSS.
+        // For api auth, can use both fortify and sanctum. Sanctum will handle token and fortify will give route and controller.
+        // If use any starter kit, dont need to install fortify, its automatically installed.
+
+        // Installation: composer require laravel/fortify
+        // Publish resources: php artisan fortify:install. (See app/actions directory, FortifyServiceProvider, config files and necessary migration files will be created.)
+        // Migrate the migration files to start the work.
+        // Config file give features: 'features' => Features::registration, ... We have to just remove or comment out what we dont want.
+        // If we are building SPA, dont need blade views then in config file: 'views' => false.
+        // You should still define a route named password.reset that is responsible for displaying your application's "reset password" view. 
+
+        // Customization: use this class- Laravel\Fortify\Fortify.
+        // Login template should include a form that makes a POST request to /login.
+        // The /login endpoint expects a string email / username and a password. 
+        // A boolean remember field may be provided to indicate that the user would like to use the "remember me" functionality provided by Laravel.
+        // For XHR request, if success then send 200 response, if error then send 422 HTTP response.
+
+        // Fortify will automatically retrieve and authenticate the user based on the provided credentials and the authentication guard that is configured for your application.
+        // But if we need customization, can do in boot() of FortifyServiceProvider:
+        Fortify::authenticateUsing(function(Request $request){
+            // Logic for login...
+        });
+        // We can customize guard in config file.
+        // If you are attempting to use Laravel Fortify to authenticate an SPA, you should use Laravel's default web guard in combination with Laravel Sanctum.
+
+        
     }
 }

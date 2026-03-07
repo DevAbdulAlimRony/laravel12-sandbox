@@ -537,9 +537,14 @@ class AppServiceProvider extends ServiceProvider
                             ->withErrors([
                                 'email' => 'Too many login attempts. Please try again later.',
                             ]);
-            }),
-        ];
-    });
+                }),
+            ];
+        });
+
+        //* Query Events to see query, time takes etc:
+        DB::listen(function(QueryExecuted $query){
+            Log::info($query->sql, ['bindings' => $query->bindings, 'timing' => $query->timing]);
+        });
 
     }
 

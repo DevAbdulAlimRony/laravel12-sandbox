@@ -6,10 +6,16 @@ use App\Http\Resources\PostResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+/*
+* @mixin User
+*/
+// That mixin docblock will make $this->id all columns will be clickable if model has those properties defined above.
 
 class UserResource extends JsonResource
 {
     // Transform the resource into array.
+    // Its actually a transformation layer between backend and frontend, what data to pass in api responses. It doesnt matter we are building api or not, we can use it anytime.
+    // We can use DTO, or hidden field in model or any other transformation layer. But standard is using resources in laravel. 
 
     // When returning a resource collection from a route, Laravel resets the collection's keys so that they are in numerical order. 
     // Can prevent that:
@@ -23,7 +29,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'updated_at' => $this->updated_at, // can format date here.
 
             // Specify related model's resource:
             'posts' => PostResource::collection($this->posts),
