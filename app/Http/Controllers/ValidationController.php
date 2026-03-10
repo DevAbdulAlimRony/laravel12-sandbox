@@ -29,6 +29,15 @@ class ValidationController {
             'v1\.0' => 'required', // if contains a literal period. "v1.0": "Version Release Notes",
             // The backslash tells Laravel: "This dot is part of the key name, not a nested array"
 
+            // filled: Must not be empty when it is present.
+            // gt, gte, lt, lte, max, max_digits
+            // lowercase, list: The field under validation must be an array that is a list.
+            // An array is considered a list if its keys consist of consecutive numbers from 0 to count($array) - 1. 
+            // hex_color: valid color value in hexadecimal format.
+            'age' => 'integer:strict'
+
+            // ip,ipv4, ipv6, mac_address, json.
+            
             // Required Validations:
             'role_id' => Rule::requiredIf($request->user()->is_admin), // Required based on another column condition.
             'role_id' => Rule::requiredIf(fn () => $request->user()->is_admin), // Can use callback.
@@ -74,8 +83,18 @@ class ValidationController {
             // Conditionally adding rules:
             // appointment_date field will not be validated if the has_appointment field has a value of false
             'has_appointment' => 'required|boolean',
-            'appointment_date' => 'exclude_if:has_appointment,false|required|date', // can use exclude_unless also.
+            'appointment_date' => 'exclude_if:has_appointment,false|required|date',
+            // exclude_unless, exclude_with, exclude_without.
 
+            // Exists Validation.
+            'state' => 'exists:states', // If the column option is not specified, the field name will be used.
+            'state' => 'exists:states,abbreviation', // specified column.
+            'state' => Rule::exists('states', 'abbreviation'),
+            'states' => ['array', Rule::exists('states', 'abbreviation')], // if array of values exists in the database.
+            'email' => 'exists:connection.staff,email', // specific database connectiion.
+            'user_id' => 'exists:App\Models\User,id', // Model Rather than Table.
+            'email' => [Rule::exists('staff')->where(function (Builder $query) {})],
+             
             // Validating when present:
             // email field will only be validated if it is present in the $data array.
             'email' => 'sometimes|required|email',
@@ -148,23 +167,36 @@ class ValidationController {
 
             'toppings' => [Rule::notIn(['sprinkles', 'cherries'])],
 
+            'photo' => ['extensions:jpg,png'], // file, image, mimetypes
+            // By default, the image rule does not allow SVG files due to the possibility of XSS vulnerabilities. 
+            // But if need: image:allow_svg.
+            'video' => 'mimetypes:video/avi,video/mpeg,video/quicktime',
+            'media' => 'mimetypes:image/*,video/*',
+            'photo' => 'mimes:jpg,bmp,png'
+
+            'zones' => [Rule::in(['first-zone', 'second-zone'])],
+            // When the in rule is combined with the array rule, each value in the input array must be present within the list of values provided to the in rule.
+            // in_array.
+            'config' => 'array|in_array_keys:timezone'
+
             // Enum validation:
             'status' => [Rule::enum(ServerStatus::class)],
             // ->only([ServerStatus::Pending, ServerStatus::Active]), except()
             'status2' => [Rule::enum(ServerStatus::class)->when(Auth::user()->isAdmin(),
                                                         fn ($rule) => $rule->only(...),
                                                         fn ($rule) => $rule->only(...) )]]),
+                                                        
 
-        // Validate and store error messages within a named error bag:
-        $request->validateWithBag('postErrors', ['title' => 'required']);
+            // Validate and store error messages within a named error bag:
+            $request->validateWithBag('postErrors', ['title' => 'required']);
 
-        // We can use $request->validate() 
-        // or Validator::make() on which we can apply other methods including ->validate(). It throws validationException if validation failed.
-        // or, can use validate() helper.
-        // or, can inject ValidationFactory class.
+            // We can use $request->validate() 
+            // or Validator::make() on which we can apply other methods including ->validate(). It throws validationException if validation failed.
+            // or, can use validate() helper.
+            // or, can inject ValidationFactory class.
 
-        // All validations finally return the validation data in an array like ['name' => 'Abdul', ''].
-        // If we dont pass any column to validate, it will not be returned in validation data, but in $request->all() validated and invalidated data will be present.
+            // All validations finally return the validation data in an array like ['name' => 'Abdul', ''].
+            // If we dont pass any column to validate, it will not be returned in validation data, but in $request->all() validated and invalidated data will be present.
     }
 
     //* Using Form Request
@@ -269,7 +301,7 @@ class ValidationController {
     //* Custom Validation Rule:
     // php artisan make:rule Uppercase. See in app/Rules directory..
 
-    //* Live Validation using Laravel Precognition Package
+    //* Live Validation using Laravel Precognition Package:
     // For Inertia powered frontend, we can do real time validation using Laravel Precognition Package:
     // Has ability to provide "live" validation for your frontend JavaScript application without having to duplicate your application's backend validation rules.
     // As of Inertia 2.3, Precognition support is built-in.

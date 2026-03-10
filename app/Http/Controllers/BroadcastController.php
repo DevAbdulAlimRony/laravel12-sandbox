@@ -56,7 +56,6 @@ class BroadcastController{
     //* Listening Broadcast using Echo:
     // https://laravel.com/docs/12.x/broadcasting#receiving-broadcasts
 
-
     //* Client Events:
     // Broadcast event without hitting backend, Examp: Another user is typing.
     // Use Echo's whisper method.
@@ -68,4 +67,18 @@ class BroadcastController{
     // const { channel } = useEchoModel('App.Models.User', userId);
     // channel().notification((notification) => {})
     // stop listening to notifications without leaving the channel: stopListeningForNotification(callback)
+
+    //* Reverb:
+    // Install: php artisan install:broadcasting.
+    // Behind the scenes, the install:broadcasting Artisan command will run the reverb:install command.
+    // Config file: reverb.php. 'allowed_origins' => ['laravel.com'], REVERB_APP_ID=my-app-id, Key, Secret.
+    // It is possible to serve more than one application using a single Reverb installation, In config: 'apps'=> [], [].
+    // Running the server: php artisan reverb:start
+    // By default, the Reverb server will be started at 0.0.0.0:8080, making it accessible from all network interfaces.
+    // php artisan reverb:start --host=127.0.0.1 --port=9000
+    // Can provide server host and port in environment.
+    // Since Reverb is a long-running process, changes to your code will not be reflected without restarting the server via the reverb:restart Artisan command.
+    // Reverb may be monitored via an integration with Laravel Pulse.
+    // Other things: https://laravel.com/docs/12.x/reverb#scaling.
+
 }

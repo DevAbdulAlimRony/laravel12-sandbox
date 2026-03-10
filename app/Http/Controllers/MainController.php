@@ -199,6 +199,7 @@ class MainController {
         Article::all()->rerank('body', 'Laravel tutorials');
 
         //* Laravel scout Search:
+        // Scout ships with a built-in database engine that uses MySQL / PostgreSQL full-text indexes and LIKE clauses to search your existing database 
         // composer require laravel/scout
         // php artisan vendor:publish --provider="Laravel\Scout\ScoutServiceProvider"
         // Searchable trait that automatically keeps search indexes in sync with Eloquent models.
@@ -208,6 +209,8 @@ class MainController {
         Article::search('Laravel')->get();
         // Its using now database engine, but we can use Algolia, Meilisearch, Typesense engine to get advantages what they provide.
         // If we use other engine rather than database or collection, we should make 'queue' => true in scout config file.
+        // Using milesearch with Scout is the best choice.
+        // Full documentation: https://laravel.com/docs/12.x/scout#queueing.
 
         //* Search by Combining Techniques:
         // Full-Text Retrieval + Reranking: speed of full text with accuracy of AI powered relavance scoring:

@@ -214,6 +214,7 @@ class OptimizationController {
     // Using package like laravel telescope to monitor.
 
     // Caching route, config, view, cache etc in production.
+    // avoid attaching session or authentication middleware to public-facing APIs that don’t require them.
 
     //* Use OpCache: 
     // OpCache is a PHP extension that caches compiled PHP code in memory, reducing the time it takes to load PHP files. 
@@ -242,4 +243,31 @@ class OptimizationController {
     // PHP is a server-side language that requires interpreters to translate the code into a bytecode, which the computer can understand.
     // This process takes a lot of time and consumes a lot of resources.
     // For the sake of efficiency, devs use the just-in-time (JIT) compiler to repeat that procedure just once.
+
+    //* Choosing Right Hosting:
+    // Ecommerce: Dedicated servers with Redis and CDN integration for traffic spikes and secure transactions.
+    // SaaS Application: VPS hosting with scalable resources and support for queue workers.
+    // CMS (Content Management System): Shared hosting with CDN for media delivery; upgrade as content and traffic grow.
+    // Business Applications: VPS or dedicated hosting based on user count and data complexity.
+
+    // eCommerce apps must load quickly (typically under 200ms) to reduce cart abandonment.
+    // Performance-sensitive elements include product pages, checkout flows, and third-party payment gateways.
+    // SaaS platforms benefit from efficient API rate limiting, scalable background jobs, and fast real-time interactions (e.g., chat, notifications).
+    // CMS-based websites require optimized images, robust content caching, and low-latency search features to maintain SEO rankings and user experience.
+    // Enterprise-grade tools like dashboards or analytics engines often perform database-intensive operations and require fast, concurrent access to large datasets.
+
+    // Shared hosting is ideal for lightweight Laravel apps or early-stage projects.
+    // If traffic increases or workloads become heavier, response times may degrade.
+    // VPS hosting offers root access, which allows for custom PHP configurations, Redis integration, and performance tuning that is not possible on shared plans.
+    // Dedicated servers are best for mission-critical Laravel applications.
+
+    //* Laravel actually slow than other frameworks.
+    // Out of the box, Laravel prioritizes ease of development over production performance.
+    // For instance, default settings load unnecessary services and include verbose logging that’s helpful in development but costly in production.
+    // .NET is the fastest, then noe.js, then Django, then maybe laravel.
+    // But the gap can be closed using PHP 8.x with JIT compilation and tool like Laravel Octane.
+    // A realistic baseline for many business applications is a sub-200ms response time.
+    // Anything above that risks impacting conversions, user experience, and SEO.
+
+    //* Server Level Optimization
 }
