@@ -3,6 +3,17 @@
 namespace App\Http\Controllers;
 
 class DeploymentController {
+    // Shared Hosting, Cloud Hosting, Microservices, Serverless solution using AWS Lambda.
+    // Static + Hybrid (Jamstack/Edge): For apps with high SEO needs and global users, you deploy the frontend to a Global CDN and the backend to "Edge Functions." Examples: Vercel, Netlify..
+    // Lowest Cost but slow: Shared Hosting.
+    // Learning and Full Control: VPS like DigitalOcean etc.
+    // High traffic or scale: Serverless.
+    // Team efficiency: Laravel Forge/Vapor.
+    // Complex Enterprise: Microservices (K8s).
+    // The Modern Container (Cloud Run / Railway), dockerization.
+    // CDN: Cloudflare Enterprise (to serve images and static pages from the nearest city).
+    // Database: PlanetScale or Amazon Aurora (for serverless database speed).
+
     //* Github CI/CD:
     // 1. Run tests on pushes.
     // 2. Run tests on pull requestDeploy when pushes are made to specific branches.
