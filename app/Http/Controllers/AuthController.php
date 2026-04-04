@@ -531,4 +531,8 @@ class AuthController {
 
         // Testing: https://laravel.com/docs/12.x/socialite#testing
     }
+
+    public function sanctum(){
+        
+    }
 }

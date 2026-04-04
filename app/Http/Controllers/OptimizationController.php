@@ -14,6 +14,21 @@ class OptimizationController {
     $count = User::count();
     // O(1) because you’re only storing a single integer (the count of users) in memory, regardless of how many users are in the table.
 
+    //* Linked Lists:
+    // While arrays are usually the "go-to" for lists, they have a physical limitation: they are stored in contiguous memory.
+    // If you want to add an item to the middle of a massive array, the computer has to shift every single subsequent element to make room.
+    // Linked Lists solve this by storing data in nodes that point to each other.
+    // Think of it like a treasure hunt where each clue tells you where to find the next one; the clues don't have to be in the same room.
+    // Dynamic Size: You don't need to know the size upfront.
+    // Efficient Insertions/Deletions: You just change where a "pointer" is looking, rather than moving thousands of items in memory.
+    // Memory Flexibility: They can use scattered fragments of memory that might be too small for a large array.
+    // PHP Array Versatility: In PHP, an "array" is actually an ordered map. It’s highly optimized by the C engine to act like a list, a hash table, and a stack all at once.
+    // If you are building a specialized Laravel feature—like a Task Queue where you are constantly adding to the start and removing from the end of a million-item list—you might step away from Collections and use SplDoublyLinkedList (a built-in PHP class) to avoid the performance hit of array re-indexing.
+
+    // In PHP, hashtable is implemented using associative arrays.Useful for extremely first lookups.
+
+    //* Other Data structures in DSA sandbox.
+
     //* Collection memory optimization:
     $users = User::all();
     $activeUsers = $users->filter(function ($user) {

@@ -545,7 +545,6 @@ class AppServiceProvider extends ServiceProvider
         DB::listen(function(QueryExecuted $query){
             Log::info($query->sql, ['bindings' => $query->bindings, 'timing' => $query->timing]);
         });
-
     }
 
     //* Facades: See app/Facades/Payment.php
