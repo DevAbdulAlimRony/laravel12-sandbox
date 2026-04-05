@@ -82,9 +82,6 @@ class AppServiceProvider extends ServiceProvider
     // Within the register method, you should only bind things into the service container, nothing else.
     public function register(): void
     {
-        //* Binding Terminable middleware from same handled middleware
-        // $this->app->singleton(TerminatingMiddleware::class);
-
         //* Binding Dependency (Second Way)
         $this->app->bind(PaymentProcessor::class, Bkash::class);
 
@@ -108,12 +105,16 @@ class AppServiceProvider extends ServiceProvider
         // or in the interface or class, we can use attribute: #[Singleton] class Transa..{}
 
         //* Binding Dependency (Sixth Way- Use scoped if you want to bind only one time within a given request or job lifecycle.
+        // A scoped binding ensures that you get the same instance within a specific lifecycle, but it resets when that lifecycle ends.
+        // In a Web Request: It acts exactly like a singleton, In a Queue Job: This is where it shines. If a Worker processes 100 jobs, a singleton would live through all 100 jobs (potentially leaking data from Job 1 into Job 100). A scoped binding is destroyed after Job 1 and recreated fresh for Job 2.
         // $this->app->scoped()
         // $this->app->scopedIf:  A scoped container binding only if a binding has not already been registered for the given type
-        // Can use attribute also: #[Scoped]
+        // Can use attribute above the class also: #[Scoped], no need to bind here then.
         
         //* Binding Dependency (Seventh Way):
-        //* $this->app->instance(Transistor::class, $service): 
+        // You are basically saying: "Hey Laravel, don't worry about calling new or looking at constructors. Whenever someone asks for Transistor::class, just give them this specific object I'm holding right now."
+        // Useful for testing and mocking, external configuration etc.
+        $this->app->instance(Transistor::class, $service): 
         // when you already have an object and you want to hand it over to Laravel to manage.
 
         //* Binding Dependency (Eighth Way):
@@ -127,7 +128,7 @@ class AppServiceProvider extends ServiceProvider
                   ->give(function () {
                     return Storage::disk('local');
                  });
-         // and another binding for another controller
+         // and another binding for another controller.
 
         //* Binding Dependency (Tenth Way- Primitives Value Binding)
         $this->app->when(UserController::class)->needs('$variableName')->give($value);
@@ -147,6 +148,11 @@ class AppServiceProvider extends ServiceProvider
         // Be careful with singleton here. If you use singleton, the first gateway chosen in a request will stay "locked in" for the duration of that request.
         // But strategy pattern is the best choice for this scenario.
 
+        //* Binding Terminable middleware from same handled middleware
+        // $this->app->singleton(TerminatingMiddleware::class);
+        // Normally, middleware runs before or during the request. Terminable middleware has a special terminate() method that runs after the response has already been sent to the user's browser.
+        // you are telling Laravel’s Service Container to treat this specific middleware as a "single instance" for the entire duration of the web request.
+
         //* Laravel provides some Contextual Attributes
         // #[Storage('local')] protected Filesystem $filesystem: to inject a specific storage disk
         // #[Auth('web')] protected Guard $auth,
@@ -164,19 +170,17 @@ class AppServiceProvider extends ServiceProvider
         // We can make our own custom attribute implementing the Illuminate\Contracts\Container\ContextualAttribute contract.
         // The container will call your attribute's resolve method.
 
-        // The service container fires an event each time it resolves an object.
-        // We may listen to this:
+        // The service container fires an event each time it resolves an object, we may listen to this:
         // $this->app->resolving(Transistor::class, function (Transistor $transistor, Application $app) {}
         // Listen for rebinding: $this->app->rebinding()
     }
-
 
     /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
-        // Boot method is being called after all service priver registered
+        // Boot method is being called after all service provider registered
         // So we can inject any service provider here to use.
 
         View::share('name', 'Abdul Alim'); // Now, this name will be available in all blade file into our entire application.
@@ -192,6 +196,11 @@ class AppServiceProvider extends ServiceProvider
         // Assigning all views
         View::composer('*', ProfileComposer::class);
 
+        // View Creator: Let's say we have Views/Creators/ProfileCreaor same as ProfileComposer.
+        // View::creator('profile', ProfileCreator::class)
+        // Very similar to view composers
+        // However, they are executed immediately after the view is instantiated instead of waiting until the view is about to render. 
+
         //* Custom Blade directive:
         Blade::directive('datetime', function (string $expression) {
             return "<?php echo ($expression)->format('m/d/Y H:i'); ?>";
@@ -200,7 +209,7 @@ class AppServiceProvider extends ServiceProvider
         //* Custom Echo Handler:
         // When we attempt to echo an object using blade, magic method __toString will be invoked.
         // Sometimes we may not have conntrol when using third party package.
-        //  Blade allows you to register a custom echo handler for that particular type of object.
+        // Blade allows you to register a custom echo handler for that particular type of object.
         Blade::stringable(function (Money $money) {
             return $money->formatTo('en_GB');
         });
@@ -224,16 +233,11 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
         Paginator::useBootstrapFour();
 
-        // View Creator: Let's say we have Views/Creators/ProfileCreaor same as ProfileComposer.
-        // View::creator('profile', ProfileCreator::class)
-        // Very similar to view composers
-        // However, they are executed immediately after the view is instantiated instead of waiting until the view is about to render. 
-
         //* Explicit Route Binding
         Route::model('user', User::class); // all user parameter in route {user} will point to the User's instance.
         // If a matching model instance is not found in the database, a 404 HTTP response will be automatically generated.
         // every time a route has {user}, Laravel knows to look in the User table. If you want to change that logic globally to search by username instead, you only change it in one place
-        
+
         // If we want our own binding resolution logic:
         Route::bind('user', function (string $value) {
             return User::where('name', $value)->firstOrFail();
@@ -241,7 +245,7 @@ class AppServiceProvider extends ServiceProvider
         // You use Route::bind when the logic to find a model is more complex than just looking at a single column.
         // Example: When a user visits a route, you don't just want to find the user by ID; you want to make sure they are active and belong to the correct company.
         
-        //* Global Constraints fro route parameter validation:
+        //* Global Constraints for route parameter validation:
         Route::pattern('id', '[0-9]+');
 
         //* Localizing Resource URIs
@@ -265,12 +269,19 @@ class AppServiceProvider extends ServiceProvider
         // While this makes the initial load faster, it creates a "waterfall" effect where clicking a link triggers a network request for the next page's code, leading to a noticeable delay or a "loading" state.
         // Laravel’s Vite::prefetch solves this by downloading those chunks in the background before the user even clicks the link.
         // Ex: Load the main inventory list, Immediately start downloading the code for the "Edit Product," "Stock Management," and "Order History" views in the background.
+        // If your Dashboard.vue has links to Profile.vue and Reports.vue, Vite will only prefetch the code for Profile and Reports.
         Vite::prefetch(concurrency: 3); // Assets will be prefetched with a maximum of 3 concurrent downloads on each page load
+        // The "Don't Hog the Wi-Fi" setting. If you have 20 different chunks to download, downloading them all at once might slow down the user's current page (like a video playing or a live chat), so we used concurrency.
         Vite::prefetch(); // No concurrency limit if the application should download all assets at once
         Vite::prefetch(event: 'vite:prefetch'); // Rather than in page load, pefetch will happen when that listener call.
+        // ou can trigger the prefetch only when a certain action happens—for example, when a user hovers their mouse over a link using that listener.
 
         //* Adding extra attribute in built <script> tag for our js
         Vite::useScriptTagAttributes(['async' => true]);
+        // With async, the browser says: "I’ll keep loading the HTML while I download this script in the background.
+        // Use when If your script doesn't need to manipulate the HTML immediately (like an analytics tracker or a chat widget), async is perfect.
+        // You want a high "Lighthouse" score: Google rewards sites that don't block the initial "Paint" of the page.
+        // Large Bundles: If your Vite JS bundle is 500KB+, a non-async tag will make your site feel broken or "frozen" while it loads.
         
         // Conditionally add attribute:
         Vite::useScriptTagAttributes(fn (string $src, string $url, array|null $chunk, array|null $manifest) => [
@@ -281,20 +292,15 @@ class AppServiceProvider extends ServiceProvider
         DB::listen(function (QueryExecuted $query){}); // Listen to a query events
         // Monitoring Qumulative Query Time:
         DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {echo 'Notify developers.'});
+        DB::listen(function(QueryExecuted $query){
+            Log::info($query->sql, ['bindings' => $query->bindings, 'timing' => $query->timing]);
+        });
 
         //* Register the subfolder so Laravel merge it with migration files while riunning migrations.
         $this->loadMigrationsFrom(database_path('migrations/integrations'));
         // loadSeedersFrom(), loadRoutesFrom(), loadTranslationsFrom(), loadViewsFrom(), loadFactoriesFrom(), loadJsonTranslationsFrom().
         // loadViewComponentsAs(): Register the given view components with a custom prefix.
         // mergeConfigFrom(), commands()- register packages custom commands, optimizes()- should run on optimize or optimize:clear.
-
-        //* Default password validation rule:
-        Password::defaults(function(){
-            $rule = Password::min(8);
-            return $this->app->isProduction() ? $rule->mixedCase()->uncompromised() : $rule;
-        }); 
-        // Now, whenever we will validate password: 'password' => ['required', Password::defaults()],
-        // Can pass additional rule when call using closure in defaults()
 
         //* Collection Macro:
         // The macro closure may access the collection's other methods via $this
@@ -304,14 +310,19 @@ class AppServiceProvider extends ServiceProvider
         // $collection->toUpper(); In that function (), we can define arguments for that method also.
 
         //* Configuring Eloquent Strictness:
-        Model::preventLazyLoading(! $this->app->isProduction()); // Only disable lazy loading in non-production environments.
+        Model::preventLazyLoading(! $this->app->isProduction()); // Only disable lazy loading in non-production environments      
+        // If lazy loaded somewhere, throw Illuminate\Database\LazyLoadingViolationException
+        // Can use custom msg:
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation) {
+            $class = $model::class;
+            info("Attempted to lazy load [{$relation}] on model [{$class}].");
+        });
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction()); // Throw an exception when attempting to fill an unfillable attribute.
+        Model::preventSilentlyDiscardingAttributes($this->app->isLocal()); // Mass Assign Exception.
+        Model::automaticallyEagerLoadRelationships(); // Laravel will attempt to automatically load any relationships you access that have not been previously loaded. 
 
         //* Register Model Observer:
-        User::observe(UserObserver::class);
-
-        //* Mass Assign Exception:
-        Model::preventSilentlyDiscardingAttributes($this->app->isLocal());
+        User::observe(UserObserver::class);        
 
         //* Morph Aliasing:
         Relation::enforceMorphMap([
@@ -320,19 +331,6 @@ class AppServiceProvider extends ServiceProvider
         ]); // Then in type we will get post rather than fully qualified class.
         // Determine the alias in controller:  $post->getMorphClass();
         // determine fully qualified class: Relation::getMorphedModel($alias)
-
-        //* Automatic Eager Load:
-        Model::automaticallyEagerLoadRelationships();
-        // , Laravel will attempt to automatically load any relationships you access that have not been previously loaded. 
-
-        // Prevent Lazy Load relationship:
-        Model::preventLazyLoading(! $this->app->isProduction());
-        // If lazy loaded somewhere, throw Illuminate\Database\LazyLoadingViolationException
-        // Can use custom msg:
-        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation) {
-            $class = $model::class;
-            info("Attempted to lazy load [{$relation}] on model [{$class}].");
-        });
 
         //* Listening Event Manually:
         Event::listen(PodcastProcessed::class, SendPodcastNotification::class); // (Eventname, ListenerName)
@@ -347,6 +345,8 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(UserEventSubscriber::class);
 
         //* Optimize performnace for queue worker by disabling polling globally which interupts.
+        // Normally, when a Queue Worker has no jobs to do, it enters a "sleep" state for a few seconds. However, even while sleeping, it occasionally "wakes up" for a split second to check for System Signals.
+        // This frequent "waking up" to check for instructions is called Interruption Polling.
         Queue::withoutInterruptionPolling();
 
         //* Event for failed queue job:
@@ -369,6 +369,105 @@ class AppServiceProvider extends ServiceProvider
         Queue::looping(function () {
             // Do something
         });
+    
+        //* Locale lang pluralization:
+        Pluralizer::useLanguage('spanish'); // As version 12, supported for french, norwegian-bokmal, portuguese, spanish, and turkish.
+
+        //* Object Replacement formatting:
+        // For localization, if we provide object a placeholder, __toString method will be invoked.
+        // But sometimes it may not have control. Solve by:
+        Lang::stringable(function (Money $money) {
+            return $money->formatTo('en_GB');
+        });
+
+        //* Using global guzzle option for Http Client:
+        Http::globalOptions([
+            'allow_redirects' => false,
+        ]);
+
+        //* Http Client Macro:
+        Http::macro('github', function () {
+            return Http::withHeaders([ 'X-Example' => 'example',])->baseUrl('https://github.com');
+        });
+
+        //* For storage, how temprary urls will be built:
+        Storage::disk('local')->buildTemporaryUrlsUsing(function(){});
+
+        //* Work with mail when local developemnt:
+        if ($this->app->environment('local')) {
+            Mail::alwaysTo('taylor@example.com');
+        }
+
+        //* Custom Auth Guard:
+        Auth::extend('jwt', function (Application $app, string $name, array $config){
+            return new JwtGuard(Auth::createUserProvider($config['provider']));
+        });
+        // Now in auth config, guards' => [ 'api' => [ 'driver' => 'jwt',..
+
+        //* Closure Request Guard:
+        Auth::viaRequest('custom-token', function (Request $request) {
+            return User::where('token', (string) $request->token)->first();
+        });
+        // Route::middleware('auth:api')
+
+        //* Custom Authentication Provider:
+        Auth::provider('mongo', function (Application $app, array $config) {});
+
+        //* Customizing Email Verification Mail:
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url){
+            return (new MailMessage)->subject('Verify Email Address')->line('Click the button below to verify your email address.')
+                                    ->action('Verify Email Address', $url);
+        });
+
+        //* Password Reset Link Customization:
+        ResetPassword::createUrlUsing(function (User $user, string $token) {
+            return 'https://example.com/reset-password?token='.$token;
+        });
+
+        //* Default password validation rule:
+        Password::defaults(function(){
+            $rule = Password::min(8);
+            return $this->app->isProduction() ? $rule->mixedCase()->uncompromised() : $rule;
+        }); 
+        // Now, whenever we will validate password: 'password' => ['required', Password::defaults()],
+        // Can pass additional rule when call using closure in defaults()
+
+         //* Strong Password Rules as a Centralized Way (dont need to write same rule again):
+        Password::defaults(funcion(){
+            $rule = Password::min(8)->mixedCase()->letters()->numbers()->symbols()->uncompromised();
+            if (app()->environment('local')) { 
+                 return Password::min(8);
+            }
+            return $rule;
+        }); // Now in Validation just use: 'password' => 'required|Password::defaults()'.
+
+        //* Authorization Gates:
+        Gate::define('update-post', function(User $user, Post $post){
+            return $user->id === $post->id;
+        });
+        Gate::define('update-post', [PostPolicy::class, 'update']); // Class callback.
+        Gate::define('create-post', function (User $user, Category $category, bool $pinned) {}); // passing extra data $pinned.
+        Gate::define('edit-settings', function(User $user){
+            return $user->isAdmin ? Response::allow() : Response::deny('You must be an administrator');
+            // More detailed response rather than just true false.
+            // Use gate::inspect in controller to access this detailed response.
+
+            // When an action is denied via a Gate, a 403 HTTP response is returned by default. Customize:
+            // Response::denyWithStatus(404), Response::denyAsNotFound()
+        });
+        Gate::before(function(User $user, string $ability){
+            if($user->isAdministrator()){
+                return true;
+                // Grant all abilities to a specific user before all other authorization check.
+            }
+        });
+        // After all other authorization chekck: Gate::after().
+
+        //* Custom Policy discovery rule:
+        Gate::guessPolicyNamesUsing(function (string $modelClass) {});
+
+        //* Manual registration of policy:
+        Gate::policy(Order::class, OrderPolicy::class);
 
         //* Rate Limiters
         // The for method accepts a rate limiter name and a closure that returns the limit.
@@ -415,106 +514,6 @@ class AppServiceProvider extends ServiceProvider
 
         });
 
-        //* Locale lang pluralization:
-        Pluralizer::useLanguage('spanish'); // As version 12, supported for french, norwegian-bokmal, portuguese, spanish, and turkish.
-
-        //* Object Replacement formatting:
-        // For localization, if we provide object a placeholder, __toString method will be invoked.
-        // But sometimes it may not have control. Solve by:
-        Lang::stringable(function (Money $money) {
-            return $money->formatTo('en_GB');
-        });
-
-        //* Using global guzzle option for Http Client:
-        Http::globalOptions([
-            'allow_redirects' => false,
-        ]);
-
-        //* Http Client Macro:
-        Http::macro('github', function () {
-            return Http::withHeaders([ 'X-Example' => 'example',])->baseUrl('https://github.com');
-        });
-
-        //* For storage, how temprary urls will be built:
-        Storage::disk('local')->buildTemporaryUrlsUsing(function(){});
-
-        //* Work with mail when local developemnt:
-        if ($this->app->environment('local')) {
-            Mail::alwaysTo('taylor@example.com');
-        }
-
-        //* Custom Auth Guard:
-        Auth::extend('jwt', function (Application $app, string $name, array $config){
-            return new JwtGuard(Auth::createUserProvider($config['provider']));
-        });
-        // Now in auth config, guards' => [ 'api' => [ 'driver' => 'jwt',..
-
-        //* Closure Request Guard:
-        Auth::viaRequest('custom-token', function (Request $request) {
-            return User::where('token', (string) $request->token)->first();
-        });
-        // Route::middleware('auth:api')
-        // Route::middleware('auth:api')
-
-        //* Custom Authentication Provider:
-        Auth::provider('mongo', function (Application $app, array $config) {});
-
-        //* Customizing Email Verification Mail:
-        VerifyEmail::toMailUsing(function (object $notifiable, string $url){
-            return (new MailMessage)->subject('Verify Email Address')->line('Click the button below to verify your email address.')
-                                    ->action('Verify Email Address', $url);
-        });
-
-        //* Password Reset Link Customization:
-        ResetPassword::createUrlUsing(function (User $user, string $token) {
-            return 'https://example.com/reset-password?token='.$token;
-        });
-
-        //* Parallel Testing Hooks:
-        ParallelTesting::setUpProcess(function (int $token) {});
-        ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
-            Artisan::call('db:seed');
-        });
-        // tearDownProcess(), setUpTestCase(), tearDownTestCase().
-        // Access token from anywhere: ParallelTesting::token()
-
-        //* Authorization Gates:
-        Gate::define('update-post', function(User $user, Post $post){
-            return $user->id === $post->id;
-        });
-        Gate::define('update-post', [PostPolicy::class, 'update']); // Class callback.
-        Gate::define('create-post', function (User $user, Category $category, bool $pinned) {}); // passing extra data $pinned.
-        Gate::define('edit-settings', function(User $user){
-            return $user->isAdmin ? Response::allow() : Response::deny('You must be an administrator');
-            // More detailed response rather than just true false.
-            // Use gate::inspect in controller to access this detailed response.
-
-            // When an action is denied via a Gate, a 403 HTTP response is returned by default. Customize:
-            // Response::denyWithStatus(404), Response::denyAsNotFound()
-        });
-        Gate::before(function(User $user, string $ability){
-            if($user->isAdministrator()){
-                return true;
-                // Grant all abilities to a specific user before all other authorization check.
-            }
-        });
-        // After all other authorization chekck: Gate::after()
-
-        //* Custom Policy discovery rule:
-        Gate::guessPolicyNamesUsing(function (string $modelClass) {});
-
-        //* Manual registration of policy:
-        Gate::policy(Order::class, OrderPolicy::class);
-
-        //* Strong Password Rules as a Centralized Way (dont need to write same rule again):
-        Password::defaults(funcion(){
-            $rule = Password::min(8)->mixedCase()->letters()->numbers()->symbols()->uncompromised();
-            if (app()->environment('local')) { 
-                 return Password::min(8);
-            }
-            return $rule;
-        }); // Now in Validation just use: 'password' => 'required|Password::defaults()'.
-
         //* Login RateLimitter:
         RateLimiter::for('login', function (Request $request) {
             return [
@@ -541,10 +540,13 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
-        //* Query Events to see query, time takes etc:
-        DB::listen(function(QueryExecuted $query){
-            Log::info($query->sql, ['bindings' => $query->bindings, 'timing' => $query->timing]);
+        //* Parallel Testing Hooks:
+        ParallelTesting::setUpProcess(function (int $token) {});
+        ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
+            Artisan::call('db:seed');
         });
+        // tearDownProcess(), setUpTestCase(), tearDownTestCase().
+        // Access token from anywhere: ParallelTesting::token()
     }
 
     //* Facades: See app/Facades/Payment.php

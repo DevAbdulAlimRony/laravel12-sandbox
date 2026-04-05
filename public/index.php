@@ -12,9 +12,7 @@ use Illuminate\Http\Request;
 // They subtract LARAVEL_START from the current time at the end of the request to tell you exactly how many milliseconds the page took to load.
 // You can use it anywhere in your app to show "Page loaded in X seconds" by doing: $executionTime = microtime(true) - LARAVEL_START;
 // This constant becomes global. It is available in your Controllers, Models, Service Providers, and even your Blade views.
-
 define('LARAVEL_START', microtime(true));
-
 
 // Determine if the application is in maintenance mode...
 // Laravel includes this check at the very top so it can "stop" the request before loading the entire framework (which saves CPU and Memory).
@@ -33,8 +31,8 @@ require __DIR__.'/../vendor/autoload.php';
 
 // Bootstrap Laravel and handle the request...
 // We use require_once because we only ever want one instance of the Laravel Application running.
-// handleRequest(...): This takes the incoming web request (captured via Request::capture()) and sends it into the Laravel "Kernel" to find the right route.
-/** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// handleRequest(...): This takes the incoming web request (captured via Request::capture()) and sends it into the Laravel "Kernel" to find the right route.
+/** @var Application $app */
 $app->handleRequest(Request::capture());

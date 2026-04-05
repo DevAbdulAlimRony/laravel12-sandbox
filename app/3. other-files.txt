@@ -64,9 +64,10 @@ It prevents committing secrets, dependencies, logs, and build files.
 ## public/.htaccess: 
 1. .htaccess is an Apache web server configuration file.
 2. It controls how requests are handled before Laravel runs.
-3. In Laravel, it mainly: edirects all requests to index.php, Enables URL rewriting (/login instead of /index.php/login)
+3. In Laravel, it mainly: redirects all requests to index.php, Enables URL rewriting (/login instead of /index.php/login)
 4. It blocks direct access to sensitive files.
 5. It ensures Laravel routing works correctly.
+You do not need the .htaccess file if you are using Nginx.
 
 ## public/robots.txt: 
 1. robots.txt tells search engine bots what they are allowed to crawl.
@@ -96,4 +97,3 @@ It prevents committing secrets, dependencies, logs, and build files.
 - It includes js bundles, css files, manifest.json
 - If we remove this from development server, not problem if hot exists.
 - Laravel checks: If public/hot exists → use Vite dev server, Else → use public/build.
-
