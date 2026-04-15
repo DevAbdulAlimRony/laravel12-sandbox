@@ -17,6 +17,14 @@ use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Support\Collection;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
+// Expanded PHP attributes from Laravel 13:
+#[Connection('redis')]
+#[Queue('long_running_tasks')]
+#[Tries(5)]
+#[Timeout(120)]
+#[Backoff([10, 30, 60])] // Retry after 10s, then 30s, then 60s
+#[MaxExceptions(3)]
+
 class ProcessPodcast implements ShouldQueue, ShouldBeUnique
 {
     use Queueable;

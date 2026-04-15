@@ -502,6 +502,10 @@ class AuthController {
          // Password Confirmation:
          // While building your application, you may occasionally have actions that should require the user to confirm their password before the action is performed. 
          Fortify::confirmPasswordView(function () {});
+
+         // In laravel 13, WebAuthn (Passkeys) is natively integrated directly into Laravel Fortify and the Starter Kits. 
+         // Your users can securely log in via Face ID, Touch ID, or hardware security keys out-of-the-box, letting you ditch complex, third-party WebAuthn packages.
+         // his will allow users to simultaneously act on behalf of different teams via distinct URLs (even in different browser tabs) without encountering session conflicts.
     }
 
     public function socialite(){
@@ -532,7 +536,24 @@ class AuthController {
         // Testing: https://laravel.com/docs/12.x/socialite#testing
     }
 
-    public function sanctum(){
+    public function sanctum(Request $request){
+        // Sanctum allows each user of your application to generate multiple API tokens for their account. 
+        // These tokens typically have a very long expiration time (years), but may be manually revoked by the user anytime.
         
+        // Install: php artisan install:api
+        // We can override default models creating a class PersonalAccessToken extends SanctumPersonalAccessToken then registering in AppService Provider's boot:
+        // Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // When making requests using API tokens, the token should be included in the Authorization header as a Bearer token.
+        // In User model: use HasApiTokens.
+
+        // PI tokens are hashed using SHA-256 hashing before being stored in your database
+        $token = $request->user()->createToken($request->token_name);
+        // return ['token' => $token->plainTextToken];
+        // foreach ($user->tokens as $token) {}
+
+        // Give Token Abilities:
+        $user->createToken('token-name', ['server:update'])->plainTextToken;
+        // if ($user->tokenCan('server:update')), tokenCant().
     }
 }

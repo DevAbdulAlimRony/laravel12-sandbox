@@ -413,3 +413,6 @@ Route::post('/profile', function () {})
 Route::get('/batch/{batchId}', function (string $batchId) {
     return Bus::findBatch($batchId);
 });
+
+// Queue Routing from Laravel 13:
+Queue::route(ProcessPodcast::class, connection: 'redis', queue: 'podcasts');

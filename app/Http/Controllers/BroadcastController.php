@@ -80,5 +80,7 @@ class BroadcastController{
     // Since Reverb is a long-running process, changes to your code will not be reflected without restarting the server via the reverb:restart Artisan command.
     // Reverb may be monitored via an integration with Laravel Pulse.
     // Other things: https://laravel.com/docs/12.x/reverb#scaling.
+    // to scale Reverb horizontally across multiple servers, you previously had to use Redis to manage the Pub/Sub messaging between nodes.
+    // In laravel 13, Reverb introduces a Database Driver for small to medium application.
 
 }

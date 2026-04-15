@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
 class MainController {
+    // Expanded PHP attributes from Laravel 13:
+    #[Middleware('auth')]
+    // #[Authorize('create', [Comment::class, 'post'])]
     public function index(){
         Flight::all(); // all models.
         $flight = Flight::where('status', 1)->get(); // We can chain any method of query builder.

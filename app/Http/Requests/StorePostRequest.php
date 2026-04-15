@@ -11,6 +11,9 @@ class StorePostRequest extends FormRequest
     protected $redirect = '/dashboard'; // Redirect Loacation, or by route:
     protected $redirectRoute = 'dashboard';
 
+    // Attributes from Laravel 13:
+    //#[RedirectTo('/dashboard')] or #[StopOnFirstFailure]
+
     /**
      *  If the authenticated user actually has the authority to update a given resource.
      */

@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 */
 // That mixin docblock will make $this->id all columns will be clickable if model has those properties defined above.
 
+// Laravel 13 attributes:
+// #[Collects(User::class)] or #[PreserveKeys]
+
 class UserResource extends JsonResource
 {
     // Transform the resource into array.

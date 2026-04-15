@@ -36,6 +36,12 @@ namespace App\Models;
 */
 // Or, Can install barryvdh/laravel-ide-helper, and using command can make property automatically.
 
+// PHP Attributes from Laravel 13:
+#[Table('system_users', key: 'user_id', keyType: 'string', incrementing: false)]
+#[Fillable(['name', 'email'])]
+#[Hidden(['password', 'remember_token'])]
+// Available attributes for model: #[Appends], #[Connection], #[Guarded], #[Touches], #[Unguarded], and #[Visible].
+
 #[UsePolicy(OrderPolicy::class)]
 class Flight extends Model implements HasLocalePreference, Attachable {
     // If we have different database connection rather than default:

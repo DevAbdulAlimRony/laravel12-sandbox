@@ -78,6 +78,7 @@ class HttpClientController{
         // pool cant be chained with other methods, can mention here directly:
         $pool->withHeaders($headers)->get('http://laravel.test/test'),
     ], concurrency: 5); // concurrency is optional which determines max num of request in parallel.
+    // In laravel 13, Http::pool() now defaults to a concurrency level of 2, meaning bulk API requests via the pool will execute concurrently out of the box without any extra configuration. 
 
     //* Request Batching:
     // Do the same thing as pooling,  but it also allows us to define completion callbacks.

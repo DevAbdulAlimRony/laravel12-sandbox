@@ -109,6 +109,14 @@ class CacheController {
         // Lock acquired after waiting a maximum of 10 seconds...
     }); // Can give lockFor: 120, waitFor: 5 arguments also.
 
+    // Previously, if you wanted to extend the Time-To-Live (TTL) of a cached item, you had to retrieve the payload from the cache store and then PUT it back. 
+    // This resulted in unnecessary memory usage and network transfer, especially for large cached objects.
+    // Laravel 13 bypasses this completely by utilizing native cache store commands (like Redis EXPIRE or Memcached TOUCH).
+    // Rather than get and put again:
+    Cache::touch('heavy_analytics_dashboard', now()->addHours(6));
+    Cache::touch('user_session:123', 3600);
+    Cache::touch('permanent_report', null);
+
     //* Events:
     // CacheFlushed, CacheFlushing, CacheHit, CacheMissed, ForgettingKey, KeyForgetFailed, KeyForgotten, KeyWriteFailed, KeyWritten, RetrievingKey, RetrievingManyKeys, WritingKey, WritingManyKeys
     // To increase performance we can disable those events if not necessary: In config->in driver-> 'events' => false.  

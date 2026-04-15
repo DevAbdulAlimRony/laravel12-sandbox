@@ -28,3 +28,26 @@ CREATE TABLE greetings (
 -- Boolean: BOOLEAN (True or False values): 1 represents TRUE and 0 represents FALSE.
 -- XML Data Type: Used to store XML data and manipulate XML structures in the database.
 -- Spatial Data Type (Geometry): stores planar spatial data, such as points, lines, and polygons, in a database table. etc.
+
+-- Database:
+CREATE DATABASE database_name;
+CREATE DATABASE IF NOT EXISTS GeeksForGeeks;
+SHOW DATABASES; -- To list all databases in the server.
+USE database_name;
+DROP DATABASE GeeksForGeeks;
+DROP DATABASE IF EXISTS Database_Name;
+ALTER DATABASE Test MODIFY NAME = Example -- rename database
+ALTER DATABASE current_database_name RENAME TO new_database_name; -- for postgres.
+RENAME TABLE old_database_name.table1 TO new_database_name.table1; -- Transfer table from a old database to a new one.
+-- Always create a backup before deleting a database. 
+-- Privileges: Only users with administrative rights can delete a database.
+-- Database State: A database can be dropped in any state offline, read-only or suspect.
+
+-- Select Examples:
+SELECT * FROM Employees;
+SELECT name, age FROM Employees;
+SELECT name, age FROM Employees WHERE age >= 35;
+SELECT name, age FROM Employees ORDER BY age DESC;
+SELECT name, salary FROM Employees ORDER BY salary DESC LIMIT 3
+SELECT department, AVG(salary) AS average_salary FROM Employees GROUP BY department;
+

@@ -21,6 +21,11 @@ use Illuminate\Support\Facades\Artisan;
 // By default, laravel automatically scan console/commands directory, but if another directory then add in bootstrap/app.php
 // See callback command in console.php
 
+// PHP Attributes from Laravel 13:
+#[Signature('reports:generate {user} {--queue}')]
+#[Description('Generate a monthly analytics report for a specific user.')]
+// Can use that attribute or directly in class.
+
 class SendEmails extends Command implements Isolatable, PromptsForMissingInput
 {
     // Name and Signature of the command: php artisan mail:send syful.isl

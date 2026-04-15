@@ -15,6 +15,7 @@ class UserFactory extends Factory
     // If factory class not in database/factories directly, specify above model class: #[UseFactory(FlightFactory::class)], dont need HasFactory trait then.
     // Or, Just implement newFactory() method in model, See Model. and define model here:
     protected $model = Flight::class;
+    // Using Laravel 13 attribute: #[UseModel(User::class)]
 
     // The current password being used by the factory.
     protected static ?string $password;
