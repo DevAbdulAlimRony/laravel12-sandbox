@@ -116,6 +116,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // If we just do alias, we dont need to append or prepend to assign route to make a local middleware.
         // Laravel's default alias: auth, auth.basic, auth.session, cache.headers
         // can(Authorize middleware), guest, password.confim, precognitive, signed, subscribed, throttle, verified.
+
+        //* Sanctum Token Middleware:
+        $middleware->alias([
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //* HTTP Exceptions:
@@ -206,6 +212,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Calling task schedule here rather than in console.php
         $schedule->call(new DeleteRecentUsers)->daily();
     })
+    // Authorizing private Broadcast Channel using Sanctum:
+    // First, remove channels from withRouting. Then,
+    ->withBroadcasting(
+         __DIR__.'/../routes/channels.php',
+         ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum']],
+    )
     ->registered(function (): void {
         // If the API returns a massive amount of data (like a giant HTML page or a 5MB JSON blob), Laravel will "truncate" (cut off) the message so your logs don't explode in size.
         RequestException::truncateAt(240); // It tells Laravel: "If an API error occurs, only show me the first 240 characters of the response body in the exception message."

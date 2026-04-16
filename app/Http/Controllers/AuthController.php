@@ -555,5 +555,55 @@ class AuthController {
         // Give Token Abilities:
         $user->createToken('token-name', ['server:update'])->plainTextToken;
         // if ($user->tokenCan('server:update')), tokenCant().
+
+        // Protecting Routes: ->middleware('auth:sanctum').
+
+        // Can add abilities and ability middleware alias in bootstrap/app.php.
+        // Then can use for any route: ->middleware(['auth:sanctum', 'abilities:check-status,place-orders']).
+
+        // Revoking or Deleting Tokens:
+        // By default, Sanctum tokens never expire and may only be invalidated by revoking the token.
+        $request->user()->tokens()->delete(); // Revoke all tokens...
+        $request->user()->currentAccessToken()->delete(); // Revoke current token...
+        $request->user()->tokens()->where('id', $tokenId)->delete(); 
+
+        // But we can set an expiration time also:
+        // In sanctum config file: 'expiration' => 525600.
+        // If wanna do for each token independently, take second argument:
+        $user->createToken('token-name', ['server:update'], now()->addDays(10))->plainTextToken;  
+        // If we set expiration time, we should schedule a prune: Schedule::command('sanctum:prune-expired --hours=24')->daily();
+
+        // SPA Authentication:
+        // In order to authenticate, your SPA and API must share the same top-level domain. 
+        // In configuration set first party stateful domain: Sanctum::currentApplicationUrlWithPort().
+        // In app.php withMiddleware: $middleware->statefulApi().
+        
+        // If need cors configuration for separate sub domain: php artisan config:publish cors.
+        // In cors.php: Access-Control-Allow-Credentials header with a value of True. 
+        // In bootstrap.js: axios.defaults.withCredentials = true, axios.defaults.withXSRFToken = true.
+        // In session.php: 'domain' => '.domain.com'.
+
+        // To authenticate SPA, first to login: axios.get('/sanctum/csrf-cookie').then(response => {}
+        // Once CSRF protection has been initialized, you should make a POST request to your Laravel application's /login route, maybe using fortify.
+        // If the login request is successful, you will be authenticated and subsequent requests to your application's routes will automatically be authenticated via the session cookie that the Laravel application issued to your client. 
+    
+        // Authorizing Private broadcast Channel: See app.php.
+        // You will need to provide a custom Pusher authorizer when initializing Laravel Echo. 
+
+        // For Mobile Application Authentication:
+        // Use device_name with email and password when login to issue token. Create Tken with that device name.
+
+        // Testing:
+        Sanctum::actingAs(User::factory()->create(), ['view-tasks']); // view tasks can be ['*']
+        $response = $this->get('/api/task');
+        $response->assertOk();
+    }
+
+    public function jetstream(){
+
+    }
+
+    public function passport(){
+
     }
 }
