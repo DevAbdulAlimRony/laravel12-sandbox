@@ -33,13 +33,12 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
 
     // Create a new Job Instance,
     public function __construct(
-        // If different queue: $this->onQueue('processing'). Or call onQueue before dispatch if controller.
+        // If different queue: $this->onQueue('processing'). Or call onQueue before dispatch in controller.
         // Same goes for connection: $this->onConnection('sqs')
 
         public Podcast $podcast, // Can pass eloquent model because of Queueable trait.
         // Eloquent models and their loaded relationships will be gracefully serialized and unserialized when the job is processing.
         // Can access the model's properties and relationships as usual when the job is processed. $podcast->title.
-        
         // Binary data, such as raw image contents, should be passed through the base64_encode function before being passed to a queued job, if not serialization wont be perfect.
     ) 
     {
@@ -59,7 +58,8 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         $this->prependToChain(new TranscribePodcast); // Run job immediately after current job
         $this->appendToChain(new TranscribePodcast);
 
-        // When a job exception thrown, it will be released ack onto the queue until max attempts meet.
+        // When a job exception thrown, it will be released onto the queue until max attempts meet.
+        // When you "release" a job, you are essentially telling the queue worker: "I can't do this right now. Put this ticket back on the pile and I'll try again later.
         // Manually release a job:
         $this->release();
         $this->release(10); // 10s before it will be attempted again.
@@ -74,11 +74,11 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
             return;
         }
         
-
         // Can call another job belongs to the same job, useful when we need so many batches.
+        // Scenario: You need to generate 1,000 PDF reports. Adding them one by one to a batch is slow; you can add them in bulk.
         $this->batch()->add(Collection::times(1000, function () {
             return new ImportContacts;
-        }));
+        })); // do 1000 jobs.
     }
 
     //* Unique Job: 
@@ -106,7 +106,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
 
     //* Encrypted Job:
     // To ensure privacy and security, Laravel allows you to encrypt the data of your queued jobs. This means that the job's payload is encrypted before being stored in the queue and decrypted when the job is processed.
-    //  implements ShouldQueue, ShouldBeEncrypted
+    // implements ShouldQueue, ShouldBeEncrypted
 
     //* Job Middleware:
     public function middleware(): array{
@@ -124,7 +124,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         // Let's say want to prevent credit score update job overlaps for the same user ID.
         return [new WithoutOverlapping($this->user->id)]; // Can use releaseAfter()
         // new WithoutOverlapping($this->order->id))->dontRelease(): Immediately delete any overlapping jobs so that they will not be retried.
-        // If unexpectedly cant atomic lock feature failed: ->expireAfter(180)
+        // If unexpectedly cant. atomic lock feature failed: ->expireAfter(180)
         // By default, it will only prevent overlapping jobs of the same class. . But we can do for multiple class:
         // (new WithoutOverlapping("status:{$this->provider}"))->shared()
 
@@ -149,11 +149,6 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         return [new FailOnException([AuthorizationException::class])];
     }
 
-    public function retryUntil(): DateTime
-    {
-        return now()->plus(minutes: 30);
-    }
-
     //* Max Attempts:
     // When a job is dispatched, it is pushed onto the queue. A worker then picks it up and attempts to execute it. This is a job attempt.
     // Job can be successful, can encounter exception, can release, can fails or withOutOverlappings, can be timed out.
@@ -169,6 +164,8 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
         return now()->addMinutes(30);
     }
     // If tries() and retryUntil() both exist, retryUntil() will take precedence.
+    // If you run the command php artisan queue:work, it defaults to 0, which technically means "keep trying forever" if the job keeps failing.
+    // So, we should give how many tries when necessary.
 
     public $maxExceptions = 3; // Should fail if the retries are triggered by a given number of unhandled exceptions.
     
@@ -206,7 +203,7 @@ class ProcessPodcast implements ShouldQueue, ShouldBeUnique
      //* Failover:
      // If one connection failed, another connection will be used, this ensures high availability in production.
      // In config/queue.php, specify the failover driver  and provide an array of connection names to attempt in order.
-     // In .env, QUEUE_CONNECTION=failover.
+     // if failover deafault, In .env, QUEUE_CONNECTION=failover.
      // php artisan queue:work redis, php artisan queue:work database.
 
      //* Handling failed job:

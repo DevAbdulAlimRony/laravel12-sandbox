@@ -39,11 +39,11 @@ class OrderShipped implements ShouldDispatchAfterCommit, ShouldBroadcast
         // If multiple channels: return [].
         // The channels should be instances of Channel, PrivateChannel, or PresenceChannel.
         // Instances of Channel represent public channels that any user may subscribe to/
-        // rivateChannels and PresenceChannels represent private channels that require channel authorization.
+        // privateChannels and PresenceChannels represent private channels that require channel authorization.
         // Private channel should be autorized which is done in routes/channels.php.
     }
 
-    //* By default, laravel will broadcast the evnt using event's name. We can override it:
+    //* By default, laravel will broadcast the event using event's name. We can override it:
     public function broadcastAs(): string
     {
         return 'server.created';
@@ -82,8 +82,4 @@ class OrderShipped implements ShouldDispatchAfterCommit, ShouldBroadcast
     // All presence channels are also private channels; therefore, users must be authorized to access them.
     // But while authorizing, insteade of returning true, return array of data.
     // We can join presence channel: Echo.join().here().joining().leaving().error().
-
-    //* Model Broadcasting:
-    // Broadcast when model created, updated, deleted.
-    // See Flight Model.
 }

@@ -12,7 +12,7 @@ Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
 Broadcast::channel('orders.{order}', OrderChannel::class);
 // See the class in app/broadcasting.
 
-// We can use implicit or explicit rpute model binding: Broadcast::channel('orders.{order}'.
+// We can use implicit or explicit route model binding: Broadcast::channel('orders.{order}'.
 // Rather than orderId, we passed Order model itself.
 // Unlike HTTP route model binding, channel model binding does not support automatic implicit model binding scoping.
 

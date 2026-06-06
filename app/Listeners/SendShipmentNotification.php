@@ -16,7 +16,7 @@ class SendShipmentNotification implements ShouldQueue, ShouldQueueAfterCommit, S
 {
     use InteractsWithQueue; // To manually interact with queue delete and release
     // ShouldQueueAfterCommit is for while working with db transaction if queued listener should be dispatched after all open database transactions have been committed.
-    //  impplements ShouldBeEncrypted interface if need data security encryption and integretiy.
+    // impplements ShouldBeEncrypted interface if need data security encryption and integretiy.
 
     public function __construct() {}
 

@@ -23,7 +23,7 @@ class EventListenerController
         // See withEvents() in bootstrap\app.php
 
         // Rather than listening directly in listener, we can manually listen.
-        // See Event.listen in AppServiceProvider.php
+        // See Event::listen() in AppServiceProvider.php
 
         // See all Events: php artisan event:list
         // Cache in production to boost performance: php artisan event:cache or using optimize.
@@ -54,7 +54,7 @@ class EventListenerController
         //* Queued Event Listeners:
         // Queueing listeners can be beneficial if your listener is going to perform a slow task such as sending an email or making an HTTP request.
         // Configure a queue and run a worker at first.
-        // Add ShouldQueueinterface in listener class, See SendShipmentNotification listener class.
+        // Add ShouldQueueInterface in listener class, See SendShipmentNotification listener class.
 
         //* Testing:
         // Using the Event facade's fake method, may prevent listeners from executing

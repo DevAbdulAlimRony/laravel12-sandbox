@@ -14,11 +14,11 @@ class BroadcastController{
     // Available server side channel: Laravel Reverb, Pusher Channels, Ably and a log driver for local development and debugging. null driver to disable during testing.
     // For Laravel's React or Vue strter kits, we can listen for events using Echo's useEcho hook.
     // Laravel Echo is a JavaScript library that makes it painless to subscribe to channels and listen for events broadcast by your server-side broadcasting driver.
-    //  All event broadcasting is done via queued jobs. Before broadcasting any event, configure and run a queue worker.
+    // All event broadcasting is done via queued jobs. Before broadcasting any event, configure and run a queue worker.
 
     // Enable Broadcasting: php artisan install:broadcasting
     // config/broadcasting.php, routes/channels.php
-    // php artisan install:broadcasting --reverb. If already broadcasting installed, php artisan install:broadcasting --reverb. or just install broadcast, it will ask for the driver to install.
+    // php artisan install:broadcasting --reverb. or just install broadcast, it will ask for the driver to install.
     // After installing reverb, publish configs and env vars: php artisan reverb:install
     // Same goes for Pusher, just have to give credentials in env like PUSHER_APP_ID etc. BROADCAST_CONNECTION=pusher.
     // Same goes for Ably.
@@ -34,7 +34,7 @@ class BroadcastController{
     
     // When broadcasting is installed Laravel attempts to automatically register the /broadcasting/auth route to handle authorization requests.
     // If failed, then manually in app.php withRouting add channels route.
-    // php artisan channel:list
+    // php artisan channel:list.
 
     //* Broadcasting Events:
     OrderShipped::dispatch($order); // Just dispatch the event which implements shouldBroadcast.
@@ -54,19 +54,23 @@ class BroadcastController{
     Broadcast::on('orders.'.$order->id)->toOthers()->send();
 
     //* Listening Broadcast using Echo:
-    // https://laravel.com/docs/12.x/broadcasting#receiving-broadcasts
+    // https://laravel.com/docs/12.x/broadcasting#receiving-broadcasts.
 
     //* Client Events:
     // Broadcast event without hitting backend, Examp: Another user is typing.
     // Use Echo's whisper method.
     // const { channel } = useEcho(`chat.${roomId}`, ['update'], (e) => {})
-    // channel().whisper('typing', { name: user.name }); channel().listenForWhisper('typing', (e) => {})
+    // channel().whisper('typing', { name: user.name }); channel().listenForWhisper('typing', (e) => {}).
 
     //* Notifications:
     // By pairing event broadcasting with notifications, JavaScript application may receive new notifications as they occur without needing to refresh the page.
     // const { channel } = useEchoModel('App.Models.User', userId);
     // channel().notification((notification) => {})
     // stop listening to notifications without leaving the channel: stopListeningForNotification(callback)
+
+    //* Model Broadcasting:
+    // Broadcast when model created, updated, deleted.
+    // See Flight Model.
 
     //* Reverb:
     // Install: php artisan install:broadcasting.
@@ -82,5 +86,4 @@ class BroadcastController{
     // Other things: https://laravel.com/docs/12.x/reverb#scaling.
     // to scale Reverb horizontally across multiple servers, you previously had to use Redis to manage the Pub/Sub messaging between nodes.
     // In laravel 13, Reverb introduces a Database Driver for small to medium application.
-
 }

@@ -600,8 +600,118 @@ class AuthController {
     }
 
     public function jetstream(){
+         // Jetstream is a eautifully designed application starter kit for Laravel.
+         // Jetstream provides the implementation for your application's login, registration, email verification, two-factor authentication, session management, API via Laravel Sanctum, and optional team management features.
+         // Jetstream is designed using Tailwind CSS and offers your choice of Livewire or Inertia scaffolding.
+         // Laravel Livewire is a library that makes it simple to build modern, reactive, dynamic interfaces using Laravel Blade as your templating language. 
+         // The Inertia stack provided by Jetstream uses Vue.js as its templating language.
 
-    }
+         // Install: omposer require laravel/jetstream.
+         // php artisan jetstream:install, and select the stack- livewire or inertia.
+         // You may use the --teams switch to enable team support.
+         // Or, everything with a command: php artisan jetstream:install inertia --teams.
+         // SSR Support: php artisan jetstream:install inertia --ssr.
+         // Change default jetstream logo in inertia: See the vue pages for ApplicationLogo, Applicationmark, ApplicationCardLogo.
+         // During the Jetstream installation process, actions are published to your application's app/Actions directory.
+         
+         // In contrast to Laravel Breeze, Laravel Jetstream does not publish controllers or routes to your application.
+         // Action classes typically perform a single action and correspond to a single Jetstream or Fortify feature, such as creating a team or deleting a user.
+         // When using Inertia, "Pages" will be published to your resources/js/Pages directory.
+         // Application Layout for Inertia Located in: App\View\Components\AppLayout.
+         // Other default pages: Dashboard.vue, GuestLayout.vue, Banner.vue, Teams/Create and Show.vue etc.
+         // A postcss.config.js file and tailwind.config.js file will be created. 
+         // After authenticating with your application, you will be redirected to the /dashboard route.
+         // We can customize or edit them anything we want.
+
+         //* API:
+         // We can give multipple api token for user with permission. Check profiles dropdown.
+         // If not in config/jetstream.php features: Features::api().
+         // If not install: php artisan install:api
+         // The permissions available to API tokens are defined using the Jetstream::permissions method within your application's App\Providers\JetstreamServiceProvider class. 
+         Jetstream::defaultApiTokenPermissions(['read']);
+         Jetstream::permissions(['post:create']);
+         // HasApiTokens trait is automatically applied to your application's App\Models\User model during Jetstream's installation.
+         // Checking Permission: $request->user()->tokenCan('post:update').
+         // When a user makes a request to a route within your routes/web.php file, the request will typically be authenticated by Sanctum through an authenticated session cookie based guard.
+
+         //* Login:
+         // Under the hood, the authentication portions of Jetstream are powered by Laravel Fortify, which is a frontend agnostic authentication backend for Laravel.
+         // When Jetstream is installed, the config/fortify.php configuration file is installed.
+         // Backedn classes in app/Action directory.
+
+         // Livewire Page: esources/views/auth/login.blade.php
+         // Inertia page: resources/js/Pages/Auth/Login.vue
+         // Customizing view in JetStreamServiceprovider boot():
+         Fortify::loginView(function () {return view('auth.login');}); // If Inertia:
+         Fortify::loginView(function () {return Inertia::render('Auth/Login');});
+
+         // Full Logic Customization in boot:
+         Fortify::authenticateUsing(function (Request $request) {$user = User::where('email', $request->email)->first(); });
+         Fortify::authenticateUsing([new AuthenticateLoginAttempt, '__invoke']); // Call a class instead of direct logic.
+         // Custom pipeline to authenticate: Fortify::authenticateThrough(function (Request $request) {  return array_filter([...
+
+         //* Registration:
+         // App\Actions\Fortify\CreateNewUser class will be invoked when a user registers with your application. 
+         // App\Actions\Fortify\CreateNewUser, App\Actions\Fortify\ResetUserPassword, App\Actions\Fortify\UpdateUserPassword will use Password Validation Rules here: App\Actions\Fortify\PasswordValidationRules
+         // Pages: resources/views/auth/register.blade.php or resources/js/Pages/Auth/Register.vue.
+         
+         // Customize View in boot:
+         Fortify::registerView(function () {return view('auth.register');}); // If Inertia:
+
+        // Many applications require users to accept their terms of service / privacy policy during registration. 
+        // Setup in config/jetstream.php: 'features' => Features::termsAndPrivacyPolicy(), the write terms in resources/markdown/terms.md or localized version terms.es.md.
+        // Enable email verification during register in config/fortify.php: 'features' => Features::emailVerification(), then in User model implements MustVerifyEmail.
+
+        //* Profile Management:
+        // App\Actions\Fortify\UpdateUserProfileInformation
+        // views/profile/update-profile-information-form.blade.php, esources/js/Pages/Profile/UpdateProfileInformationForm.vue.
+        // Enable user can upload profile photo in config/jetstream.php features: Features::profilePhotos() and  execute the storage:link Artisan command.
+        // Laravel\Jetstream\HasProfilePhoto trait that is automatically attached to your App\Models\User class
+        // Account Deletion: enable feature in config-  Features::accountDeletion().
+
+        //* Password Update:
+        // App\Actions\Fortify\UpdateUserPassword, resources/views/profile/update-password-form.blade.php or resources/js/Pages/Profile/UpdatePasswordForm.vue.
+
+        //* Password Confirmation:
+        // Confirm user's password before the action is performed.
+        // redirect based password confirmation and modal based password confirmation.
+        // Redirect based password confirmation is typically used when the user needs to confirm their password before accessing an entire screen that is rendered by your application, such as a billing settings screen.
+        // Modal based password authentication might be used when you would like the user to confirm their password before performing a specific action, such as when enabling two-factor authentication.
+        // the route that will render the view that requires password confirmation and any routes that perform the confirmed actions are assigned the password.confirm middleware.
+        // resources/js/Pages/Auth/ConfirmPassword.vue.
+        // Once the user has confirmed their password, they will not be required to re-enter their password until the number of seconds defined by your application's auth.password_timeout configuration option has elapsed.
+        // For Modal based: import ConfirmsPassword from './Components/ConfirmsPassword.vue'
+        // <ConfirmsPassword @confirmed="enableAdminMode">
+        // Customizing in boot: Fortify::confirmPasswordsUsing(function (User $user, string $password) {..
+        // Customized Class: Fortify::confirmPasswordsUsing([new ConfirmPassword, '__invoke']);
+
+        //* Two Factor Authentication:
+        // When a user enables two-factor authentication for their account, they should scan the given QR code using a free TOTP authenticator application such as Google Authenticator.
+        // In addition, they should store the listed recovery codes in a secure password manager such as 1Password.
+        // Jetstream's two-factor authentication services are encapsulated within Jetstream and should not require customization
+        // resources/views/profile/two-factor-authentication-form.blade.php or, resources/js/Pages/Profile/TwoFactorAuthenticationForm.vue.
+        // Can disable by removing it from config.
+
+        //* Browser sessions:
+        // Using Illuminate\Session\Middleware\AuthenticateSession middleware to safely log out other browser sessions that are authenticated as the current user.
+        // views/profile/logout-other-browser-sessions-form.blade.php, esources/js/Pages/Profile/LogoutOtherBrowserSessionsForm.vue.
+
+        //* Teams:
+        // Jetstream's team scaffolding and opinions may not work for every application. 
+        // If you installed Jetstream using the --teams option, your application will be scaffolded to support team creation and management.
+        // Jetstream's team features allow each registered user to create and belong to multiple teams.
+        // If a user named "Sally Jones" creates a new account, they will be assigned to a team named "Sally's Team". After registration, the user may rename this team or create additional teams.
+        // In actions, CreateTeam, UpdateTeamName, and DeleteTeam.
+        // esources/js/Pages/Teams/CreateTeamForm.vue.
+
+        // Accessing User Tea,m:
+        // use HasTeams;
+        // $user->currentTeam : Laravel\Jetstream\Team, $user->allTeams(), ->ownedTeams, ->teams, ->personalTeam(), ownsTeam(0, belongsToTeam(), teamRole(0, hasTeamRole(0, teampermission(), teamPermissions(), hasTeampermission().
+        
+
+
+
+    }    
 
     public function passport(){
 

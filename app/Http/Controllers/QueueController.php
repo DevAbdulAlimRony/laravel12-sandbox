@@ -5,17 +5,17 @@ use Illuminate\Support\Facades\Bus;
 
 class QueueController {
     // A Queue job is a task that is offloaded to be processed later so the user doesn't have to wait for it to finish.
-    // Example: sending an email, processing a video, generating a report, database cleanup, automated billing etc.
+    // Example: Sending an email, Processing a video, Generating a report, Database cleanup, Automated billing etc.
     // Laravel queues provide a unified queueing API across a variety of different queue backends, such as Amazon SQS, Redis, or even a relational database.
     // config/queue.php
     // Queue drivers: sync, database, beanstalkd, sqs, redis, null
     // Synchronous driver will execute jobs immediately (for use during development or testing).
-    // Process job for multiple queues: php artisan queue:work --queue=high,default
+    // Process job for multiple queues: php artisan queue:work --queue=high,default.
 
     // Database Queue: Hold the job in database 0001_01_01_000002_create_jobs_table.php
     // If table not available: php artisan queue:table
-    // Redis Queue: Configure a Redis database connection in config/database.php.  Need dependencie: redis/predis ~2.0 or phpredis PHP extension.
-    // Change default queue connection in .env: QUEUE_CONNECTION
+    // Redis Queue: Configure a Redis database connection in config/database.php. Need dependencie: predis/predis ~2.0 or phpredis PHP extension.
+    // Change default queue connection in .env: QUEUE_CONNECTION.
 
     // Create Job: php artisan make:job ProcessPodcast
     // Job class will be created in app/Jobs/ProcessPodcast.php, implement shouldQueue interface and use Queueable trait.
@@ -145,6 +145,7 @@ class QueueController {
     // php artisan queue:monitor redis:default,redis:deployments --max=100
     // Scheduling this command alone is not enough to trigger a notification alerting you of the queue's overwhelmed status. 
     // In AppServiceProvider, listen to the Illuminate\Queue\Events\QueueBusy event.
+    // Can use laravel horizon to monitor.
 
     //* Testing: See in documentation.
 }
