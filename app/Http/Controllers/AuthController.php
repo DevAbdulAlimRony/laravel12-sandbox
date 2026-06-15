@@ -704,16 +704,54 @@ class AuthController {
         // In actions, CreateTeam, UpdateTeamName, and DeleteTeam.
         // esources/js/Pages/Teams/CreateTeamForm.vue.
 
-        // Accessing User Tea,m:
+        // Accessing User Team:
         // use HasTeams;
         // $user->currentTeam : Laravel\Jetstream\Team, $user->allTeams(), ->ownedTeams, ->teams, ->personalTeam(), ownsTeam(0, belongsToTeam(), teamRole(0, hasTeamRole(0, teampermission(), teamPermissions(), hasTeampermission().
-        
+        Calendar::where('team_id', $request->user()->currentTeam->id)->get(); // accessing current team
+        // Team Object: $team->owner, $team->allUsers(), $team->users, $team->hasUser($user), $team->hasUserWithEmail($emailAddress), $team->userHasPermission($user, $permission).
 
+        // Member Management: App\Policies\TeamPolicy, App\Actions\Jetstream\AddTeamMember, App\Actions\Jetstream\RemoveTeamMember.
+        // resources/views/teams/team-member-manager.blade.php, resources/js/Pages/Teams/TeamMemberManager.vue.
 
+        // Enable Invitations: Features::teams(['invitations' => true]) in config. App\Actions\Jetstream\InviteTeamMember.
 
+        // Role Permissions in boot:
+        Jetstream::defaultApiTokenPermissions(['read']);
+        Jetstream::role('admin', 'Administrator', ['server:create',])->description('Administrator users can perform any action.'); // role name, display name, permissions, description.
+        // Authorize: $user->hasTeamPermission($server->team, 'server:update');
     }    
 
     public function passport(){
+            // Laravel passport provides a full OAuth2 server implementation.
+            // Passport is built on League OAuth2 server.
+            // php artisan install:api --passport
 
+            // Now in user model: implements OAuthenticatable, use HasApiTokens.
+            // config/auth.php: 'api' => ['driver' => 'passport', 'provider' => 'users'].
+
+            // When deploying:
+            // php artisan passport:keys
+            // If necessary, mention from where key should load in app boot(): Passport::loadKeysFrom(__DIR__.'/../secrets/oauth');
+            // Can publish config and mention key should load from where as env variable: php artisan vendor:publish --tag=passport-config.
+            // PASSPORT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY----- .....
+
+            // By default, Passport issues long-lived access tokens that expire after one year. 
+            // Can customize in app's boot()m method:
+            Passport::tokensExpireIn(CarbonInterval::days(15));
+            Passport::refreshTokensExpireIn(CarbonInterval::days(30));
+            Passport::personalAccessTokensExpireIn(CarbonInterval::months(6));
+
+            // Overriding Default Model:
+            // class Client extends PassportClient. Then use like that:
+            Passport::useTokenModel(Token::class);
+            Passport::useRefreshTokenModel(RefreshToken::class);
+            Passport::useAuthCodeModel(AuthCode::class);
+            Passport::useClientModel(Client::class);
+            Passport::useDeviceCodeModel(DeviceCode::class);
+
+            // Overriding Routes:
+            // In app service provider's register():
+            Passport::ignoreRoutes();
+            // Then copy routes from Passpoert and customize it in web.php.
     }
 }

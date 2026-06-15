@@ -228,3 +228,47 @@ class CachedQueryBuilder
 // Usage
 $builder = new CachedQueryBuilder(Product::where('active', true));
 $products = $builder->get();
+
+//* Laravel Telescope to monitor cache and other things.
+class Telescope(){
+        // Telescope provides insight into the requests coming into your application, exceptions, log entries, database queries, queued jobs, mail, notifications, cache operations, scheduled tasks, variable dumps, and more.
+        // Install: composer require laravel/telescope. 
+        // If only need local, add: --dev and remove TelescopeServiceProvider from bootstrap/providers.php. To prevent auto discover, in composer.json: extra->laravel->dont-discover: ["laravel/telescope"].
+        // php artisan telescope:install. Run migrate command.
+        // Access the dashboard: /telescope.
+        // config/telescope.php.
+        
+        // Data pruning: 
+        // Schedule::command('telescope:prune')->daily();
+        // Schedule::command('telescope:prune --hours=48')->daily();
+
+        // Dashboard Authorization:
+        // By default, we can access /telescope only in local.
+        // To make author as non- local, customize the gate() method in TelescopeServiceProvider.
+        Gate::define('viewTelescope', function (User $user) {});
+        // Ensure APP_ENV as production, otherwise it will be publicly available.
+
+        // We can filter which data we need in provider's register() using Telescope::filter() method. For example, we can filter out all cache hits and only log cache misses.
+        // While the filter closure filters data for individual entries, you may use the filterBatch method to register a closure that filters all data for a given request or console command.
+
+        // Adding custom tag:
+        Telescope::tag(function (IncomingEntry $entry) {
+            if ($entry->type === 'cache') {
+                return ['cache'];
+            }
+        });
+
+        // Available Watchers:
+        // Telescope "watchers" gather application data when a request or console command is executed. 
+        // We can customize or enable in config/telescope.php. 
+        // 'watchers' => [  Watchers\CacheWatcher::class => true, ]
+        // Batch watcher, Cache watcher, command watcher, dump watcher, event watcher, exception watcher, gate watcher, http client watcher, job watcher, log watcher, mail watcher, model watcher, notification, query, redis, request, schedule, view watcher.
+
+        // Customize Displaying user avatar in Telescope Dashboard:
+        // In register():
+        Telescope::avatar(function (?string $id, ?string $email) {
+            return ! is_null($id)
+                ? '/avatars/'.User::find($id)->avatar_path
+                : '/generic-avatar.jpg';
+        });
+}
