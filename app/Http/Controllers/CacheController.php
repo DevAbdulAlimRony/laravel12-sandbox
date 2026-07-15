@@ -106,7 +106,7 @@ class CacheController {
     
     //* Handling Cache Busting:
     $cacheKey = "products:listing:v1.2"; // Include version to the cache key
-    key = "user:{$user->id}:profile:{$user->updated_at->timestamp}"; // Model based cache key with timestamp.
+    $key = "user:{$user->id}:profile:{$user->updated_at->timestamp}"; // Model based cache key with timestamp.
     // Event-driven cache invalidation using Laravel’s event system.
 
     //* Cache Warming Strategies:
@@ -119,6 +119,11 @@ class CacheController {
     // Now make a custom command to call that code, actually the method where this warmer code written.
     // Now, that command can be triggerized during deployment, as a schedule task or after significant data updates.
 
+    // It returns a tuple containing both the retrieved data and a boolean indicating the cache state
+    [$data, $isWarm] = Cache::rememberWithWarmth('key', $seconds, function () {
+        return HeavyOperation::run();
+    });
+
     //* Atomic Lock:
     // Let's say a user doing refund, while loading same user or another admin clicks again refund, that will be problematic. We can lock the loading.
     // Supported on memcached, redis, dynamodb, database, file or array.
@@ -129,7 +134,11 @@ class CacheController {
         // Only ONE process can be in here at a time.
         $paymentService->refund($order);
         // ---- CRITICAL SECTION END ----
+
+        // Extend the lock for another 10 seconds...
+        $lock->refresh();
         
+        // Release the lock so that other processes can acquire it...
         $lock->release();
     } else {
         return "Please wait, another admin is already processing this refund.";
@@ -156,6 +165,9 @@ class CacheController {
     Cache::restoreLock('processing', $this->owner)->release(); 
     Cache::forceRelease();
 
+    //* Clear all atomic locks cache:
+    Cache::flushLocks();
+
     // The withoutOverlapping method provides a simple syntax for executing a given closure while holding an atomic lock.
     Cache::withoutOverlapping('foo', function () {
         // The lock will not be released until the closure finishes executing
@@ -163,6 +175,12 @@ class CacheController {
     }); // Can give lockFor: 120, waitFor: 5 arguments also.
 
     // High-scale apps often use a Cache::lock() to quickly bounce away duplicate requests at the front door, and then use lockForUpdate() inside the database for final security.
+
+    //* If you want controlled parallelism:
+    Cache::funnel('key')->limit(3)->releaseAfter(60)->block(10)->then(function(){}, function() {});
+    // Can use try catch for LockTimeoutException. If not available, then second callback will be executed.
+    // Cache::store('redis')->funnel('foo')
+    // Example: Your shipping partner has a strict API limit: "Do not send more than 3 requests at the exact same millisecond, or we will block your API key.
 
     //* Preventing Cache Stampedes:
     // Cache stampedes occur when many concurrent requests try to regenerate the same expired cache item simultaneously. 
@@ -230,7 +248,8 @@ $builder = new CachedQueryBuilder(Product::where('active', true));
 $products = $builder->get();
 
 //* Laravel Telescope to monitor cache and other things.
-class Telescope(){
+class Telescope()
+{
         // Telescope provides insight into the requests coming into your application, exceptions, log entries, database queries, queued jobs, mail, notifications, cache operations, scheduled tasks, variable dumps, and more.
         // Install: composer require laravel/telescope. 
         // If only need local, add: --dev and remove TelescopeServiceProvider from bootstrap/providers.php. To prevent auto discover, in composer.json: extra->laravel->dont-discover: ["laravel/telescope"].
