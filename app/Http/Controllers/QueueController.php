@@ -148,4 +148,28 @@ class QueueController {
     // Can use laravel horizon to monitor.
 
     //* Testing: See in documentation.
+
+    //* Laravel Horizon
+    // Horizon allows you to easily monitor key metrics of your queue system such as job throughput, runtime, and job failures.
+    
+    // Install: composer require laravel/horizon
+    // php artisan horizon:install
+    // config/horizon.php
+    // Access by: /horizon
+
+    // Can dfine wildcard environments, max job attemts, job timeout, job backoff in config file.
+
+    // Dashboard Authorization in HorizonServiceProvider:
+    protected function gate(): void
+    {
+        Gate::define('viewHorizon', function (User $user) {
+            return in_array($user->email, [
+                'alim@gmail.com',
+            ]);
+        });
+    }
+
+    // Read documentation: https://laravel.com/docs/13.x/horizon#configuration
+
+    //* Laravel Octane:
 }
