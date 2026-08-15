@@ -74,10 +74,19 @@ export default defineConfig({
         // We can defne a macro in a service provider for the path as an alias in boot method:
         // Vite::macro('image', fn (string $asset) => $this->asset("resources/images/{$asset}"));
         // Now, can use: <img src="{{ Vite::image('logo.png') }}" alt="Laravel Logo">
+
+        //* Activate inertia:
+        inertia(),
     ],
     server: {
         watch: {
-            ignored: ['**/storage/framework/views/**'],
+            ignored: [
+                '**/storage/framework/views/**',
+                '**/.junie/**',
+                '**/.cursor/**',
+                '**/.claude/**',
+                '**/.codex/**',
+            ],
         },
 
         // Add it When running the Vite development server within Laravel Sail on Windows Subsystem for Linux 2 (WSL2)

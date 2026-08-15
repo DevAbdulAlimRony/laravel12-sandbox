@@ -21,7 +21,7 @@ class InvoicePaid extends Notification implements ShouldQueue
     //* Queue Notification:
     use Queueable;
 
-    // If need data privacy and integrity: mplements ShouldQueue, ShouldBeEncrypted.
+    // If need data privacy and integrity: implements ShouldQueue, ShouldBeEncrypted.
 
     // Properties for Queue Notifications can be used:
     public $tries = 5; // Number of times the notification may be attempted.
@@ -33,18 +33,18 @@ class InvoicePaid extends Notification implements ShouldQueue
         $this->afterCommit(); // When notification in db transaction.
     }
 
+    // Determine which connections should be used for each notification channel.
+    public function viaConnections(): array{
+        return [
+            'mail' => 'redis', 'database' = 'sync',
+        ];
+    }
+
     // Delay notification when queable.
     public function withDelay(object $notifiable): array{
         return [
             'mail' => 5,
             'sms' => now()->plus(minutes: 10),
-        ];
-    }
-
-    // Determine which connections should be used for each notification channel.
-    public function viaConnections(): array{
-        return [
-            'mail' => 'redis', 'database' = 'sync',
         ];
     }
 
@@ -76,10 +76,15 @@ class InvoicePaid extends Notification implements ShouldQueue
     // Make the final determination on whether the queued notification should be sent after it is being processed by a queue worker.
     public function shouldSend(object $notifiable, string $channel): bool{
         return $this->invoice->isPaid();
+        // Can give the final condition here.
+        // User Preferences Changed While Queued
     }
 
     // Execute code after a queued notification has been sent:
-    public function afterSending(object $notifiable, string $channel, mixed $response): void{}
+    public function afterSending(object $notifiable, string $channel, mixed $response): void{
+        // Ex: Make a  log if sent failed.
+        // Take any action after sending.
+    }
 
     //* Database Notification:
     // Get the array representation of the notification.
@@ -94,6 +99,7 @@ class InvoicePaid extends Notification implements ShouldQueue
     // But can override:
     public function databaseType(object $notifiable): string {
         return 'invoice-paid';
+        // Now, even if you rename, move, or delete the PHP notification class in the future, all your historical database records remain clean, consistent, and predictable.
     }
     public function initialDatabaseReadAtValue(): ?Carbon{
         return null;
@@ -110,7 +116,7 @@ class InvoicePaid extends Notification implements ShouldQueue
     }
     // Customize the column type:
     public function broadcastType(): string{
-        return 'broadcast.message';
+        return 'broadcast.message'; // dealer.created.
     }
     // Customize channel:
     public function receivesBroadcastNotificationsOn(): string{
@@ -147,7 +153,6 @@ class InvoicePaid extends Notification implements ShouldQueue
         // Can use text() method if plain text view. or specify: ['mail.invoice.paid', 'mail.invoice.paid-text']
         // Rather than so many method chaning, we can send a full Mailable object:  return (new InvoicePaidMailable($this->invoice))->to($notifiable->email)
         // If notification is on demand, $notifiable instanceof AnonymousNotifiable ? $notifiable->routeNotificationFor('mail') : $notifiable->
-        
         
         //* Customizing recipient:
         // When sending notifications via the mail channel, the notification system will automatically look for an email property on your notifiable entity.

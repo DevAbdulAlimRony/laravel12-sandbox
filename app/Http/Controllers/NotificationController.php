@@ -36,6 +36,14 @@ class NotificationController {
         // or, call withDelay in Notification class.
         $user->notify((new InvoicePaid($invoice))->afterCommit()); // If queued notification in a db transaction, or call it in class constructor.
 
+        // In modern web applications, queued notifications are crucial whenever a single user action triggers notifications to multiple recipients, or when the notification relies on a third-party service (SMS gateways, push notification servers, or email providers)
+        // Exmp: Upon order creation, your application needs to- Send an email, send an sms text, push notification, deduct stock.
+        // Without Queues: The customer clicks "Pay Now" and has to wait 3 to 5 seconds while your server connects to the email server, talks to the SMS API gateway, and fires push notifications.
+        // Scenario: A user posts an update inside a group with 2,000 members or tags @everyone.
+        // Without Queues: If you run a loop of 2,000 iterations inside the request cycle, your server will hit the PHP script execution time limit (usually 30 seconds), crash, and throw a 504 Gateway Timeout.
+        // Scenario: A customer requests a ride. Why Queueing is Required: The app needs to broadcast the request to the nearest 15 drivers simultaneously. If one driver's phone drops connection, the HTTP connection to their device might hang.
+        // All broadcast notifications are queued for broadcasting.
+        
         //* On Demand Notification:
         // Send a notification to a guest user who is not in database.
         Notification::route('mail', 'taylor@example.com')
@@ -47,8 +55,8 @@ class NotificationController {
         // ad-hoc routing info for multiple routes: routes(['mail' => ['barrett@example.com' => 'Barrett Blair'], 'vonage' => '5555555555'])
 
         //* Database Notification:
-        // stores the notification information in a database table.
-        // can query the table to display the notifications in your application's user interface.
+        // Stores the notification information in a database table.
+        // Can query the table to display the notifications in your application's user interface.
         // php artisan make:notifications-table
         // If your notifiable models are using UUID or ULID primary keys, you should replace the morphs method with uuidMorphs or ulidMorphs in the notification table migration.
         // See InvoicePaid class.
@@ -87,6 +95,8 @@ class NotificationController {
         //* Other Notifications:
         // If we want other channels like telegram, apple push etc: 
         // https://laravel-notification-channels.com/about/#viability.
+        // For web push, we can use web push channel which will work for browsers, But If we use Firebase Cloud Messaging (FCM) channel, it will work for both browsers and mobile devices.
+        
 
         //* Localizing Notification:
         $user->notify((new InvoicePaid($invoice))->locale('es'));
